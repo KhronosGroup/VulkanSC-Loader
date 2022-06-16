@@ -2552,6 +2552,7 @@ static VkResult loader_add_layer_properties(const struct loader_instance *inst, 
     //     required
     VkResult result = VK_ERROR_INITIALIZATION_FAILED;
     cJSON *item, *layers_node, *layer_node;
+    char *file_vers = NULL;
     loader_api_version json_version = {0, 0, 0};
     // Make sure sure the top level json value is an object
     if (!json || json->type != 6) {
@@ -2561,7 +2562,7 @@ static VkResult loader_add_layer_properties(const struct loader_instance *inst, 
     if (item == NULL) {
         goto out;
     }
-    char *file_vers = cJSON_PrintUnformatted(item);
+    file_vers = cJSON_PrintUnformatted(item);
     if (NULL == file_vers) {
         goto out;
     }
@@ -2637,6 +2638,7 @@ out:
     if (NULL != file_vers) {
         loader_instance_heap_free(inst, file_vers);
     }
+
     return result;
 }
 
