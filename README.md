@@ -1,6 +1,6 @@
 # Vulkan Ecosystem Components
 
-This project provides the Khronos official Vulkan ICD desktop loader for Windows, Linux, and MacOS.
+This project provides the Khronos official Vulkan SC ICD desktop loader for Windows, Linux, and MacOS.
 
 ## CI Build Status
 
