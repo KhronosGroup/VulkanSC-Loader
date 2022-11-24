@@ -34,6 +34,7 @@ jobs:
                 cxx: [ g++, clang++ ]
                 config: [ Debug, Release ]
                 os: [ ubuntu-18.04, ubuntu-20.04 ]
+                vksc_build: [ VulkanSC=TRUE, VulkanSC=FALSE ]
                 exclude:
                     - cc: gcc
                       cxx: clang++
@@ -48,7 +49,7 @@ jobs:
             - run: sudo apt install libwayland-dev libxrandr-dev
 
             - name: Generate build files
-              run: cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON
+              run: cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} -D${{matrix.vksc_build}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON
               env:
                 CC: ${{matrix.cc}}
                 CXX: ${{matrix.cxx}}
@@ -77,6 +78,7 @@ jobs:
                 arch: [ Win32, x64 ]
                 config: [ Debug, Release ]
                 os: [ windows-2019 ]
+                vksc_build: [ VulkanSC=TRUE, VulkanSC=FALSE ]
 
         steps:
             - uses: actions/checkout@v2
@@ -85,7 +87,7 @@ jobs:
                 python-version: '3.7'
 
             - name: Generate build files
-              run: cmake -S. -Bbuild -A${{matrix.arch}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON
+              run: cmake -S. -Bbuild -A${{matrix.arch}} -D${{matrix.vksc_build}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON
 
             - name: Build the loader
               run: cmake --build ./build --config ${{matrix.config}}
@@ -105,6 +107,7 @@ jobs:
                 config: [ Debug, Release ]
                 os: [ macos-11 ]
                 static_build: [ BUILD_STATIC_LOADER=OFF ]
+                vksc_build: [ VulkanSC=TRUE, VulkanSC=FALSE ]
 
         steps:
             - uses: actions/checkout@v2
@@ -113,7 +116,7 @@ jobs:
                 python-version: '3.7'
 
             - name: Generate build files
-              run: cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} -D${{matrix.static_build}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON -DTEST_USE_ADDRESS_SANITIZER=ON
+              run: cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} -D${{matrix.static_build}} -D${{matrix.vksc_build}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON -DTEST_USE_ADDRESS_SANITIZER=ON
               env:
                 # Specify the minimum version of macOS on which the target binaries are to be deployed.
                 # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
