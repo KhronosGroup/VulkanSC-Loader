@@ -848,6 +848,7 @@ TEST(EnvironmentVariables, VK_LAYER_PATH) {
 }
 #endif
 
+#if !defined(VULKANSC)
 TEST(ExtensionManual, ToolingProperties) {
     VkPhysicalDeviceToolPropertiesEXT icd_tool_props{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TOOL_PROPERTIES_EXT,
                                                      nullptr,
@@ -897,3 +898,4 @@ TEST(ExtensionManual, ToolingProperties) {
         string_eq(props.name, icd_tool_props.name);
     }
 }
+#endif

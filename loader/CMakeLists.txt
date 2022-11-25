@@ -296,7 +296,7 @@ if(WIN32)
                 ${CMAKE_CURRENT_LIST_DIR}/loader.rc)
 
     if (UPDATE_DEPS)
-        add_dependencies(SONAME vl_update_deps)
+        add_dependencies(${SONAME} vl_update_deps)
     endif()
 
     # when adding the suffix the import and runtime library names must be consistent

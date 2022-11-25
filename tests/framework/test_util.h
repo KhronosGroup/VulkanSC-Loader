@@ -428,6 +428,13 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_ERROR_VALIDATION_FAILED_EXT";
         case (VK_ERROR_INVALID_SHADER_NV):
             return os << "VK_ERROR_INVALID_SHADER_NV";
+#else
+        case (VK_ERROR_NO_PIPELINE_MATCH):
+            return os << "VK_ERROR_NO_PIPELINE_MATCH";
+        case (VK_ERROR_INVALID_PIPELINE_CACHE_DATA):
+            return os << "VK_ERROR_INVALID_PIPELINE_CACHE_DATA";
+        case (VK_ERROR_VALIDATION_FAILED):
+            return os << "VK_ERROR_VALIDATION_FAILED";
 #endif
         case (VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT):
             return os << "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";

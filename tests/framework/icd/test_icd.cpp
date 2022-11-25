@@ -278,6 +278,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkDestroyDevice(VkDevice device, const VkAllocat
     if (found != icd.device_handles.end()) icd.device_handles.erase(found);
 }
 
+#if !defined(VULKANSC)
 VKAPI_ATTR VkResult VKAPI_CALL test_vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDevice, uint32_t* pToolCount,
                                                                          VkPhysicalDeviceToolPropertiesEXT* pToolProperties) {
     if (icd.tooling_properties.size() == 0) {
@@ -295,6 +296,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkGetPhysicalDeviceToolPropertiesEXT(VkPhysi
     }
     return VK_SUCCESS;
 }
+#endif
 
 //// WSI ////
 
@@ -548,9 +550,11 @@ PFN_vkVoidFunction get_physical_device_func(VkInstance instance, const char* pNa
             return TO_VOID_PFN(test_vkGetPhysicalDeviceImageFormatProperties2);
         }
     }
+#if !defined(VULKANSC)
     if (icd.supports_tooling_info_ext) {
         if (string_eq(pName, "vkGetPhysicalDeviceToolPropertiesEXT")) return TO_VOID_PFN(test_vkGetPhysicalDeviceToolPropertiesEXT);
     }
+#endif
 
     for (auto& func : icd.custom_physical_device_functions) {
         if (func.name == pName) {
