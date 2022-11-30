@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2021 Valve Corporation
  * Copyright (c) 2015-2021 LunarG, Inc.
  * Copyright (C) 2015-2016 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +32,7 @@
 void debug_utils_AddInstanceExtensions(const struct loader_instance *inst, struct loader_extension_list *ext_list);
 void debug_utils_CreateInstance(struct loader_instance *ptr_instance, const VkInstanceCreateInfo *pCreateInfo);
 bool debug_utils_InstanceGpa(struct loader_instance *ptr_instance, const char *name, void **addr);
+#ifndef VULKANSC
 bool debug_utils_ReportFlagsToAnnotFlags(VkDebugReportFlagsEXT dr_flags, bool default_flag_is_spec,
                                          VkDebugUtilsMessageSeverityFlagBitsEXT *da_severity,
                                          VkDebugUtilsMessageTypeFlagsEXT *da_type);
@@ -40,7 +42,7 @@ bool debug_utils_ReportObjectToAnnotObject(VkDebugReportObjectTypeEXT dr_object_
                                            VkDebugUtilsObjectNameInfoEXT *da_object_name_info);
 bool debug_utils_AnnotObjectToDebugReportObject(const VkDebugUtilsObjectNameInfoEXT *da_object_name_info,
                                                 VkDebugReportObjectTypeEXT *dr_object_type, uint64_t *dr_object_handle);
-
+#endif // VULKANSC
 // VK_EXT_debug_utils related items
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugUtilsMessengerEXT(VkInstance instance,
@@ -70,7 +72,7 @@ void util_DestroyDebugUtilsMessengers(struct loader_instance *inst, const VkAllo
                                       uint32_t num_messengers, VkDebugUtilsMessengerEXT *messengers);
 void util_FreeDebugUtilsMessengerCreateInfos(const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerCreateInfoEXT *infos,
                                              VkDebugUtilsMessengerEXT *messengers);
-
+#ifndef VULKANSC
 // VK_EXT_debug_report related items
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugReportCallbackEXT(VkInstance instance,
@@ -100,3 +102,4 @@ void util_DestroyDebugReportCallbacks(struct loader_instance *inst, const VkAllo
                                       VkDebugReportCallbackEXT *callbacks);
 void util_FreeDebugReportCreateInfos(const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackCreateInfoEXT *infos,
                                      VkDebugReportCallbackEXT *callbacks);
+#endif // VULKANSC

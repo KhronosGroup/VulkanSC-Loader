@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -27,7 +28,11 @@
 
 #include "test_layer.h"
 
+#if defined(VULKANSC)
+#include "loader/generated-vksc/vk_dispatch_table_helper.h"
+#else
 #include "loader/generated/vk_dispatch_table_helper.h"
+#endif
 
 // export the enumeration functions instance|device+layer|extension
 #ifndef TEST_LAYER_EXPORT_ENUMERATE_FUNCTIONS
@@ -130,7 +135,11 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateDeviceExtensionProperties(VkPhysi
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateInstanceVersion(uint32_t* pApiVersion) {
     if (pApiVersion != nullptr) {
-        *pApiVersion = VK_MAKE_VERSION(1, 0, 0);
+#if !defined(VULKANSC)
+        *pApiVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+        *pApiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
     }
     return VK_SUCCESS;
 }

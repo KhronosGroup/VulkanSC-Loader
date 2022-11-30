@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -290,16 +291,30 @@ struct TestLayerHandle {
 };
 
 struct TestICDDetails {
-    TestICDDetails(const char* icd_path, uint32_t api_version = VK_MAKE_VERSION(1, 0, 0)) noexcept
+#if !defined(VULKANSC)
+    TestICDDetails(const char* icd_path, uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0)) noexcept
         : icd_path(icd_path), api_version(api_version) {}
     const char* icd_path = nullptr;
-    uint32_t api_version = VK_MAKE_VERSION(1, 0, 0);
+    uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+    TestICDDetails(const char* icd_path, uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0)) noexcept
+        : icd_path(icd_path), api_version(api_version) {}
+    const char* icd_path = nullptr;
+    uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
 };
 struct TestLayerDetails {
-    TestLayerDetails(const char* layer_path, uint32_t api_version = VK_MAKE_VERSION(1, 0, 0)) noexcept
+#if !defined(VULKANSC)
+    TestLayerDetails(const char* layer_path, uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0)) noexcept
         : layer_path(layer_path), api_version(api_version) {}
     const char* layer_path = nullptr;
-    uint32_t api_version = VK_MAKE_VERSION(1, 0, 0);
+    uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+    TestLayerDetails(const char* layer_path, uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0)) noexcept
+        : layer_path(layer_path), api_version(api_version) {}
+    const char* layer_path = nullptr;
+    uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
 };
 
 struct FrameworkEnvironment {

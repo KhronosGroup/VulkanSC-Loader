@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -30,7 +31,11 @@
 class LayerTests : public ::testing::Test {
    protected:
     virtual void SetUp() {
-        env = std::unique_ptr<SingleICDShim>(new SingleICDShim(TestICDDetails(TEST_ICD_PATH_VERSION_6, VK_MAKE_VERSION(1, 0, 0))));
+#if !defined(VULKANSC)
+        env = std::unique_ptr<SingleICDShim>(new SingleICDShim(TestICDDetails(TEST_ICD_PATH_VERSION_6, VK_MAKE_API_VERSION(0, 1, 0, 0))));
+#else
+        env = std::unique_ptr<SingleICDShim>(new SingleICDShim(TestICDDetails(TEST_ICD_PATH_VERSION_6, VK_MAKE_API_VERSION(1, 1, 0, 0))));
+#endif
     }
 
     virtual void TearDown() { env.reset(); }
@@ -286,6 +291,7 @@ TEST_F(LayerCreateInstance, GetPhysicalDeviceProperties2) {
     inst.CheckCreate();
 }
 
+#if !defined(VULKANSC)
 TEST_F(LayerCreateInstance, GetPhysicalDeviceProperties2KHR) {
     env->get_test_icd().physical_devices.push_back({});
     env->get_test_icd().AddInstanceExtension({"VK_KHR_get_physical_device_properties2", 0});
@@ -321,6 +327,7 @@ TEST_F(LayerCreateInstance, GetPhysicalDeviceProperties2KHR) {
     inst.create_info.add_layer(regular_layer_name).add_extension("VK_KHR_get_physical_device_properties2");
     inst.CheckCreate();
 }
+#endif
 
 TEST_F(ExplicitLayers, WrapObjects) {
     auto& driver = env->get_test_icd();

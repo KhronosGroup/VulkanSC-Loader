@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -31,14 +32,25 @@
 
 struct LayerDefinition {
     std::string layerName;
-    uint32_t specVersion = VK_MAKE_VERSION(1, 0, 0);
-    uint32_t implementationVersion = VK_MAKE_VERSION(1, 0, 0);
+#if !defined(VULKANSC)
+    uint32_t specVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+    uint32_t implementationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+    uint32_t specVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
+    uint32_t implementationVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
     std::string description;
     std::vector<Extension> extensions;
 
-    LayerDefinition(std::string layerName, uint32_t specVersion = VK_MAKE_VERSION(1, 0, 0),
-                    uint32_t implementationVersion = VK_MAKE_VERSION(1, 0, 0), std::string description = "",
+#if !defined(VULKANSC)
+    LayerDefinition(std::string layerName, uint32_t specVersion = VK_MAKE_API_VERSION(0, 1, 0, 0),
+                    uint32_t implementationVersion = VK_MAKE_API_VERSION(0, 1, 0, 0), std::string description = "",
                     std::vector<Extension> extensions = {})
+#else
+    LayerDefinition(std::string layerName, uint32_t specVersion = VK_MAKE_API_VERSION(1, 1, 0, 0),
+                    uint32_t implementationVersion = VK_MAKE_API_VERSION(1, 1, 0, 0), std::string description = "",
+                    std::vector<Extension> extensions = {})
+#endif
         : layerName(layerName),
           specVersion(specVersion),
           implementationVersion(implementationVersion),

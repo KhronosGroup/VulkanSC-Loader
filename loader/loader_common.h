@@ -4,6 +4,7 @@
  * Copyright (c) 2014-2021 Valve Corporation
  * Copyright (c) 2014-2021 LunarG, Inc.
  * Copyright (C) 2015 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,8 +281,10 @@ struct loader_instance {
 
     VkLayerDbgFunctionNode *DbgFunctionHead;
     uint32_t num_tmp_report_callbacks;
+#ifndef VULKANSC
     VkDebugReportCallbackCreateInfoEXT *tmp_report_create_infos;
     VkDebugReportCallbackEXT *tmp_report_callbacks;
+#endif // VULKANSC
     uint32_t num_tmp_messengers;
     VkDebugUtilsMessengerCreateInfoEXT *tmp_messenger_create_infos;
     VkDebugUtilsMessengerEXT *tmp_messengers;
@@ -401,7 +404,9 @@ struct LoaderSortedPhysicalDevice {
     struct loader_icd_term *icd_term;
 };
 
+#ifndef VULKANSC
 struct loader_msg_callback_map_entry {
     VkDebugReportCallbackEXT icd_obj;
     VkDebugReportCallbackEXT loader_obj;
 };
+#endif // VULKANSC

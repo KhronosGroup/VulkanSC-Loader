@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -81,7 +82,11 @@
 
 #endif
 
+#if defined(VULKANSC)
+#include <vulkan/vulkan_sc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif
 #include <vulkan/vk_icd.h>
 #include <vulkan/vk_layer.h>
 
@@ -418,14 +423,24 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_ERROR_OUT_OF_DATE_KHR";
         case (VK_ERROR_INCOMPATIBLE_DISPLAY_KHR):
             return os << "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
+#if !defined(VULKANSC)
         case (VK_ERROR_VALIDATION_FAILED_EXT):
             return os << "VK_ERROR_VALIDATION_FAILED_EXT";
         case (VK_ERROR_INVALID_SHADER_NV):
             return os << "VK_ERROR_INVALID_SHADER_NV";
+#else
+        case (VK_ERROR_NO_PIPELINE_MATCH):
+            return os << "VK_ERROR_NO_PIPELINE_MATCH";
+        case (VK_ERROR_INVALID_PIPELINE_CACHE_DATA):
+            return os << "VK_ERROR_INVALID_PIPELINE_CACHE_DATA";
+        case (VK_ERROR_VALIDATION_FAILED):
+            return os << "VK_ERROR_VALIDATION_FAILED";
+#endif
         case (VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT):
             return os << "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
         case (VK_ERROR_NOT_PERMITTED_EXT):
             return os << "VK_ERROR_NOT_PERMITTED_EXT";
+#if !defined(VULKANSC)
         case (VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT):
             return os << "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
         case (VK_THREAD_IDLE_KHR):
@@ -438,6 +453,7 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_OPERATION_NOT_DEFERRED_KHR";
         case (VK_PIPELINE_COMPILE_REQUIRED_EXT):
             return os << "VK_PIPELINE_COMPILE_REQUIRED_EXT";
+#endif
         case (VK_RESULT_MAX_ENUM):
             return os << "VK_RESULT_MAX_ENUM";
     }
@@ -448,8 +464,10 @@ bool string_eq(const char* a, const char* b) noexcept;
 bool string_eq(const char* a, const char* b, size_t len) noexcept;
 
 inline std::string version_to_string(uint32_t version) {
-    return std::to_string(VK_VERSION_MAJOR(version)) + "." + std::to_string(VK_VERSION_MINOR(version)) + "." +
-           std::to_string(VK_VERSION_PATCH(version));
+    return /*std::to_string(VK_API_VERSION_VARIANT(version)) + "." + */
+           std::to_string(VK_API_VERSION_MAJOR(version)) + "." +
+           std::to_string(VK_API_VERSION_MINOR(version)) + "." +
+           std::to_string(VK_API_VERSION_PATCH(version));
 }
 
 struct ManifestVersion {
@@ -467,7 +485,11 @@ struct ManifestVersion {
 
 struct ManifestICD {
     ManifestVersion file_format_version = ManifestVersion();
-    uint32_t api_version = VK_MAKE_VERSION(1, 0, 0);
+#if !defined(VULKANSC)
+    uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+    uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
     std::string lib_path;
 
     std::string get_manifest_str() const;
@@ -501,7 +523,11 @@ struct ManifestLayer {
         std::string name;
         Type type = Type::INSTANCE;
         fs::path lib_path;
-        uint32_t api_version = VK_MAKE_VERSION(1, 0, 0);
+#if !defined(VULKANSC)
+        uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+        uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
         uint32_t implementation_version = 0;
         std::string description;
         std::vector<FunctionOverride> functions;
@@ -523,9 +549,17 @@ struct ManifestLayer {
 
 struct Extension {
     std::string extensionName;
-    uint32_t specVersion = VK_MAKE_VERSION(1, 0, 0);
+#if !defined(VULKANSC)
+    uint32_t specVersion = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+    uint32_t specVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
 
-    Extension(std::string extensionName, uint32_t specVersion = VK_MAKE_VERSION(1, 0, 0))
+#if !defined(VULKANSC)
+    Extension(std::string extensionName, uint32_t specVersion = VK_MAKE_API_VERSION(0, 1, 0, 0))
+#else
+    Extension(std::string extensionName, uint32_t specVersion = VK_MAKE_API_VERSION(1, 1, 0, 0))
+#endif
         : extensionName(extensionName), specVersion(specVersion) {}
 
     VkExtensionProperties get() const noexcept {
@@ -614,7 +648,11 @@ struct InstanceCreateInfo {
     std::string engine_name;
     uint32_t app_version = 0;
     uint32_t engine_version = 0;
-    uint32_t api_version = VK_MAKE_VERSION(1, 0, 0);
+#if !defined(VULKANSC)
+    uint32_t api_version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+#else
+    uint32_t api_version = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
     std::vector<const char*> enabled_layers;
     std::vector<const char*> enabled_extensions;
 

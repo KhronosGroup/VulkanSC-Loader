@@ -4,6 +4,7 @@
 # Copyright (c) 2015-2017 Valve Corporation
 # Copyright (c) 2015-2017 LunarG, Inc.
 # Copyright (c) 2015-2017 Google Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -250,7 +251,7 @@ class HelperFileOutputGenerator(OutputGenerator):
     def paramIsPointer(self, param):
         ispointer = False
         for elem in param:
-            if ((elem.tag is not 'type') and (elem.tail is not None)) and '*' in elem.tail:
+            if ((elem.tag is not str('type')) and (elem.tail is not None)) and '*' in elem.tail:
                 ispointer = True
         return ispointer
     #

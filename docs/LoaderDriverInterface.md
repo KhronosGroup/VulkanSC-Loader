@@ -8,6 +8,7 @@
 [![Creative Commons][3]][4]
 
 <!-- Copyright &copy; 2015-2021 LunarG, Inc. -->
+<!-- Copyright &copy; 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 
 [3]: https://i.creativecommons.org/l/by-nd/4.0/88x31.png "Creative Commons License"
 [4]: https://creativecommons.org/licenses/by-nd/4.0/
@@ -365,6 +366,18 @@ like the following:
   /home/me/.local/share/vulkan/icd.d
   /usr/local/share/vulkan/icd.d
   /usr/share/vulkan/icd.d
+```
+
+And when the loader is built for Vulkan SC:
+
+```
+  /home/me/.config/vulkansc/icd.d
+  /etc/xdg/vulkansc/icd.d
+  /usr/local/etc/vulkansc/icd.d
+  /etc/vulkansc/icd.d
+  /home/me/.local/share/vulkansc/icd.d
+  /usr/local/share/vulkansc/icd.d
+  /usr/share/vulkansc/icd.d
 ```
 
 

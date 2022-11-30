@@ -2,7 +2,7 @@
 # Copyright (c) 2014-2021 The Khronos Group Inc.
 # Copyright (c) 2014-2021 Valve Corporation
 # Copyright (c) 2014-2021 LunarG, Inc.
-# Copyright (c) 2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,18 @@
 # limitations under the License.
 # ~~~
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated ${CMAKE_CURRENT_BINARY_DIR})
+if(VulkanSC)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated-vksc ${CMAKE_CURRENT_BINARY_DIR})
+    # Get version of the API the generated code used and put it into a cmake variable LOADER_GENERATED_HEADER_VERSION
+    include(generated-vksc/loader_generated_header_version.cmake)
+    set(SONAME "vulkansc")
+else()
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated ${CMAKE_CURRENT_BINARY_DIR})
+    # Get version of the API the generated code used and put it into a cmake variable LOADER_GENERATED_HEADER_VERSION
+    include(generated/loader_generated_header_version.cmake)
+    set(SONAME "vulkan")
+endif()
 
-# Get version of the API the generated code used and put it into a cmake variable LOADER_GENERATED_HEADER_VERSION
-include(generated/loader_generated_header_version.cmake)
 
 # Check for the existance of the secure_getenv or __secure_getenv commands
 include(CheckFunctionExists)
@@ -45,7 +53,9 @@ if(WIN32)
 elseif(ANDROID)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_ANDROID_KHR)
 elseif(APPLE)
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
+    if(NOT VulkanSC)
+        set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
+    endif()
 elseif(UNIX AND NOT APPLE) # i.e.: Linux
     if(BUILD_WSI_XCB_SUPPORT)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_XCB_KHR)
@@ -66,6 +76,13 @@ elseif(UNIX AND NOT APPLE) # i.e.: Linux
     if(BUILD_WSI_SCREEN_QNX_SUPPORT)
         set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCREEN_QNX)
     endif()
+
+    if(VulkanSC)
+        if(BUILD_WSI_SCI_SUPPORT)
+            set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCI)
+        endif()
+    endif()
+
 else()
     message(FATAL_ERROR "Unsupported Platform!")
 endif()
@@ -270,35 +287,35 @@ if(WIN32)
     target_compile_options(loader-opt PUBLIC ${MSVC_LOADER_COMPILE_OPTIONS})
     target_include_directories(loader-opt PRIVATE "$<TARGET_PROPERTY:Vulkan::Headers,INTERFACE_INCLUDE_DIRECTORIES>")
 
-    add_library(vulkan
+    add_library(${SONAME}
                 SHARED
                 $<TARGET_OBJECTS:loader-opt>
                 $<TARGET_OBJECTS:loader-norm>
                 $<TARGET_OBJECTS:loader-unknown-chain>
-                ${CMAKE_CURRENT_SOURCE_DIR}/vulkan-1.def
+                ${CMAKE_CURRENT_SOURCE_DIR}/${SONAME}-1.def
                 ${CMAKE_CURRENT_LIST_DIR}/loader.rc)
 
     if (UPDATE_DEPS)
-        add_dependencies(vulkan vl_update_deps)
+        add_dependencies(${SONAME} vl_update_deps)
     endif()
 
     # when adding the suffix the import and runtime library names must be consistent
     # mingw: libvulkan-1.dll.a / libvulkan-1.dll
     # msvc: vulkan-1.lib / vulkan-1.dll
-    set_target_properties(vulkan
+    set_target_properties(${SONAME}
                           PROPERTIES
-                          OUTPUT_NAME vulkan-1)
+                          OUTPUT_NAME ${SONAME}-1)
 
-    target_link_libraries(vulkan Vulkan::Headers)
+    target_link_libraries(${SONAME} Vulkan::Headers)
 
     if(MSVC AND ENABLE_WIN10_ONECORE)
-        target_link_libraries(vulkan OneCoreUAP.lib LIBCMT.LIB LIBCMTD.LIB LIBVCRUNTIME.LIB LIBUCRT.LIB)
-        set_target_properties(vulkan PROPERTIES LINK_FLAGS "/NODEFAULTLIB")
+        target_link_libraries(${SONAME} OneCoreUAP.lib LIBCMT.LIB LIBCMTD.LIB LIBVCRUNTIME.LIB LIBUCRT.LIB)
+        set_target_properties(${SONAME} PROPERTIES LINK_FLAGS "/NODEFAULTLIB")
     else()
-        target_link_libraries(vulkan cfgmgr32)
+        target_link_libraries(${SONAME} cfgmgr32)
     endif()
 
-    add_dependencies(vulkan loader_asm_gen_files)
+    add_dependencies(${SONAME} loader_asm_gen_files)
 
 else()
     # Linux and MacOS
@@ -311,57 +328,90 @@ else()
     endif()
 
     if(APPLE AND BUILD_STATIC_LOADER)
-        add_library(vulkan STATIC ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS})
+        add_library(${SONAME} STATIC ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS})
     else()
-        add_library(vulkan SHARED ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS})
+        add_library(${SONAME} SHARED ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS})
     endif()
-    add_dependencies(vulkan loader_asm_gen_files)
+    add_dependencies(${SONAME} loader_asm_gen_files)
     # set version based on LOADER_GENERATED_HEADER_VERSION used to generate the code
-    set_target_properties(vulkan
+    set_target_properties(${SONAME}
                           PROPERTIES SOVERSION "1"
                           VERSION ${LOADER_GENERATED_HEADER_VERSION})
-    target_link_libraries(vulkan ${CMAKE_DL_LIBS} m)
-    if (NOT ANDROID)
-        target_link_libraries(vulkan pthread)
+    # On QNX libdl is part of libc and there is no separate library.
+    if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "QNX"))
+      target_link_libraries(${SONAME} ${CMAKE_DL_LIBS} m)
+    else()
+      target_link_libraries(${SONAME} m)
     endif()
-    target_link_libraries(vulkan Vulkan::Headers)
+    if(NOT ANDROID)
+      # On QNX pthread is part of libc only and there is no separate lib for pthread
+      if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "QNX"))
+        target_link_libraries(${SONAME} pthread)
+      else()
+        target_link_libraries(${SONAME})
+      endif()
+    endif()
+    target_link_libraries(${SONAME} Vulkan::Headers)
     # Used to make alloca() and secure_getenv() available
-    target_compile_definitions(vulkan PRIVATE _GNU_SOURCE)
+    target_compile_definitions(${SONAME} PRIVATE _GNU_SOURCE)
     if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-        target_compile_definitions(vulkan PRIVATE __BSD_VISIBLE=1)
+        target_compile_definitions(${SONAME} PRIVATE __BSD_VISIBLE=1)
         target_compile_definitions(asm_offset PRIVATE __BSD_VISIBLE=1)
     endif()
     if(APPLE)
         find_library(COREFOUNDATION_LIBRARY NAMES CoreFoundation)
-        target_link_libraries(vulkan "-framework CoreFoundation")
+        target_link_libraries(${SONAME} "-framework CoreFoundation")
 
-        # Build vulkan.framework
-        set(FRAMEWORK_HEADERS
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_layer.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_platform.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_sdk_platform.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_android.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_core.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_ios.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_macos.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_vi.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_wayland.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_win32.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xcb.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib_xrandr.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_screen.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.h
-            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.hpp)
-        if(BUILD_STATIC_LOADER)
-            add_library(vulkan-framework STATIC ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS} ${FRAMEWORK_HEADERS})
+        if(VulkanSC)
+            # Build vulkansc.framework
+            set(FRAMEWORK_HEADERS
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_layer.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_platform.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_sdk_platform.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_android.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc_core.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc_core.hpp
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_ios.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_macos.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sci.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_vi.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_wayland.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_win32.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xcb.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib_xrandr.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_screen.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc.h)
         else()
-            add_library(vulkan-framework SHARED ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS} ${FRAMEWORK_HEADERS})
+            # Build vulkan.framework
+            set(FRAMEWORK_HEADERS
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_layer.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_platform.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_sdk_platform.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_android.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_core.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_ios.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_macos.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_vi.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_wayland.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_win32.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xcb.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib_xrandr.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_screen.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.hpp)
         endif()
-        add_dependencies(vulkan-framework loader_asm_gen_files)
-        target_link_libraries(vulkan-framework -ldl -lpthread -lm "-framework CoreFoundation")
-        target_link_libraries(vulkan-framework Vulkan::Headers)
+        if(BUILD_STATIC_LOADER)
+            add_library(${SONAME}-framework STATIC ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS} ${FRAMEWORK_HEADERS})
+        else()
+            add_library(${SONAME}-framework SHARED ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS} ${FRAMEWORK_HEADERS})
+        endif()
+        add_dependencies(${SONAME}-framework loader_asm_gen_files)
+        target_link_libraries(${SONAME}-framework -ldl -lpthread -lm "-framework CoreFoundation")
+        target_link_libraries(${SONAME}-framework Vulkan::Headers)
 
         # The FRAMEWORK_VERSION needs to be "A" here so that Xcode code-signing works when a user adds their framework to an Xcode
         # project and does "Sign on Copy". It would have been nicer to use "1" to denote Vulkan 1. Although Apple docs say that a
@@ -369,8 +419,8 @@ else()
         # https://forums.developer.apple.com/thread/65963
 
 # cmake-format: off
-        set_target_properties(vulkan-framework PROPERTIES
-            OUTPUT_NAME vulkan
+        set_target_properties(${SONAME}-framework PROPERTIES
+            OUTPUT_NAME ${SONAME}
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
             VERSION "${LOADER_GENERATED_HEADER_VERSION}" # "current version"
@@ -378,7 +428,7 @@ else()
             MACOSX_FRAMEWORK_IDENTIFIER com.lunarg.vulkanFramework
             PUBLIC_HEADER "${FRAMEWORK_HEADERS}"
         )
-        install(TARGETS vulkan-framework
+        install(TARGETS ${SONAME}-framework
             PUBLIC_HEADER DESTINATION vulkan
             FRAMEWORK DESTINATION loader
         )
@@ -386,7 +436,7 @@ else()
     endif()
 
     if(NOT APPLE)
-        target_compile_definitions(vulkan PRIVATE _XOPEN_SOURCE=500) # hush compiler warnings for readlink
+        target_compile_definitions(${SONAME} PRIVATE _XOPEN_SOURCE=500) # hush compiler warnings for readlink
     endif()
 endif()
 
@@ -410,13 +460,13 @@ if(PKG_CONFIG_FOUND)
         set(CMAKE_INSTALL_FULL_LIBDIR_PC ${CMAKE_INSTALL_FULL_LIBDIR})
     endif ()
     configure_file("vulkan.pc.in" "vulkan.pc" @ONLY)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vulkan.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vulkan.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig/" RENAME "${SONAME}.pc")
 endif()
 
-target_link_libraries(vulkan Vulkan::Headers)
-add_library(Vulkan::Vulkan ALIAS vulkan)
+target_link_libraries(${SONAME} Vulkan::Headers)
+add_library(Vulkan::Vulkan ALIAS ${SONAME})
 
-install(TARGETS vulkan
+install(TARGETS ${SONAME}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

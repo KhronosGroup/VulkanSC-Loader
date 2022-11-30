@@ -12,6 +12,7 @@ Instructions for building this repository on Linux, Windows, and MacOS.
 1. [MacOS build](#building-on-macos)
 1. [Fuchsia build](#building-on-fuchsia)
 1. [QNX build](#building-on-qnx)
+1. [VulkanSC Build](#vulkansc-build-commands)
 
 ## Contributing to the Repository
 
@@ -200,6 +201,7 @@ on/off options currently supported by this repository:
 | BUILD_WSI_WAYLAND_SUPPORT | Linux | `ON` | Build the loader with the Wayland entry points enabled. Without this, the Wayland headers should not be needed, but the extension `VK_KHR_wayland_surface` won't be available. |
 | BUILD_WSI_DIRECTFB_SUPPORT | Linux | `OFF` | Build the loader with the DirectFB entry points enabled. Without this, the DirectFB headers should not be needed, but the extension `VK_EXT_directfb_surface` won't be available. |
 | BUILD_WSI_SCREEN_QNX_SUPPORT | QNX | `OFF` | Build the loader with the QNX Screen entry points enabled. Without this the extension `VK_QNX_screen_surface` won't be available. |
+| BUILD_WSI_SCI_SUPPORT | Linux, QNX | `OFF` | Vulkan SC only. Build the loader with the SCI entry points enabled.
 | ENABLE_WIN10_ONECORE | Windows | `OFF` | Link the loader to the [OneCore](https://msdn.microsoft.com/en-us/library/windows/desktop/mt654039.aspx) umbrella library, instead of the standard Win32 ones. |
 | USE_CCACHE | Linux | `OFF` | Enable caching with the CCache program. |
 | USE_GAS  | Linux   | `ON` | Controls whether to build assembly files with the GNU assembler, else fallback to C code. |
@@ -726,3 +728,39 @@ It will build the ICD loader for all CPU targets supported by QNX.
 
 The Vulkan Loader is a component of the Fuchsia SDK, so it must explicitly declare its exported symbols in
 the file vulkan.symbols.api; see [SDK](https://fuchsia.dev/fuchsia-src/development/sdk).
+
+## VulkanSC Build Commands
+Follow the steps mentioned in the earlier part of this documents if required. CMake is required for building the Vulkan-SC Loader.
+After the final step the install folder inside the respective build folder should have the binaries
+
+#### Windows 10 (Visual Studio 2019 Required)
+
+        git clone https://gitlab.khronos.org/vulkan/Vulkan-Loader.git
+        cd Vulkan-Loader
+        mkdir build
+        cd build
+        ..\scripts\update_deps.py --api vulkansc
+        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVulkanSC=TRUE -DCMAKE_INSTALL_PREFIX=install -A x64
+        cmake --build . --config Debug --target install
+
+#### Ubuntu 20
+
+        git clone https://gitlab.khronos.org/vulkan/Vulkan-Loader.git
+        cd Vulkan-Loader
+        mkdir build
+        cd build
+        ../scripts/update_deps.py --api vulkansc
+        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVulkanSC=TRUE -DCMAKE_INSTALL_PREFIX=install
+        cmake --build . --config Debug --target install
+
+#### QNX
+
+   Set QNX build environment details in 'qnxCmakeToolchain' file and provide its path to ```CMAKE_TOOLCHAIN_FILE``` in the command line:
+
+        git clone https://gitlab.khronos.org/vulkan/Vulkan-Loader.git
+        cd Vulkan-Loader
+        mkdir build
+        cd build
+        ../scripts/update_deps.py --api vulkansc
+        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVulkanSC=TRUE -DCMAKE_INSTALL_PREFIX=install -DCMAKE_TOOLCHAIN_FILE=/path/of/qnxCmakeToolchain
+        cmake --build . --config Debug --target install

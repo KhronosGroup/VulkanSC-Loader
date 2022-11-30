@@ -3,6 +3,7 @@
  * Copyright (c) 2016-2021 The Khronos Group Inc.
  * Copyright (c) 2016-2021 Valve Corporation
  * Copyright (c) 2016-2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +24,18 @@
 #pragma once
 
 #include <stdbool.h>
+#ifdef VULKANSC
+#include <vulkan/vulkan_sc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif // VULKANSC
 
 // Linked list node for tree of debug callbacks
 typedef struct VkDebugReportContent {
+#ifndef VULKANSC
     VkDebugReportCallbackEXT msgCallback;
     PFN_vkDebugReportCallbackEXT pfnMsgCallback;
+#endif // VULKANSC
     VkFlags msgFlags;
 } VkDebugReportContent;
 
@@ -42,7 +49,9 @@ typedef struct VkDebugUtilsMessengerContent {
 typedef struct VkLayerDbgFunctionNode_ {
     bool is_messenger;
     union {
+#ifndef VULKANSC
         VkDebugReportContent report;
+#endif // VULKANSC
         VkDebugUtilsMessengerContent messenger;
     };
     void *pUserData;

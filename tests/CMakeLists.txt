@@ -1,6 +1,7 @@
 # ~~~
 # Copyright (c) 2014-2018 Valve Corporation
 # Copyright (c) 2014-2018 LunarG, Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,4 +69,6 @@ if(WIN32)
 endif()
 
 # must happen after the dll's get copied over
-gtest_discover_tests(test_regression)
+if(NOT CMAKE_CROSSCOMPILING)
+    gtest_discover_tests(test_regression)
+endif()

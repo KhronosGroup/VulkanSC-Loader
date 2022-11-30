@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
 # Copyright (c) 2013-2019 The Khronos Group Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -117,6 +118,9 @@ def makeGenOpts(args):
     # An API style conventions object
     conventions = VulkanConventions()
 
+    # Change this depending on which repository/spec we're building
+    defaultApiName = conventions.xml_api_name
+
     # Loader Generators
     # Options for dispatch table helper generator
     genOpts['vk_dispatch_table_helper.h'] = [
@@ -126,11 +130,11 @@ def makeGenOpts(args):
             filename          = 'vk_dispatch_table_helper.h',
             directory         = directory,
             genpath           = None,
-            apiname           = 'vulkan',
+            apiname           = defaultApiName,
             profile           = None,
             versions          = featuresPat,
             emitversions      = featuresPat,
-            defaultExtensions = 'vulkan',
+            defaultExtensions = defaultExtensions,
             addExtensions     = addExtensionsPat,
             removeExtensions  = removeExtensionsPat,
             emitExtensions    = emitExtensionsPat,
@@ -150,11 +154,11 @@ def makeGenOpts(args):
             filename          = 'vk_layer_dispatch_table.h',
             directory         = directory,
             genpath           = None,
-            apiname           = 'vulkan',
+            apiname           = defaultApiName,
             profile           = None,
             versions          = featuresPat,
             emitversions      = featuresPat,
-            defaultExtensions = 'vulkan',
+            defaultExtensions = defaultExtensions,
             addExtensions     = addExtensionsPat,
             removeExtensions  = removeExtensionsPat,
             emitExtensions    = emitExtensionsPat,
@@ -174,11 +178,11 @@ def makeGenOpts(args):
             filename          = 'vk_loader_extensions.h',
             directory         = directory,
             genpath           = None,
-            apiname           = 'vulkan',
+            apiname           = defaultApiName,
             profile           = None,
             versions          = featuresPat,
             emitversions      = featuresPat,
-            defaultExtensions = 'vulkan',
+            defaultExtensions = defaultExtensions,
             addExtensions     = addExtensionsPat,
             removeExtensions  = removeExtensionsPat,
             emitExtensions    = emitExtensionsPat,
@@ -198,11 +202,11 @@ def makeGenOpts(args):
             filename          = 'vk_loader_extensions.c',
             directory         = directory,
             genpath           = None,
-            apiname           = 'vulkan',
+            apiname           = defaultApiName,
             profile           = None,
             versions          = featuresPat,
             emitversions      = featuresPat,
-            defaultExtensions = 'vulkan',
+            defaultExtensions = defaultExtensions,
             addExtensions     = addExtensionsPat,
             removeExtensions  = removeExtensionsPat,
             emitExtensions    = emitExtensionsPat,
@@ -222,11 +226,11 @@ def makeGenOpts(args):
             filename          = 'vk_object_types.h',
             directory         = directory,
             genpath           = None,
-            apiname           = 'vulkan',
+            apiname           = defaultApiName,
             profile           = None,
             versions          = featuresPat,
             emitversions      = featuresPat,
-            defaultExtensions = 'vulkan',
+            defaultExtensions = defaultExtensions,
             addExtensions     = addExtensionsPat,
             removeExtensions  = removeExtensionsPat,
             emitExtensions    = emitExtensionsPat,
@@ -247,11 +251,11 @@ def makeGenOpts(args):
             filename          = 'loader_generated_header_version.cmake',
             directory         = directory,
             genpath           = None,
-            apiname           = 'vulkan',
+            apiname           = defaultApiName,
             profile           = None,
             versions          = featuresPat,
             emitversions      = featuresPat,
-            defaultExtensions = 'vulkan',
+            defaultExtensions = defaultExtensions,
             addExtensions     = addExtensionsPat,
             removeExtensions  = removeExtensionsPat,
             emitExtensions    = emitExtensionsPat,

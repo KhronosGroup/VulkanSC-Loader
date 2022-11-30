@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -37,7 +38,11 @@
 class RegressionTests : public ::testing::Test {
    protected:
     virtual void SetUp() {
-        env = std::unique_ptr<SingleICDShim>(new SingleICDShim(TestICDDetails(TEST_ICD_PATH_VERSION_2, VK_MAKE_VERSION(1, 0, 0))));
+#if !defined(VULKANSC)
+        env = std::unique_ptr<SingleICDShim>(new SingleICDShim(TestICDDetails(TEST_ICD_PATH_VERSION_2, VK_MAKE_API_VERSION(0, 1, 0, 0))));
+#else
+        env = std::unique_ptr<SingleICDShim>(new SingleICDShim(TestICDDetails(TEST_ICD_PATH_VERSION_2, VK_MAKE_API_VERSION(1, 1, 0, 0))));
+#endif
     }
 
     virtual void TearDown() { env.reset(); }
@@ -582,6 +587,7 @@ TEST(TryLoadWrongBinaries, WrongExplicitAndImplicit) {
     inst.CheckCreate();
 }
 
+#if !defined(VULKANSC)
 TEST_F(EnumeratePhysicalDeviceGroups, OneCall) {
     auto& driver = env->get_test_icd().SetMinICDInterfaceVersion(5);
     // ICD contains 2 devices
@@ -756,6 +762,7 @@ TEST_F(EnumeratePhysicalDeviceGroups, TwoCallIncomplete) {
         handle_assert_no_values(returned_group_count, group_props.physicalDevices);
     }
 }
+#endif
 
 #if defined(__linux__) || defined(__FreeBSD__)
 // Make sure the loader reports the correct message based on if USE_UNSAFE_FILE_SEARCH is set or not
@@ -841,6 +848,7 @@ TEST(EnvironmentVariables, VK_LAYER_PATH) {
 }
 #endif
 
+#if !defined(VULKANSC)
 TEST(ExtensionManual, ToolingProperties) {
     VkPhysicalDeviceToolPropertiesEXT icd_tool_props{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TOOL_PROPERTIES_EXT,
                                                      nullptr,
@@ -890,3 +898,4 @@ TEST(ExtensionManual, ToolingProperties) {
         string_eq(props.name, icd_tool_props.name);
     }
 }
+#endif

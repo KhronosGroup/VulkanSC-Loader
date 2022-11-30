@@ -2,6 +2,7 @@
  * Copyright (c) 2015-2021 The Khronos Group Inc.
  * Copyright (c) 2015-2021 Valve Corporation
  * Copyright (c) 2015-2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +45,7 @@ void wsi_create_instance(struct loader_instance *ptr_instance, const VkInstanceC
             ptr_instance->wsi_surface_enabled = true;
             continue;
         }
+#ifndef VULKANSC
 #ifdef VK_USE_PLATFORM_WIN32_KHR
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_KHR_WIN32_SURFACE_EXTENSION_NAME) == 0) {
             ptr_instance->wsi_win32_surface_enabled = true;
@@ -68,6 +70,7 @@ void wsi_create_instance(struct loader_instance *ptr_instance, const VkInstanceC
             continue;
         }
 #endif  // VK_USE_PLATFORM_XLIB_KHR
+#endif // VULKANSC
 #ifdef VK_USE_PLATFORM_DIRECTFB_EXT
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DIRECTFB_SURFACE_EXTENSION_NAME) == 0) {
             ptr_instance->wsi_directfb_surface_enabled = true;
@@ -431,6 +434,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateSwapchainKHR(VkDevice device, co
     return VK_SUCCESS;
 }
 
+#ifndef VULKANSC
 // This is the trampoline entrypoint for DestroySwapchainKHR
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain,
                                                                const VkAllocationCallbacks *pAllocator) {
@@ -438,7 +442,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroySwapchainKHR(VkDevice device, 
     disp = loader_get_dispatch(device);
     disp->DestroySwapchainKHR(device, swapchain, pAllocator);
 }
-
+#endif // VULKANSC
 // This is the trampoline entrypoint for GetSwapchainImagesKHR
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain,
                                                                      uint32_t *pSwapchainImageCount, VkImage *pSwapchainImages) {
@@ -485,8 +489,8 @@ static VkIcdSurface *AllocateIcdSurfaceStruct(struct loader_instance *instance, 
     return pIcdSurface;
 }
 
+#ifndef VULKANSC
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-
 // Functions for the VK_KHR_win32_surface extension:
 
 // This is the trampoline entrypoint for CreateWin32SurfaceKHR
@@ -943,7 +947,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL terminator_GetPhysicalDeviceXlibPresentationSuppo
     return icd_term->dispatch.GetPhysicalDeviceXlibPresentationSupportKHR(phys_dev_term->phys_dev, queueFamilyIndex, dpy, visualID);
 }
 #endif  // VK_USE_PLATFORM_XLIB_KHR
-
+#endif // VULKANSC
 #ifdef VK_USE_PLATFORM_DIRECTFB_EXT
 
 // Functions for the VK_EXT_directfb_surface extension:
@@ -2216,12 +2220,14 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceSurfaceCapabilities2K
     if (icd_term->dispatch.GetPhysicalDeviceSurfaceCapabilities2KHR != NULL) {
         VkBaseOutStructure *pNext = (VkBaseOutStructure *)pSurfaceCapabilities->pNext;
         while (pNext != NULL) {
+#ifndef VULKANSC
             if ((int)pNext->sType == VK_STRUCTURE_TYPE_SURFACE_PROTECTED_CAPABILITIES_KHR) {
                 // Not all ICDs may be supporting VK_KHR_surface_protected_capabilities
                 // Initialize VkSurfaceProtectedCapabilitiesKHR.supportsProtected to false and
                 // if an ICD supports protected surfaces, it will reset it to true accordingly.
                 ((VkSurfaceProtectedCapabilitiesKHR *)pNext)->supportsProtected = VK_FALSE;
             }
+#endif // VULKANSC
             pNext = (VkBaseOutStructure *)pNext->pNext;
         }
 
@@ -2407,10 +2413,12 @@ bool wsi_swapchain_instance_gpa(struct loader_instance *ptr_instance, const char
         *addr = (void *)vkCreateSwapchainKHR;
         return true;
     }
+#ifndef VULKANSC
     if (!strcmp("vkDestroySwapchainKHR", name)) {
         *addr = (void *)vkDestroySwapchainKHR;
         return true;
     }
+#endif // VULKANSC
     if (!strcmp("vkGetSwapchainImagesKHR", name)) {
         *addr = (void *)vkGetSwapchainImagesKHR;
         return true;
@@ -2428,8 +2436,8 @@ bool wsi_swapchain_instance_gpa(struct loader_instance *ptr_instance, const char
         return true;
     }
 
+#ifndef VULKANSC
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-
     // Functions for the VK_KHR_win32_surface extension:
     if (!strcmp("vkCreateWin32SurfaceKHR", name)) {
         *addr = ptr_instance->wsi_win32_surface_enabled ? (void *)vkCreateWin32SurfaceKHR : NULL;
@@ -2476,6 +2484,7 @@ bool wsi_swapchain_instance_gpa(struct loader_instance *ptr_instance, const char
         return true;
     }
 #endif  // VK_USE_PLATFORM_XLIB_KHR
+#endif // VULKANSC
 #ifdef VK_USE_PLATFORM_DIRECTFB_EXT
 
     // Functions for the VK_EXT_directfb_surface extension:

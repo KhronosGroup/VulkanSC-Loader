@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2021 The Khronos Group Inc.
  * Copyright (c) 2015-2021 Valve Corporation
  * Copyright (c) 2015-2021 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +50,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include <alloca.h>
 
 #elif defined(_WIN32)  // defined(__linux__)
 /* Windows-specific common code: */
@@ -68,13 +70,44 @@
 
 #include "vulkan/vk_platform.h"
 #include "vulkan/vk_sdk_platform.h"
+#ifdef VULKANSC
+#include <vulkan/vulkan_sc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif // VULKANSC
 #include <vulkan/vk_layer.h>
 #include <vulkan/vk_icd.h>
 
 #include "vk_loader_layer.h"
 #include "vk_layer_dispatch_table.h"
 #include "vk_loader_extensions.h"
+
+#ifdef VULKANSC
+#define VK_DEBUG_REPORT_INFORMATION_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+#define VK_DEBUG_REPORT_WARNING_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+#define VK_DEBUG_REPORT_ERROR_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+#define VK_DEBUG_REPORT_DEBUG_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+#define VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+
+// typedef for KHR to Core APIs
+typedef VkPhysicalDeviceGroupProperties VkPhysicalDeviceGroupPropertiesKHR;
+typedef VkDeviceGroupDeviceCreateInfo VkDeviceGroupDeviceCreateInfoKHR;
+typedef VkPhysicalDeviceFeatures2 VkPhysicalDeviceFeatures2KHR;
+typedef VkPhysicalDeviceMultiviewFeatures VkPhysicalDeviceMultiviewFeaturesKHR;
+typedef VkPhysicalDeviceIDProperties VkPhysicalDeviceIDPropertiesKHR;
+typedef VkImageFormatProperties2 VkImageFormatProperties2KHR;
+typedef VkPhysicalDeviceImageFormatInfo2 VkPhysicalDeviceImageFormatInfo2KHR;
+typedef VkQueueFamilyProperties2 VkQueueFamilyProperties2KHR;
+typedef VkExternalMemoryProperties VkExternalMemoryPropertiesKHR;
+typedef VkPhysicalDeviceExternalSemaphoreInfo VkPhysicalDeviceExternalSemaphoreInfoKHR;
+
+
+// Other required macros
+#define VK_MAKE_VERSION(major, minor, patch) VK_MAKE_API_VERSION(VKSC_API_VARIANT, major, minor, patch)
+#define VK_VERSION_MAJOR(version) VK_API_VERSION_MAJOR(version)
+#define VK_VERSION_MINOR(version) VK_API_VERSION_MINOR(version)
+#define VK_VERSION_PATCH(version) VK_API_VERSION_PATCH(version)
+#endif // VULKANSC
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define LOADER_EXPORT __attribute__((visibility("default")))
@@ -109,7 +142,11 @@
 #define PATH_SEPARATOR ':'
 #define DIRECTORY_SYMBOL '/'
 
+#if defined(VULKANSC)
+#define VULKAN_DIR "vulkansc/"
+#else
 #define VULKAN_DIR "vulkan/"
+#endif
 #define VULKAN_ICDCONF_DIR "icd.d"
 #define VULKAN_ICD_DIR "icd"
 #define VULKAN_SETTINGSCONF_DIR "settings.d"

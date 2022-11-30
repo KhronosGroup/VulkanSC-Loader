@@ -4,6 +4,7 @@
 # Copyright (c) 2021 Valve Corporation
 # Copyright (c) 2021 LunarG, Inc.
 # Copyright (c) 2021 Google Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -98,11 +99,18 @@ class LoaderVersioningGenerator(OutputGenerator):
         for elem in self.registry.reg.find('types').findall('type'):
             if elem.get('category') == 'define':
                 if elem.get('name') == 'VK_HEADER_VERSION_COMPLETE':
-                    # Parses the following string:
-                    #define <name>VK_HEADER_VERSION_COMPLETE</name> <type>VK_MAKE_API_VERSION</type>(0, 1, 2, VK_HEADER_VERSION)</type>
-                    # The 0th index is the VARIANT version, 1st & 2nd are the Major & Minor
-                    version_major = re.findall("[0-9]+", ''.join(elem.itertext()))[1]
-                    version_minor = re.findall("[0-9]+", ''.join(elem.itertext()))[2]
+                    if genOpts.apiname == 'vulkansc':
+                        # Parses the following string:
+                        #define <name>VK_HEADER_VERSION_COMPLETE</name> <type>VK_MAKE_API_VERSION</type>(VKSC_API_VARIANT, 1, 0, VK_HEADER_VERSION)</type>
+                        # The 0th & 1st index are the Major & Minor
+                        version_major = re.findall("[0-9]+", ''.join(elem.itertext()))[0]
+                        version_minor = re.findall("[0-9]+", ''.join(elem.itertext()))[1]
+                    else:
+                        # Parses the following string:
+                        #define <name>VK_HEADER_VERSION_COMPLETE</name> <type>VK_MAKE_API_VERSION</type>(0, 1, 2, VK_HEADER_VERSION)</type>
+                        # The 0th index is the VARIANT version, 1st & 2nd are the Major & Minor
+                        version_major = re.findall("[0-9]+", ''.join(elem.itertext()))[1]
+                        version_minor = re.findall("[0-9]+", ''.join(elem.itertext()))[2]
                 if elem.get('name') == 'VK_HEADER_VERSION':
                     # Parses the following string:
                     #define <name>VK_HEADER_VERSION</name> 189</type>
@@ -119,6 +127,7 @@ class LoaderVersioningGenerator(OutputGenerator):
 # Copyright (c) 2021 Valve Corporation
 # Copyright (c) 2021 LunarG, Inc.
 # Copyright (c) 2021 Google Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
