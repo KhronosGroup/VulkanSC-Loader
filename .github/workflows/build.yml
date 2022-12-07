@@ -61,7 +61,6 @@ jobs:
             - name: Run regression tests
               working-directory: ./build
               run: ctest --output-on-failure
-              if: matrix.vksc_build == 'VULKANSC=OFF'
 
             - name: Verify generated source files
               run: python scripts/generate_source.py --verify external/Vulkan-Headers/registry
@@ -103,7 +102,6 @@ jobs:
             - name: Run regression tests
               working-directory: ./build
               run: ctest --output-on-failure
-              if: matrix.vksc_build == 'VULKANSC=OFF'
 
             - name: Verify generated source files
               run: python scripts/generate_source.py --verify external/Vulkan-Headers/registry
