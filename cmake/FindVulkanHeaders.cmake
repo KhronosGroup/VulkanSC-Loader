@@ -63,7 +63,7 @@ if(DEFINED VULKAN_HEADERS_INSTALL_DIR)
   # Use HINTS instead of PATH to search these locations before
   # searching system environment variables like $PATH that may
   # contain SDK directories.
-  if(VulkanSC)
+  if(VULKANSC)
       find_path(VulkanHeaders_INCLUDE_DIR
           NAMES vulkan/vulkan_sc.h
           HINTS ${VULKAN_HEADERS_INSTALL_DIR}/include
@@ -107,7 +107,7 @@ set(VulkanHeaders_VERSION_MAJOR "0")
 set(VulkanHeaders_VERSION_MINOR "0")
 set(VulkanHeaders_VERSION_PATCH "0")
 
-if(VulkanSC)
+if(VULKANSC)
     if (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h")
         set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h)
     endif()
@@ -135,8 +135,8 @@ foreach(VulkanHeaders_line ${VulkanHeaders_lines})
     #   Format is:
     #        #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, X, Y, VK_HEADER_VERSION)
     #   We grab the major version (X) and minor version (Y) out of the parentheses
-    if(VulkanSC)
-    # For VulkanSC format is:
+    if(VULKANSC)
+    # For Vulkan SC format is:
     #        #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(VKSC_API_VARIANT, X, Y, VK_HEADER_VERSION)
         string(REGEX MATCH "VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION\\(VKSC_API_VARIANT.*\\)" VulkanHeaders_out ${VulkanHeaders_line})
         string(REGEX MATCHALL "[0-9]+" VulkanHeaders_MAJOR_MINOR "${VulkanHeaders_out}")

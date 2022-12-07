@@ -30,16 +30,18 @@ project(Vulkan-Loader)
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS API_NAME="Vulkan")
 
-#Added support for VulkanSC Mode from the command line
-set(VulkanSC FALSE CACHE BOOL "User defined variable for VulkanSC Mode to be passed in through cmake command line e.g. -DVulkanSC=TRUE")
-#Add preprocessor definition for the VulkanSC projects. This "VulkanSC" definition can be used to deactivate the loader code that is not required for the VulkanSC builds.
-if(VulkanSC)
+# Add support for VULKANSC mode from the command line
+set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
+
+# Add preprocessor definition for the Vulkan SC projects.
+# This "VULKANSC" definition can be used to deactivate the loader code that is not required for the VULKANSC builds.
+if(VULKANSC)
 add_definitions(-DVULKANSC)
 set(API_TYPE vulkansc)
 else()
 set(API_TYPE vulkan)
 endif()
-message("API_TYPE set to ${API_TYPE}")
+message(STATUS "API_TYPE set to ${API_TYPE}")
 
 # Enable beta Vulkan extensions
 add_definitions(-DVK_ENABLE_BETA_EXTENSIONS)
@@ -220,7 +222,7 @@ if(UNIX)
 endif()
 
 if(UNIX AND NOT APPLE) # i.e.: Linux
-    if(VulkanSC)
+    if(VULKANSC)
       option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" OFF)
       option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" OFF)
       option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
