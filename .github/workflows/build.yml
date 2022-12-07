@@ -29,12 +29,13 @@ jobs:
         runs-on: ${{matrix.os}}
 
         strategy:
+            fail-fast: false
             matrix:
                 cc: [ gcc, clang ]
                 cxx: [ g++, clang++ ]
                 config: [ Debug, Release ]
                 os: [ ubuntu-18.04, ubuntu-20.04 ]
-                vksc_build: [ VulkanSC=FALSE, VulkanSC=TRUE ]
+                vksc_build: [ VULKANSC=OFF, VULKANSC=ON ]
                 exclude:
                     - cc: gcc
                       cxx: clang++
@@ -60,15 +61,15 @@ jobs:
             - name: Run regression tests
               working-directory: ./build
               run: ctest --output-on-failure
-              if: matrix.vksc_build == 'VulkanSC=FALSE'
+              if: matrix.vksc_build == 'VULKANSC=OFF'
 
             - name: Verify generated source files
               run: python scripts/generate_source.py --verify external/Vulkan-Headers/registry
-              if: matrix.vksc_build == 'VulkanSC=FALSE'
+              if: matrix.vksc_build == 'VULKANSC=OFF'
 
             - name: Verify generated source files
               run: python scripts/generate_source.py --api vulkansc --verify external/VulkanSC-Headers/registry
-              if: matrix.vksc_build == 'VulkanSC=TRUE'
+              if: matrix.vksc_build == 'VULKANSC=ON'
 
             - name: Verify code formatting with clang-format
               run: ./scripts/check_code_format.sh
@@ -80,11 +81,12 @@ jobs:
         runs-on: ${{matrix.os}}
 
         strategy:
+            fail-fast: false
             matrix:
                 arch: [ Win32, x64 ]
                 config: [ Debug, Release ]
                 os: [ windows-2019 ]
-                vksc_build: [ VulkanSC=FALSE, VulkanSC=TRUE ]
+                vksc_build: [ VULKANSC=OFF, VULKANSC=ON ]
 
         steps:
             - uses: actions/checkout@v2
@@ -101,11 +103,11 @@ jobs:
             - name: Run regression tests
               working-directory: ./build
               run: ctest --output-on-failure
-              if: matrix.vksc_build == 'VulkanSC=FALSE'
+              if: matrix.vksc_build == 'VULKANSC=OFF'
 
             - name: Verify generated source files
               run: python scripts/generate_source.py --verify external/Vulkan-Headers/registry
-              if: matrix.vksc_build == 'VulkanSC=FALSE'
+              if: matrix.vksc_build == 'VULKANSC=OFF'
 
     mac:
         runs-on: ${{matrix.os}}
@@ -115,7 +117,7 @@ jobs:
                 config: [ Debug, Release ]
                 os: [ macos-11 ]
                 static_build: [ BUILD_STATIC_LOADER=OFF ]
-                vksc_build: [ VulkanSC=FALSE, VulkanSC=TRUE ]
+                vksc_build: [ VULKANSC=OFF, VULKANSC=ON ]
 
         steps:
             - uses: actions/checkout@v2
@@ -136,7 +138,7 @@ jobs:
             - name: Run regression tests
               working-directory: ./build
               run: ctest --output-on-failure
-              if: matrix.vksc_build == 'VulkanSC=FALSE'
+              if: matrix.vksc_build == 'VULKANSC=OFF'
 
     gn:
         runs-on: ubuntu-18.04

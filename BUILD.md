@@ -12,7 +12,7 @@ Instructions for building this repository on Linux, Windows, and MacOS.
 1. [MacOS build](#building-on-macos)
 1. [Fuchsia build](#building-on-fuchsia)
 1. [QNX build](#building-on-qnx)
-1. [VulkanSC Build](#vulkansc-build-commands)
+1. [Vulkan SC Build](#vulkansc-build-commands)
 
 ## Contributing to the Repository
 
@@ -729,38 +729,38 @@ It will build the ICD loader for all CPU targets supported by QNX.
 The Vulkan Loader is a component of the Fuchsia SDK, so it must explicitly declare its exported symbols in
 the file vulkan.symbols.api; see [SDK](https://fuchsia.dev/fuchsia-src/development/sdk).
 
-## VulkanSC Build Commands
-Follow the steps mentioned in the earlier part of this documents if required. CMake is required for building the Vulkan-SC Loader.
+## Vulkan SC Build Commands
+Follow the steps mentioned in the earlier part of this documents if required. CMake is required for building the Vulkan SC Loader.
 After the final step the install folder inside the respective build folder should have the binaries
 
 #### Windows 10 (Visual Studio 2019 Required)
 
-        git clone https://gitlab.khronos.org/vulkan/Vulkan-Loader.git
-        cd Vulkan-Loader
+        git clone https://github.com/KhronosGroup/VulkanSC-Loader
+        cd VulkanSC-Loader
         mkdir build
         cd build
         ..\scripts\update_deps.py --api vulkansc
-        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVulkanSC=TRUE -DCMAKE_INSTALL_PREFIX=install -A x64
+        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVULKANSC=ON -DCMAKE_INSTALL_PREFIX=install -A x64
         cmake --build . --config Debug --target install
 
 #### Ubuntu 20
 
-        git clone https://gitlab.khronos.org/vulkan/Vulkan-Loader.git
-        cd Vulkan-Loader
+        git clone https://github.com/KhronosGroup/VulkanSC-Loader
+        cd VulkanSC-Loader
         mkdir build
         cd build
         ../scripts/update_deps.py --api vulkansc
-        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVulkanSC=TRUE -DCMAKE_INSTALL_PREFIX=install
+        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVULKANSC=ON -DCMAKE_INSTALL_PREFIX=install
         cmake --build . --config Debug --target install
 
 #### QNX
 
    Set QNX build environment details in 'qnxCmakeToolchain' file and provide its path to ```CMAKE_TOOLCHAIN_FILE``` in the command line:
 
-        git clone https://gitlab.khronos.org/vulkan/Vulkan-Loader.git
-        cd Vulkan-Loader
+        git clone https://github.com/KhronosGroup/VulkanSC-Loader
+        cd VulkanSC-Loader
         mkdir build
         cd build
         ../scripts/update_deps.py --api vulkansc
-        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVulkanSC=TRUE -DCMAKE_INSTALL_PREFIX=install -DCMAKE_TOOLCHAIN_FILE=/path/of/qnxCmakeToolchain
+        cmake -C helper.cmake .. -DCMAKE_BUILD_TYPE=DEBUG -DVULKANSC=ON -DCMAKE_INSTALL_PREFIX=install -DCMAKE_TOOLCHAIN_FILE=/path/of/qnxCmakeToolchain
         cmake --build . --config Debug --target install

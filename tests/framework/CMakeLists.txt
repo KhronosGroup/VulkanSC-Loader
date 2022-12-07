@@ -36,7 +36,7 @@ endif()
 # Gives access to all headers in the framework folder, in the framework binary, and in the whole project (mainly for loader/generated)
 target_include_directories(testing_framework_util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
-if (VulkanSC)
+if (VULKANSC)
     set(BUILD_TARGET vulkansc)
 else()
     set(BUILD_TARGET vulkan)

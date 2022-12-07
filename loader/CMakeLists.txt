@@ -17,7 +17,7 @@
 # limitations under the License.
 # ~~~
 
-if(VulkanSC)
+if(VULKANSC)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated-vksc ${CMAKE_CURRENT_BINARY_DIR})
     # Get version of the API the generated code used and put it into a cmake variable LOADER_GENERATED_HEADER_VERSION
     include(generated-vksc/loader_generated_header_version.cmake)
@@ -53,7 +53,7 @@ if(WIN32)
 elseif(ANDROID)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_ANDROID_KHR)
 elseif(APPLE)
-    if(NOT VulkanSC)
+    if(NOT VULKANSC)
         set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
     endif()
 elseif(UNIX AND NOT APPLE) # i.e.: Linux
@@ -77,7 +77,7 @@ elseif(UNIX AND NOT APPLE) # i.e.: Linux
         set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCREEN_QNX)
     endif()
 
-    if(VulkanSC)
+    if(VULKANSC)
         if(BUILD_WSI_SCI_SUPPORT)
             set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCI)
         endif()
@@ -362,7 +362,7 @@ else()
         find_library(COREFOUNDATION_LIBRARY NAMES CoreFoundation)
         target_link_libraries(${SONAME} "-framework CoreFoundation")
 
-        if(VulkanSC)
+        if(VULKANSC)
             # Build vulkansc.framework
             set(FRAMEWORK_HEADERS
                 ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
