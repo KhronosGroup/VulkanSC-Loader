@@ -49,7 +49,7 @@ some other suitable source if you intend to run Vulkan applications.
 
 To create your local git repository:
 
-    git clone https://github.com/KhronosGroup/Vulkan-Loader.git
+    git clone https://github.com/KhronosGroup/VulkanSC-Loader.git
 
 ### Repository Dependencies
 
@@ -73,6 +73,9 @@ building this repository. The Vulkan-Headers repository is required because it
 contains the Vulkan API definition files (registry) that are required to build
 the loader. You must also take note of the headers install directory and pass
 it on the CMake command line for building this repository, as described below.
+
+For Vulkan SC, the `sc_main` branch or an appropriately tagged Vulkan SC version
+(e.g., `vksc1.0.11`) of the Vulkan-Headers repository must be checked out.
 
 #### Test Dependencies
 
@@ -101,12 +104,12 @@ to checkout dependent repository revisions that are known to be compatible with
 the revision of this repository that you currently have checked out.
 
 You can choose to do this manually or automatically.
-The first step to either is cloning the Vulkan-Loader repo and stepping into
+The first step to either is cloning the VulkanSC-Loader repo and stepping into
 that newly cloned folder:
 
 ```
-  git clone git@github.com:KhronosGroup/Vulkan-Loader.git
-  cd Vulkan-Loader
+  git clone git@github.com:KhronosGroup/VulkanSC-Loader.git
+  cd VulkanSC-Loader
 ```
 
 #### Manually
@@ -122,6 +125,9 @@ run the update deps script followed by the necessary CMake build commands:
   cmake --build .
 ```
 
+To update the dependencies for Vulkan SC the `--api vulkansc` option must be
+passed to the `update_deps.py` command.
+
 ##### Notes About the Manual Option
 
 - You may need to adjust some of the CMake options based on your platform. See
@@ -130,7 +136,7 @@ run the update deps script followed by the necessary CMake build commands:
   the current directory when it is invoked. In this case, they are built in
   the `build` directory.
 - The `build` directory is also being used to build this
-  (Vulkan-ValidationLayers) repository. But there shouldn't be any conflicts
+  (VulkanSC-ValidationLayers) repository. But there shouldn't be any conflicts
   inside the `build` directory between the dependent repositories and the
   build files for this repository.
 - The `--dir` option for `update_deps.py` can be used to relocate the
@@ -166,7 +172,7 @@ heavy-lifting, you may just trigger the following CMake commands:
 - You may need to adjust some of the CMake options based on your platform. See
   the platform-specific sections later in this document.
 - The `build` directory is also being used to build this
-  (Vulkan-ValidationLayers) repository. But there shouldn't be any conflicts
+  (VulkanSC-ValidationLayers) repository. But there shouldn't be any conflicts
   inside the `build` directory between the dependent repositories and the
   build files for this repository.
 
@@ -194,6 +200,7 @@ on/off options currently supported by this repository:
 
 | Option | Platform | Default | Description |
 | ------ | -------- | ------- | ----------- |
+| VULKANSC | All | `OFF` | Controls whether the loader is built for Vulkan (`OFF`, the default), or for Vulkan SC (`ON`). |
 | BUILD_LOADER | All | `ON` | Controls whether or not the loader is built. Setting this to `OFF` will allow building the tests against a loader that is installed to the system. |
 | BUILD_TESTS | All | `???` | Controls whether or not the loader tests are built. The default is `ON` when the Google Test repository is cloned into the `external` directory.  Otherwise, the default is `OFF`. |
 | BUILD_WSI_XCB_SUPPORT | Linux | `ON` | Build the loader with the XCB entry points enabled. Without this, the XCB headers should not be needed, but the extension `VK_KHR_xcb_surface` won't be available. |
@@ -252,7 +259,7 @@ work with the solution interactively.
 
 Open a developer command prompt and enter:
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -A x64 -DVULKAN_HEADERS_INSTALL_DIR=absolute_path_to_install_dir ..
@@ -272,7 +279,7 @@ variables.
 Change your current directory to the top of the cloned repository directory,
 create a build directory and generate the Visual Studio project files:
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -A x64 -DVULKAN_HEADERS_INSTALL_DIR=absolute_path_to_install_dir ..
@@ -299,7 +306,7 @@ install directory must be provided. This can be done by setting the
 either case, the variable should point to the installation directory of a
 Vulkan-Headers repository built with the install target.
 
-The above steps create a Windows solution file named `Vulkan-Loader.sln` in
+The above steps create a Windows solution file named `VulkanSC-Loader.sln` in
 the build directory.
 
 At this point, you can build the solution from the command line or open the
@@ -319,7 +326,7 @@ to make a Release build.
 
 #### Build the Solution With Visual Studio
 
-Launch Visual Studio and open the "Vulkan-Loader.sln" solution file in the
+Launch Visual Studio and open the "VulkanSC-Loader.sln" solution file in the
 build folder. You may select "Debug" or "Release" from the Solution
 Configurations drop-down list. Start a build by selecting the Build->Build
 Solution menu item.
@@ -343,7 +350,7 @@ or build the `INSTALL` target from the Visual Studio solution explorer.
 
 ### Windows Tests
 
-The Vulkan-Loader repository contains some simple unit tests for the loader
+The VulkanSC-Loader repository contains some simple unit tests for the loader
 but no other test clients.
 
 To run the loader test script, open a Powershell Console, change to the
@@ -405,6 +412,8 @@ layer libraries. The document also describes both how ICDs and layers should
 be packaged, and how developers can point to ICDs and layers within their
 builds.
 
+For Vulkan SC the loader library is `vulkansc-1.dll`.
+
 ## Building On Linux
 
 ### Linux Development Environment Requirements
@@ -429,7 +438,7 @@ CMake with the `--build` option or `make` to build from the command line.
 
 #### Linux Quick Start
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -DVULKAN_HEADERS_INSTALL_DIR=absolute_path_to_install_dir ..
@@ -442,7 +451,7 @@ See below for the details.
 Change your current directory to the top of the cloned repository directory,
 create a build directory and generate the make files.
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -DCMAKE_BUILD_TYPE=Debug \
@@ -574,7 +583,7 @@ To uninstall the files from the system directories, you can execute:
 
 #### Linux Tests
 
-The Vulkan-Loader repository contains some simple unit tests for the loader
+The VulkanSC-Loader repository contains some simple unit tests for the loader
 but no other test clients.
 
 To run the loader test script, change to the `build/tests` directory, and run:
@@ -637,9 +646,9 @@ Setup Homebrew and components
 
 ### Clone the Repository
 
-Clone the Vulkan-ValidationLayers repository:
+Clone the VulkanSC-ValidationLayers repository:
 
-    git clone https://github.com/KhronosGroup/Vulkan-ValidationLayers.git
+    git clone https://github.com/KhronosGroup/VulkanSC-ValidationLayers.git
 
 ### MacOS build
 
@@ -682,7 +691,7 @@ To create and open an Xcode project:
     mkdir build-xcode
     cd build-xcode
     cmake -GXcode ..
-    open Vulkan-Loader.xcodeproj
+    open VulkanSC-Loader.xcodeproj
 
 Within Xcode, you can select Debug or Release builds in the project's Build
 Settings.
@@ -696,7 +705,7 @@ can direct the application to load it from your build directory:
 
 ### MacOS Tests
 
-The Vulkan-Loader repository contains some simple unit tests for the loader
+The VulkanSC-Loader repository contains some simple unit tests for the loader
 but no other test clients.
 
 Before you run these tests, you will need to clone and build the
@@ -707,7 +716,7 @@ You will also need to direct your new loader to the MoltenVK ICD:
     export VK_ICD_FILENAMES=<path to MoltenVK repository>/Package/Latest/MoltenVK/macOS/MoltenVK_icd.json
 
 To run the loader test script, change to the `build/tests` directory in your
-Vulkan-Loader repository, and run:
+VulkanSC-Loader repository, and run:
 
     ./vk_loader_validation_tests
 
@@ -730,8 +739,8 @@ The Vulkan Loader is a component of the Fuchsia SDK, so it must explicitly decla
 the file vulkan.symbols.api; see [SDK](https://fuchsia.dev/fuchsia-src/development/sdk).
 
 ## Vulkan SC Build Commands
-Follow the steps mentioned in the earlier part of this documents if required. CMake is required for building the Vulkan SC Loader.
-After the final step the install folder inside the respective build folder should have the binaries
+Follow the steps mentioned in the earlier part of this documents as required. CMake is required for building the Vulkan SC Loader.
+After the final step the install folder inside the respective build folder should have the binaries.
 
 #### Windows 10 (Visual Studio 2019 Required)
 
