@@ -5,7 +5,7 @@
  * Copyright (c) 2015-2017 The Khronos Group Inc.
  * Copyright (c) 2015-2017 Valve Corporation
  * Copyright (c) 2015-2017 LunarG, Inc.
- * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -484,9 +484,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
 #ifdef VK_USE_PLATFORM_SCI
     table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV)gdpa(dev, "vkCreateSemaphoreSciSyncPoolNV");
 #endif // VK_USE_PLATFORM_SCI
-#ifdef VK_USE_PLATFORM_SCI
-    table->DestroySemaphoreSciSyncPoolNV = (PFN_vkDestroySemaphoreSciSyncPoolNV)gdpa(dev, "vkDestroySemaphoreSciSyncPoolNV");
-#endif // VK_USE_PLATFORM_SCI
 }
 
 // Init Instance function pointer dispatch table with core commands
@@ -894,9 +891,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     // ---- VK_NV_external_sci_sync2 extension commands
 #ifdef VK_USE_PLATFORM_SCI
     if (!strcmp(name, "CreateSemaphoreSciSyncPoolNV")) return (void *)table->CreateSemaphoreSciSyncPoolNV;
-#endif // VK_USE_PLATFORM_SCI
-#ifdef VK_USE_PLATFORM_SCI
-    if (!strcmp(name, "DestroySemaphoreSciSyncPoolNV")) return (void *)table->DestroySemaphoreSciSyncPoolNV;
 #endif // VK_USE_PLATFORM_SCI
 
     return NULL;
@@ -2028,16 +2022,6 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateSemaphoreSciSyncPoolNV(
 }
 
 #endif // VK_USE_PLATFORM_SCI
-#ifdef VK_USE_PLATFORM_SCI
-VKAPI_ATTR void VKAPI_CALL DestroySemaphoreSciSyncPoolNV(
-    VkDevice                                    device,
-    VkSemaphoreSciSyncPoolNV                    semaphorePool,
-    const VkAllocationCallbacks*                pAllocator) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    disp->DestroySemaphoreSciSyncPoolNV(device, semaphorePool, pAllocator);
-}
-
-#endif // VK_USE_PLATFORM_SCI
 // GPA helpers for extensions
 bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr) {
     *addr = NULL;
@@ -2463,12 +2447,6 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
 #ifdef VK_USE_PLATFORM_SCI
     if (!strcmp("vkCreateSemaphoreSciSyncPoolNV", name)) {
         *addr = (void *)CreateSemaphoreSciSyncPoolNV;
-        return true;
-    }
-#endif // VK_USE_PLATFORM_SCI
-#ifdef VK_USE_PLATFORM_SCI
-    if (!strcmp("vkDestroySemaphoreSciSyncPoolNV", name)) {
-        *addr = (void *)DestroySemaphoreSciSyncPoolNV;
         return true;
     }
 #endif // VK_USE_PLATFORM_SCI

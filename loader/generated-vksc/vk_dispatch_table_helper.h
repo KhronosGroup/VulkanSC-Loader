@@ -6,7 +6,7 @@
  * Copyright (c) 2015-2017 The Khronos Group Inc.
  * Copyright (c) 2015-2017 Valve Corporation
  * Copyright (c) 2015-2017 LunarG, Inc.
- * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,9 +116,6 @@ static VKAPI_ATTR void VKAPI_CALL StubCmdSetPrimitiveRestartEnableEXT(VkCommandB
 static VKAPI_ATTR void VKAPI_CALL StubCmdSetColorWriteEnableEXT(VkCommandBuffer       commandBuffer, uint32_t                                attachmentCount, const VkBool32*   pColorWriteEnables) {  };
 #ifdef VK_USE_PLATFORM_SCI
 static VKAPI_ATTR VkResult VKAPI_CALL StubCreateSemaphoreSciSyncPoolNV(VkDevice device, const VkSemaphoreSciSyncPoolCreateInfoNV* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSemaphoreSciSyncPoolNV* pSemaphorePool) { return VK_SUCCESS; };
-#endif // VK_USE_PLATFORM_SCI
-#ifdef VK_USE_PLATFORM_SCI
-static VKAPI_ATTR void VKAPI_CALL StubDestroySemaphoreSciSyncPoolNV(VkDevice device, VkSemaphoreSciSyncPoolNV semaphorePool, const VkAllocationCallbacks* pAllocator) {  };
 #endif // VK_USE_PLATFORM_SCI
 
 
@@ -428,10 +425,6 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
 #ifdef VK_USE_PLATFORM_SCI
     table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV) gpa(device, "vkCreateSemaphoreSciSyncPoolNV");
     if (table->CreateSemaphoreSciSyncPoolNV == nullptr) { table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV)StubCreateSemaphoreSciSyncPoolNV; }
-#endif // VK_USE_PLATFORM_SCI
-#ifdef VK_USE_PLATFORM_SCI
-    table->DestroySemaphoreSciSyncPoolNV = (PFN_vkDestroySemaphoreSciSyncPoolNV) gpa(device, "vkDestroySemaphoreSciSyncPoolNV");
-    if (table->DestroySemaphoreSciSyncPoolNV == nullptr) { table->DestroySemaphoreSciSyncPoolNV = (PFN_vkDestroySemaphoreSciSyncPoolNV)StubDestroySemaphoreSciSyncPoolNV; }
 #endif // VK_USE_PLATFORM_SCI
 }
 
