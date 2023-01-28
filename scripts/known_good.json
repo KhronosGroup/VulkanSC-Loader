@@ -15,9 +15,9 @@
             "build_dir" : "VulkanSC-Headers/build",
             "install_dir" : "VulkanSC-Headers/build/install",
             "cmake_options" : [
-              "-DVulkanSC=TRUE"
+              "-DVULKANSC=ON"
             ],
-            "commit" : "vksc1.0.11"
+            "commit" : "vksc1.0.12"
         },
         {
             "name": "googletest",
