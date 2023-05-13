@@ -60,6 +60,7 @@
  * level entrypoints with a NULL instance. However, as to not break old applications, the new behavior is only applied if the
  * instance passed in is both valid and minor version is greater than 1.2, which was when this change in behavior occurred. Only
  * instances with a newer version will get the new behavior.
+ * For VulkanSC, we will always use the new behavior.
  */
 LOADER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *pName) {
     // Get entrypoint addresses that are global (no dispatchable object)
@@ -76,7 +77,13 @@ LOADER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkI
 
             // First check if instance is valid - loader_get_instance() returns NULL if it isn't.
             struct loader_instance *ptr_instance = loader_get_instance(instance);
-            if (ptr_instance != NULL && (ptr_instance->app_api_minor_version > 2)) {
+            if (ptr_instance != NULL &&
+#if !defined(VULKANSC)
+               ((ptr_instance->app_api_variant_version == 0) && (ptr_instance->app_api_minor_version > 2)))
+#else
+               ((ptr_instance->app_api_variant_version == VKSC_API_VARIANT)))
+#endif
+            {
                 // New behavior
                 return NULL;
             } else {
@@ -447,8 +454,10 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
         ptr_instance->app_api_major_version = 1;
         ptr_instance->app_api_minor_version = 0;
     } else {
-        ptr_instance->app_api_major_version = VK_VERSION_MAJOR(pCreateInfo->pApplicationInfo->apiVersion);
-        ptr_instance->app_api_minor_version = VK_VERSION_MINOR(pCreateInfo->pApplicationInfo->apiVersion);
+        ptr_instance->app_api_variant_version = VK_API_VERSION_VARIANT(pCreateInfo->pApplicationInfo->apiVersion);
+        ptr_instance->app_api_major_version   = VK_VERSION_MAJOR(pCreateInfo->pApplicationInfo->apiVersion);
+        ptr_instance->app_api_minor_version   = VK_VERSION_MINOR(pCreateInfo->pApplicationInfo->apiVersion);
+        ptr_instance->app_api_patch_version   = VK_VERSION_PATCH(pCreateInfo->pApplicationInfo->apiVersion);
     }
 
     // Look for one or more VK_EXT_debug_report or VK_EXT_debug_utils create info structures

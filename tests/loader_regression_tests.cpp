@@ -176,28 +176,48 @@ TEST_F(EnumerateInstanceExtensionProperties, UsageChecks) {
         std::array<VkExtensionProperties, 4> extensions;
         ASSERT_EQ(VK_SUCCESS,
                   env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 4);  // return debug report & debug utils + our two extensions
+#else // debug report is removed from VulkanSC
+        ASSERT_EQ(extension_count, 3);  // return debug utils + our two extensions
+#endif
 
         // loader always adds the debug report & debug utils extensions
         ASSERT_TRUE(first_ext.extensionName == extensions[0].extensionName);
         ASSERT_TRUE(second_ext.extensionName == extensions[1].extensionName);
+#if !defined(VULKANSC)
         ASSERT_TRUE(string_eq("VK_EXT_debug_report", extensions[2].extensionName));
         ASSERT_TRUE(string_eq("VK_EXT_debug_utils", extensions[3].extensionName));
+#else
+        ASSERT_TRUE(string_eq("VK_EXT_debug_utils", extensions[2].extensionName));
+#endif
     }
     {  // Two Pass
         uint32_t extension_count = 0;
         std::array<VkExtensionProperties, 4> extensions;
         ASSERT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 4);  // return debug report & debug utils + our two extensions
+#else // debug report is removed from VulkanSC
+        ASSERT_EQ(extension_count, 3);  // return debug utils + our two extensions
+#endif
 
         ASSERT_EQ(VK_SUCCESS,
                   env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 4);
+#else // debug report removed from VulkanSC
+        ASSERT_EQ(extension_count, 3);
+#endif
         // loader always adds the debug report & debug utils extensions
         ASSERT_TRUE(first_ext.extensionName == extensions[0].extensionName);
         ASSERT_TRUE(second_ext.extensionName == extensions[1].extensionName);
+#if !defined(VULKANSC)
         ASSERT_TRUE(string_eq("VK_EXT_debug_report", extensions[2].extensionName));
         ASSERT_TRUE(string_eq("VK_EXT_debug_utils", extensions[3].extensionName));
+#else
+        ASSERT_TRUE(string_eq("VK_EXT_debug_utils", extensions[2].extensionName));
+#endif
     }
 }
 
@@ -206,6 +226,7 @@ TEST_F(EnumerateInstanceExtensionProperties, PropertyCountLessThanAvailable) {
     std::array<VkExtensionProperties, 2> extensions;
     {  // use nullptr for null string
         ASSERT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 2);  // return debug report & debug utils
         extension_count = 1;            // artificially remove one extension
 
@@ -214,9 +235,18 @@ TEST_F(EnumerateInstanceExtensionProperties, PropertyCountLessThanAvailable) {
         ASSERT_EQ(extension_count, 1);
         // loader always adds the debug report & debug utils extensions
         ASSERT_TRUE(string_eq(extensions[0].extensionName, "VK_EXT_debug_report"));
+#else // debug report removed from VulkanSC
+        ASSERT_EQ(extension_count, 1);  // return debug utils
+        extension_count = 0;            // artificially remove one extension
+
+        ASSERT_EQ(VK_INCOMPLETE,
+                  env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
+        ASSERT_EQ(extension_count, 0);
+#endif
     }
     {  // use "" for null string
         ASSERT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties("", &extension_count, nullptr));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 2);  // return debug report & debug utils
         extension_count = 1;            // artificially remove one extension
 
@@ -225,6 +255,14 @@ TEST_F(EnumerateInstanceExtensionProperties, PropertyCountLessThanAvailable) {
         ASSERT_EQ(extension_count, 1);
         // loader always adds the debug report & debug utils extensions
         ASSERT_TRUE(string_eq(extensions[0].extensionName, "VK_EXT_debug_report"));
+#else // debug report removed from VulkanSC
+        ASSERT_EQ(extension_count, 1);  // return debug utils
+        extension_count = 0;            // artificially remove one extension
+
+        ASSERT_EQ(VK_INCOMPLETE,
+                  env->vulkan_functions.vkEnumerateInstanceExtensionProperties("", &extension_count, extensions.data()));
+        ASSERT_EQ(extension_count, 0);
+#endif
     }
 }
 
@@ -235,6 +273,7 @@ TEST_F(EnumerateInstanceExtensionProperties, FilterUnkownInstanceExtensions) {
     {
         uint32_t extension_count = 0;
         ASSERT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties("", &extension_count, nullptr));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 2);  // return debug report & debug utils
 
         std::array<VkExtensionProperties, 2> extensions;
@@ -244,24 +283,46 @@ TEST_F(EnumerateInstanceExtensionProperties, FilterUnkownInstanceExtensions) {
         // loader always adds the debug report & debug utils extensions
         ASSERT_TRUE(string_eq(extensions[0].extensionName, "VK_EXT_debug_report"));
         ASSERT_TRUE(string_eq(extensions[1].extensionName, "VK_EXT_debug_utils"));
+#else // debug report removed from VulkanSC
+        ASSERT_EQ(extension_count, 1);  // return debug utils
+
+        std::array<VkExtensionProperties, 2> extensions;
+        ASSERT_EQ(VK_SUCCESS,
+                  env->vulkan_functions.vkEnumerateInstanceExtensionProperties("", &extension_count, extensions.data()));
+        ASSERT_EQ(extension_count, 1);
+        // loader always adds the debug report & debug utils extensions
+        ASSERT_TRUE(string_eq(extensions[0].extensionName, "VK_EXT_debug_utils"));
+#endif
     }
     {  // Disable unknown instance extension filtering
         set_env_var("VK_LOADER_DISABLE_INST_EXT_FILTER", "1");
 
         uint32_t extension_count = 0;
         ASSERT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties("", &extension_count, nullptr));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 4);
+#else
+        ASSERT_EQ(extension_count, 3);
+#endif
 
         std::array<VkExtensionProperties, 4> extensions;
         ASSERT_EQ(VK_SUCCESS,
                   env->vulkan_functions.vkEnumerateInstanceExtensionProperties("", &extension_count, extensions.data()));
+#if !defined(VULKANSC)
         ASSERT_EQ(extension_count, 4);
+#else
+        ASSERT_EQ(extension_count, 3);
+#endif
 
         ASSERT_EQ(extensions[0], first_ext.get());
         ASSERT_EQ(extensions[1], second_ext.get());
+#if !defined(VULKANSC)
         // Loader always adds these two extensions
         ASSERT_TRUE(string_eq(extensions[2].extensionName, "VK_EXT_debug_report"));
         ASSERT_TRUE(string_eq(extensions[3].extensionName, "VK_EXT_debug_utils"));
+#else
+        ASSERT_TRUE(string_eq(extensions[2].extensionName, "VK_EXT_debug_utils"));
+#endif
     }
 }
 
@@ -513,6 +574,14 @@ TEST_F(CreateDevice, LayersNotPresent) {
     dev.CheckCreate(phys_dev);
 }
 
+// This test uses prebuilt binaries that must be rebuilt for
+// non x86 platforms. Attempting to rebuild them by uncommenting lines
+// in tests/framework/data/CMakeLists.txt can create further errors due to the
+// use of "-m32" and "-m64" which are not available on certain cross compilers.
+// As a result, separate 32 bit and 64 bit cross compilers are needed, which
+// may be difficult to setup with current cmake infrastructure, so this test
+// will be skipped for now when cross compiling.
+#if !defined(CROSS_COMPILING)
 TEST(TryLoadWrongBinaries, WrongICD) {
     FakeBinaryICDShim env(TestICDDetails(TEST_ICD_PATH_VERSION_2), TestICDDetails(CURRENT_PLATFORM_DUMMY_BINARY));
     env.get_test_icd().physical_devices.emplace_back("physical_device_0");
@@ -537,6 +606,7 @@ TEST(TryLoadWrongBinaries, WrongICD) {
     ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDevices(inst, &driver_count, nullptr));
     ASSERT_EQ(driver_count, 1);
 }
+#endif
 
 TEST(TryLoadWrongBinaries, WrongExplicitAndImplicit) {
     SingleICDShim env(TestICDDetails(TEST_ICD_PATH_VERSION_2));
@@ -802,10 +872,17 @@ TEST(EnvironmentVariables, XDG) {
     inst.CheckCreate();
 
     auto check_paths = [](DebugUtilsLogger const& debug_log, ManifestCategory category, fs::path const& HOME) {
+#if !defined(VULKANSC)
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober/vulkan") / category_path_name(category)).str()));
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober2/vulkan") / category_path_name(category)).str()));
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober3/vulkan") / category_path_name(category)).str()));
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober4/with spaces/vulkan") / category_path_name(category)).str()));
+#else
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober/vulkansc") / category_path_name(category)).str()));
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober2/vulkansc") / category_path_name(category)).str()));
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober3/vulkansc") / category_path_name(category)).str()));
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober4/with spaces/vulkansc") / category_path_name(category)).str()));
+#endif
     };
     check_paths(env.debug_log, ManifestCategory::icd, HOME);
     check_paths(env.debug_log, ManifestCategory::implicit_layer, HOME);

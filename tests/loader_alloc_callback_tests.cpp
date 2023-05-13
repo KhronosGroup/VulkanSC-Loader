@@ -537,6 +537,15 @@ TEST_F(Allocation, CreateInstanceDeviceIntentionalAllocFail) {
     }
 }
 
+// This test uses prebuilt binaries that must be rebuilt for
+// non x86 platforms. Attempting to rebuild them by uncommenting lines
+// in tests/framework/data/CMakeLists.txt can create further errors due to the
+// use of "-m32" and "-m64" which are not available on certain cross compilers.
+// As a result, separate 32 bit and 64 bit cross compilers are needed, which
+// may be difficult to setup with current cmake infrastructure, so this test
+// will be skipped for now when cross compiling.
+#if !defined(CROSS_COMPILING)
+
 // Test failure during vkCreateInstance when a driver of the wrong architecture is present
 // to make sure the loader uses the valid ICD and doesn't report incompatible driver just because
 // an incompatible driver exists
@@ -558,6 +567,7 @@ TEST(TryLoadWrongBinaries, CreateInstanceIntentionalAllocFail) {
         fail_index++;
     }
 }
+#endif
 
 // Test failure during vkCreateInstance and vkCreateDevice to make sure we don't
 // leak memory if one of the out-of-memory conditions trigger.
