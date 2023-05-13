@@ -71,4 +71,10 @@ endif()
 # must happen after the dll's get copied over
 if(NOT CMAKE_CROSSCOMPILING)
     gtest_discover_tests(test_regression)
+else()
+    gtest_add_tests(TARGET test_regression)
+    # Used to skip certain tests that require rebuilding
+    # 32 bit and 64 bit dummy libs. For more info see
+    # comments for TEST(TryLoadWrongBinaries, WrongICD).
+    add_compile_definitions(CROSS_COMPILING)
 endif()

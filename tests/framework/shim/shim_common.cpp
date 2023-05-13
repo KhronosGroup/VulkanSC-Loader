@@ -352,14 +352,22 @@ void PlatformShim::redirect_category(fs::path const& new_path, ManifestCategory 
 
     for (auto& path : paths) {
         if (!path.empty()) {
+#if !defined(VULKANSC)
             redirect_path(fs::path(path) / "vulkan" / category_path_name(category), new_path);
+#else
+            redirect_path(fs::path(path) / "vulkansc" / category_path_name(category), new_path);
+#endif
         }
     }
 }
 
 void PlatformShim::set_path(ManifestCategory category, fs::path const& path) {
     // use /etc as the 'redirection path' by default since its always searched
+#if !defined(VULKANSC)
     redirect_path(fs::path(SYSCONFDIR) / "vulkan" / category_path_name(category), path);
+#else
+    redirect_path(fs::path(SYSCONFDIR) / "vulkansc" / category_path_name(category), path);
+#endif
 }
 
 #endif

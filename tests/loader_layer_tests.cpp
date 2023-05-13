@@ -186,11 +186,19 @@ TEST_F(MetaLayers, InvalidComponentLayer) {
     uint32_t extension_count = 0;
     std::array<VkExtensionProperties, 2> extensions;
     EXPECT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr));
+#if !defined(VULKANSC)
     EXPECT_EQ(extension_count, 2);  // return debug report & debug utils + our two extensions
+#else // debug report is removed in VulkanSC
+    EXPECT_EQ(extension_count, 1);  // return debug utils + our two extensions
+#endif
 
     EXPECT_EQ(VK_SUCCESS,
               env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
+#if !defined(VULKANSC)
     EXPECT_EQ(extension_count, 2);
+#else // debug report is removed in VulkanSC
+    EXPECT_EQ(extension_count, 1);
+#endif
 
     InstWrapper inst{env->vulkan_functions};
     inst.create_info.add_layer(meta_layer_name);
@@ -235,11 +243,19 @@ TEST_F(OverrideMetaLayer, InvalidDisableEnvironment) {
     uint32_t extension_count = 0;
     std::array<VkExtensionProperties, 2> extensions;
     EXPECT_EQ(VK_SUCCESS, env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr));
+#if !defined(VULKANSC)
     EXPECT_EQ(extension_count, 2);  // return debug report & debug utils + our two extensions
+#else // debug report is removed in VulkanSC
+    EXPECT_EQ(extension_count, 1);  // return debug utils + our two extensions
+#endif
 
     EXPECT_EQ(VK_SUCCESS,
               env->vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
+#if !defined(VULKANSC)
     EXPECT_EQ(extension_count, 2);
+#else // debug report is removed in VulkanSC
+    EXPECT_EQ(extension_count, 1);
+#endif
 
     InstWrapper inst{env->vulkan_functions};
     // inst.create_info.add_layer();

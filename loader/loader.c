@@ -5457,11 +5457,26 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
 
         // Create an instance, substituting the version to 1.0 if necessary
         VkApplicationInfo icd_app_info;
-        uint32_t icd_version_nopatch = VK_MAKE_VERSION(VK_VERSION_MAJOR(icd_version), VK_VERSION_MINOR(icd_version), 0);
+#if !defined(VULKANSC)
+        uint32_t icd_version_nopatch = VK_MAKE_API_VERSION(0, VK_VERSION_MAJOR(icd_version), VK_VERSION_MINOR(icd_version), 0);
+#else
+        uint32_t icd_version_nopatch = VK_MAKE_API_VERSION(VKSC_API_VARIANT, VK_VERSION_MAJOR(icd_version), VK_VERSION_MINOR(icd_version), 0);
+#endif
         uint32_t requested_version = pCreateInfo == NULL || pCreateInfo->pApplicationInfo == NULL
+#if !defined(VULKANSC)
                                          ? VK_API_VERSION_1_0
+#else
+                                         ? VKSC_API_VERSION_1_0
+#endif
                                          : pCreateInfo->pApplicationInfo->apiVersion;
-        if ((requested_version != 0) && (icd_version_nopatch == VK_API_VERSION_1_0)) {
+
+        if ((requested_version != 0) &&
+#if !defined(VULKANSC)
+                (icd_version_nopatch == VK_API_VERSION_1_0)) {
+#else
+                (icd_version_nopatch == VKSC_API_VERSION_1_0)) {
+#endif
+
             if (icd_create_info.pApplicationInfo == NULL) {
                 memset(&icd_app_info, 0, sizeof(icd_app_info));
             } else {

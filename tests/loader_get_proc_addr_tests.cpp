@@ -60,6 +60,11 @@ TEST(GetProcAddr, GlobalFunctions) {
         auto CreateInstance = reinterpret_cast<PFN_vkCreateInstance>(gipa(NULL, "vkCreateInstance"));
         handle_assert_has_value(CreateInstance);
     }
+    // This is testing a Vulkan 1.2.193 spec update, which made a change to only allow
+    // querying global functions with a null instance. However exceptions were made to avoid
+    // breaking old apps. This section is testing the exceptions. Skip for VulkanSC as we will
+    // not have exceptions.
+#if !defined(VULKANSC)
     // Now create an instance and query the functions again - should work because the instance version is less than 1.2
     for (int i = 0; i <= 2; i++) {
         InstWrapper inst{env.vulkan_functions};
@@ -90,10 +95,18 @@ TEST(GetProcAddr, GlobalFunctions) {
         auto CreateInstance = reinterpret_cast<PFN_vkCreateInstance>(gipa(inst, "vkCreateInstance"));
         handle_assert_has_value(CreateInstance);
     }
+#endif // !defined(VULKANSC)
     {
+#if !defined(VULKANSC)
         // Create a 1.3 instance - now everything should return NULL
         InstWrapper inst{env.vulkan_functions};
         inst.create_info.api_version = VK_MAKE_API_VERSION(0, 1, 3, 0);
+#else
+        // Create a valid VKSC 1.0 instance - now everything should return NULL as
+        // VulkanSC requires global functions be queried with a NULL instance.
+        InstWrapper inst{env.vulkan_functions};
+        inst.create_info.api_version = VK_MAKE_API_VERSION(1, 1, 0, 0);
+#endif
         inst.CheckCreate();
 
         auto EnumerateInstanceExtensionProperties =
