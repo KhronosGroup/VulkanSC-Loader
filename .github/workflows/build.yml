@@ -21,7 +21,7 @@ on:
     push:
     pull_request:
         branches:
-            - master
+            - main
             - sc_main
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
                 cc: [ gcc, clang ]
                 cxx: [ g++, clang++ ]
                 config: [ Debug, Release ]
-                os: [ ubuntu-20.04, ubuntu-latest ]
+                os: [ ubuntu-20.04, ubuntu-22.04 ]
                 vksc_build: [ VULKANSC=OFF, VULKANSC=ON ]
                 exclude:
                     - cc: gcc
@@ -44,13 +44,15 @@ jobs:
 
         steps:
             - uses: actions/checkout@v3
-            - uses: actions/setup-python@v2
+            - uses: actions/setup-python@v3
               with:
                 python-version: '3.7'
-            - run: sudo apt install libwayland-dev libxrandr-dev
+            - name: Install Dependencies
+              run: sudo apt update
+              run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
 
             - name: Generate build files
-              run: cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=${{matrix.config}} -D${{matrix.vksc_build}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON
+              run: cmake -S. -B build -D CMAKE_BUILD_TYPE=${{matrix.config}} -D ${{matrix.vksc_build}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON
               env:
                 CC: ${{matrix.cc}}
                 CXX: ${{matrix.cxx}}
@@ -89,12 +91,12 @@ jobs:
 
         steps:
             - uses: actions/checkout@v3
-            - uses: actions/setup-python@v2
+            - uses: actions/setup-python@v3
               with:
                 python-version: '3.7'
 
             - name: Generate build files
-              run: cmake -S. -Bbuild -A${{matrix.arch}} -D${{matrix.vksc_build}} -DBUILD_TESTS=On -DUPDATE_DEPS=ON
+              run: cmake -S. -B build -A ${{matrix.arch}} -D ${{matrix.vksc_build}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON
 
             - name: Build the loader
               run: cmake --build ./build --config ${{matrix.config}}
@@ -118,8 +120,8 @@ jobs:
                 vksc_build: [ VULKANSC=OFF, VULKANSC=ON ]
 
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/setup-python@v2
+            - uses: actions/checkout@v3
+            - uses: actions/setup-python@v3
               with:
                 python-version: '3.7'
 
