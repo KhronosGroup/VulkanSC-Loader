@@ -27,6 +27,7 @@
 
 #include "vulkan/vk_layer.h"
 #if defined(VULKANSC)
+#include "loader/vksc_header_wa.h"
 #include "loader/generated-vksc/vk_dispatch_table_helper.h"
 #else
 #include "loader/generated/vk_dispatch_table_helper.h"

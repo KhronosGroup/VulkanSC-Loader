@@ -32,7 +32,7 @@ typedef struct VkLayerInstanceDispatchTable_ {
     // Manually add in GetPhysicalDeviceProcAddr entry
     PFN_GetPhysicalDeviceProcAddr GetPhysicalDeviceProcAddr;
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     PFN_vkCreateInstance CreateInstance;
     PFN_vkDestroyInstance DestroyInstance;
     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
@@ -48,8 +48,6 @@ typedef struct VkLayerInstanceDispatchTable_ {
     PFN_vkEnumerateDeviceExtensionProperties EnumerateDeviceExtensionProperties;
     PFN_vkEnumerateInstanceLayerProperties EnumerateInstanceLayerProperties;
     PFN_vkEnumerateDeviceLayerProperties EnumerateDeviceLayerProperties;
-
-    // ---- Core 1_1 commands
     PFN_vkEnumerateInstanceVersion EnumerateInstanceVersion;
     PFN_vkEnumeratePhysicalDeviceGroups EnumeratePhysicalDeviceGroups;
     PFN_vkGetPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2;
@@ -138,7 +136,7 @@ typedef struct VkLayerInstanceDispatchTable_ {
 // Device function pointer dispatch table
 typedef struct VkLayerDispatchTable_ {
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     PFN_vkGetDeviceProcAddr GetDeviceProcAddr;
     PFN_vkDestroyDevice DestroyDevice;
     PFN_vkGetDeviceQueue GetDeviceQueue;
@@ -250,8 +248,6 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdNextSubpass CmdNextSubpass;
     PFN_vkCmdEndRenderPass CmdEndRenderPass;
     PFN_vkCmdExecuteCommands CmdExecuteCommands;
-
-    // ---- Core 1_1 commands
     PFN_vkBindBufferMemory2 BindBufferMemory2;
     PFN_vkBindImageMemory2 BindImageMemory2;
     PFN_vkGetDeviceGroupPeerMemoryFeatures GetDeviceGroupPeerMemoryFeatures;
@@ -263,8 +259,6 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCreateSamplerYcbcrConversion CreateSamplerYcbcrConversion;
     PFN_vkDestroySamplerYcbcrConversion DestroySamplerYcbcrConversion;
     PFN_vkGetDescriptorSetLayoutSupport GetDescriptorSetLayoutSupport;
-
-    // ---- Core 1_2 commands
     PFN_vkCmdDrawIndirectCount CmdDrawIndirectCount;
     PFN_vkCmdDrawIndexedIndirectCount CmdDrawIndexedIndirectCount;
     PFN_vkCreateRenderPass2 CreateRenderPass2;
@@ -278,8 +272,6 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkGetBufferDeviceAddress GetBufferDeviceAddress;
     PFN_vkGetBufferOpaqueCaptureAddress GetBufferOpaqueCaptureAddress;
     PFN_vkGetDeviceMemoryOpaqueCaptureAddress GetDeviceMemoryOpaqueCaptureAddress;
-
-    // ---- Core SC 1_0 commands
     PFN_vkGetCommandPoolMemoryConsumption GetCommandPoolMemoryConsumption;
     PFN_vkGetFaultData GetFaultData;
 
@@ -346,6 +338,8 @@ typedef struct VkLayerDispatchTable_ {
 
     // ---- VK_EXT_discard_rectangles extension commands
     PFN_vkCmdSetDiscardRectangleEXT CmdSetDiscardRectangleEXT;
+    PFN_vkCmdSetDiscardRectangleEnableEXT CmdSetDiscardRectangleEnableEXT;
+    PFN_vkCmdSetDiscardRectangleModeEXT CmdSetDiscardRectangleModeEXT;
 
     // ---- VK_EXT_hdr_metadata extension commands
     PFN_vkSetHdrMetadataEXT SetHdrMetadataEXT;

@@ -61,7 +61,7 @@ VKAPI_ATTR bool VKAPI_CALL loader_icd_init_entries(struct loader_icd_term *icd_t
     } while (0)
 
 
-    // ---- Core 1_0
+    // ---- Core SC 1_0
     LOOKUP_GIPA(DestroyInstance, true);
     LOOKUP_GIPA(EnumeratePhysicalDevices, true);
     LOOKUP_GIPA(GetPhysicalDeviceFeatures, true);
@@ -73,18 +73,16 @@ VKAPI_ATTR bool VKAPI_CALL loader_icd_init_entries(struct loader_icd_term *icd_t
     LOOKUP_GIPA(GetDeviceProcAddr, true);
     LOOKUP_GIPA(CreateDevice, true);
     LOOKUP_GIPA(EnumerateDeviceExtensionProperties, true);
-
-    // ---- Core 1_1
-    LOOKUP_GIPA(EnumeratePhysicalDeviceGroups, false);
-    LOOKUP_GIPA(GetPhysicalDeviceFeatures2, false);
-    LOOKUP_GIPA(GetPhysicalDeviceProperties2, false);
-    LOOKUP_GIPA(GetPhysicalDeviceFormatProperties2, false);
-    LOOKUP_GIPA(GetPhysicalDeviceImageFormatProperties2, false);
-    LOOKUP_GIPA(GetPhysicalDeviceQueueFamilyProperties2, false);
-    LOOKUP_GIPA(GetPhysicalDeviceMemoryProperties2, false);
-    LOOKUP_GIPA(GetPhysicalDeviceExternalBufferProperties, false);
-    LOOKUP_GIPA(GetPhysicalDeviceExternalFenceProperties, false);
-    LOOKUP_GIPA(GetPhysicalDeviceExternalSemaphoreProperties, false);
+    LOOKUP_GIPA(EnumeratePhysicalDeviceGroups, true);
+    LOOKUP_GIPA(GetPhysicalDeviceFeatures2, true);
+    LOOKUP_GIPA(GetPhysicalDeviceProperties2, true);
+    LOOKUP_GIPA(GetPhysicalDeviceFormatProperties2, true);
+    LOOKUP_GIPA(GetPhysicalDeviceImageFormatProperties2, true);
+    LOOKUP_GIPA(GetPhysicalDeviceQueueFamilyProperties2, true);
+    LOOKUP_GIPA(GetPhysicalDeviceMemoryProperties2, true);
+    LOOKUP_GIPA(GetPhysicalDeviceExternalBufferProperties, true);
+    LOOKUP_GIPA(GetPhysicalDeviceExternalFenceProperties, true);
+    LOOKUP_GIPA(GetPhysicalDeviceExternalSemaphoreProperties, true);
 
     // ---- VK_KHR_surface extension commands
     LOOKUP_GIPA(DestroySurfaceKHR, false);
@@ -182,7 +180,7 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     VkLayerDispatchTable *table = &dev_table->core_dispatch;
     for (uint32_t i = 0; i < MAX_NUM_UNKNOWN_EXTS; i++) dev_table->ext_dispatch.dev_ext[i] = (PFN_vkDevExt)vkDevExtError;
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     table->GetDeviceProcAddr = gpa;
     table->DestroyDevice = (PFN_vkDestroyDevice)gpa(dev, "vkDestroyDevice");
     table->GetDeviceQueue = (PFN_vkGetDeviceQueue)gpa(dev, "vkGetDeviceQueue");
@@ -294,8 +292,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->CmdNextSubpass = (PFN_vkCmdNextSubpass)gpa(dev, "vkCmdNextSubpass");
     table->CmdEndRenderPass = (PFN_vkCmdEndRenderPass)gpa(dev, "vkCmdEndRenderPass");
     table->CmdExecuteCommands = (PFN_vkCmdExecuteCommands)gpa(dev, "vkCmdExecuteCommands");
-
-    // ---- Core 1_1 commands
     table->BindBufferMemory2 = (PFN_vkBindBufferMemory2)gpa(dev, "vkBindBufferMemory2");
     table->BindImageMemory2 = (PFN_vkBindImageMemory2)gpa(dev, "vkBindImageMemory2");
     table->GetDeviceGroupPeerMemoryFeatures = (PFN_vkGetDeviceGroupPeerMemoryFeatures)gpa(dev, "vkGetDeviceGroupPeerMemoryFeatures");
@@ -307,8 +303,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->CreateSamplerYcbcrConversion = (PFN_vkCreateSamplerYcbcrConversion)gpa(dev, "vkCreateSamplerYcbcrConversion");
     table->DestroySamplerYcbcrConversion = (PFN_vkDestroySamplerYcbcrConversion)gpa(dev, "vkDestroySamplerYcbcrConversion");
     table->GetDescriptorSetLayoutSupport = (PFN_vkGetDescriptorSetLayoutSupport)gpa(dev, "vkGetDescriptorSetLayoutSupport");
-
-    // ---- Core 1_2 commands
     table->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)gpa(dev, "vkCmdDrawIndirectCount");
     table->CmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)gpa(dev, "vkCmdDrawIndexedIndirectCount");
     table->CreateRenderPass2 = (PFN_vkCreateRenderPass2)gpa(dev, "vkCreateRenderPass2");
@@ -322,8 +316,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)gpa(dev, "vkGetBufferDeviceAddress");
     table->GetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)gpa(dev, "vkGetBufferOpaqueCaptureAddress");
     table->GetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)gpa(dev, "vkGetDeviceMemoryOpaqueCaptureAddress");
-
-    // ---- Core SC 1_0 commands
     table->GetCommandPoolMemoryConsumption = (PFN_vkGetCommandPoolMemoryConsumption)gpa(dev, "vkGetCommandPoolMemoryConsumption");
     table->GetFaultData = (PFN_vkGetFaultData)gpa(dev, "vkGetFaultData");
 }
@@ -399,6 +391,8 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
 
     // ---- VK_EXT_discard_rectangles extension commands
     table->CmdSetDiscardRectangleEXT = (PFN_vkCmdSetDiscardRectangleEXT)gdpa(dev, "vkCmdSetDiscardRectangleEXT");
+    table->CmdSetDiscardRectangleEnableEXT = (PFN_vkCmdSetDiscardRectangleEnableEXT)gdpa(dev, "vkCmdSetDiscardRectangleEnableEXT");
+    table->CmdSetDiscardRectangleModeEXT = (PFN_vkCmdSetDiscardRectangleModeEXT)gdpa(dev, "vkCmdSetDiscardRectangleModeEXT");
 
     // ---- VK_EXT_hdr_metadata extension commands
     table->SetHdrMetadataEXT = (PFN_vkSetHdrMetadataEXT)gdpa(dev, "vkSetHdrMetadataEXT");
@@ -490,7 +484,7 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
 VKAPI_ATTR void VKAPI_CALL loader_init_instance_core_dispatch_table(VkLayerInstanceDispatchTable *table, PFN_vkGetInstanceProcAddr gpa,
                                                                     VkInstance inst) {
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     table->DestroyInstance = (PFN_vkDestroyInstance)gpa(inst, "vkDestroyInstance");
     table->EnumeratePhysicalDevices = (PFN_vkEnumeratePhysicalDevices)gpa(inst, "vkEnumeratePhysicalDevices");
     table->GetPhysicalDeviceFeatures = (PFN_vkGetPhysicalDeviceFeatures)gpa(inst, "vkGetPhysicalDeviceFeatures");
@@ -502,8 +496,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_instance_core_dispatch_table(VkLayerInsta
     table->GetInstanceProcAddr = gpa;
     table->EnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)gpa(inst, "vkEnumerateDeviceExtensionProperties");
     table->EnumerateDeviceLayerProperties = (PFN_vkEnumerateDeviceLayerProperties)gpa(inst, "vkEnumerateDeviceLayerProperties");
-
-    // ---- Core 1_1 commands
     table->EnumeratePhysicalDeviceGroups = (PFN_vkEnumeratePhysicalDeviceGroups)gpa(inst, "vkEnumeratePhysicalDeviceGroups");
     table->GetPhysicalDeviceFeatures2 = (PFN_vkGetPhysicalDeviceFeatures2)gpa(inst, "vkGetPhysicalDeviceFeatures2");
     table->GetPhysicalDeviceProperties2 = (PFN_vkGetPhysicalDeviceProperties2)gpa(inst, "vkGetPhysicalDeviceProperties2");
@@ -599,7 +591,7 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
 
     name += 2;
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     if (!strcmp(name, "GetDeviceProcAddr")) return (void *)table->GetDeviceProcAddr;
     if (!strcmp(name, "DestroyDevice")) return (void *)table->DestroyDevice;
     if (!strcmp(name, "GetDeviceQueue")) return (void *)table->GetDeviceQueue;
@@ -711,8 +703,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "CmdNextSubpass")) return (void *)table->CmdNextSubpass;
     if (!strcmp(name, "CmdEndRenderPass")) return (void *)table->CmdEndRenderPass;
     if (!strcmp(name, "CmdExecuteCommands")) return (void *)table->CmdExecuteCommands;
-
-    // ---- Core 1_1 commands
     if (!strcmp(name, "BindBufferMemory2")) return (void *)table->BindBufferMemory2;
     if (!strcmp(name, "BindImageMemory2")) return (void *)table->BindImageMemory2;
     if (!strcmp(name, "GetDeviceGroupPeerMemoryFeatures")) return (void *)table->GetDeviceGroupPeerMemoryFeatures;
@@ -724,8 +714,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "CreateSamplerYcbcrConversion")) return (void *)table->CreateSamplerYcbcrConversion;
     if (!strcmp(name, "DestroySamplerYcbcrConversion")) return (void *)table->DestroySamplerYcbcrConversion;
     if (!strcmp(name, "GetDescriptorSetLayoutSupport")) return (void *)table->GetDescriptorSetLayoutSupport;
-
-    // ---- Core 1_2 commands
     if (!strcmp(name, "CmdDrawIndirectCount")) return (void *)table->CmdDrawIndirectCount;
     if (!strcmp(name, "CmdDrawIndexedIndirectCount")) return (void *)table->CmdDrawIndexedIndirectCount;
     if (!strcmp(name, "CreateRenderPass2")) return (void *)table->CreateRenderPass2;
@@ -739,8 +727,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "GetBufferDeviceAddress")) return (void *)table->GetBufferDeviceAddress;
     if (!strcmp(name, "GetBufferOpaqueCaptureAddress")) return (void *)table->GetBufferOpaqueCaptureAddress;
     if (!strcmp(name, "GetDeviceMemoryOpaqueCaptureAddress")) return (void *)table->GetDeviceMemoryOpaqueCaptureAddress;
-
-    // ---- Core SC 1_0 commands
     if (!strcmp(name, "GetCommandPoolMemoryConsumption")) return (void *)table->GetCommandPoolMemoryConsumption;
     if (!strcmp(name, "GetFaultData")) return (void *)table->GetFaultData;
 
@@ -807,6 +793,8 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
 
     // ---- VK_EXT_discard_rectangles extension commands
     if (!strcmp(name, "CmdSetDiscardRectangleEXT")) return (void *)table->CmdSetDiscardRectangleEXT;
+    if (!strcmp(name, "CmdSetDiscardRectangleEnableEXT")) return (void *)table->CmdSetDiscardRectangleEnableEXT;
+    if (!strcmp(name, "CmdSetDiscardRectangleModeEXT")) return (void *)table->CmdSetDiscardRectangleModeEXT;
 
     // ---- VK_EXT_hdr_metadata extension commands
     if (!strcmp(name, "SetHdrMetadataEXT")) return (void *)table->SetHdrMetadataEXT;
@@ -907,7 +895,7 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_instance_dispatch_table(const VkLayerI
     *found_name = true;
     name += 2;
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     if (!strcmp(name, "DestroyInstance")) return (void *)table->DestroyInstance;
     if (!strcmp(name, "EnumeratePhysicalDevices")) return (void *)table->EnumeratePhysicalDevices;
     if (!strcmp(name, "GetPhysicalDeviceFeatures")) return (void *)table->GetPhysicalDeviceFeatures;
@@ -919,8 +907,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_instance_dispatch_table(const VkLayerI
     if (!strcmp(name, "GetInstanceProcAddr")) return (void *)table->GetInstanceProcAddr;
     if (!strcmp(name, "EnumerateDeviceExtensionProperties")) return (void *)table->EnumerateDeviceExtensionProperties;
     if (!strcmp(name, "EnumerateDeviceLayerProperties")) return (void *)table->EnumerateDeviceLayerProperties;
-
-    // ---- Core 1_1 commands
     if (!strcmp(name, "EnumeratePhysicalDeviceGroups")) return (void *)table->EnumeratePhysicalDeviceGroups;
     if (!strcmp(name, "GetPhysicalDeviceFeatures2")) return (void *)table->GetPhysicalDeviceFeatures2;
     if (!strcmp(name, "GetPhysicalDeviceProperties2")) return (void *)table->GetPhysicalDeviceProperties2;
@@ -1213,7 +1199,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceRefreshableObjectType
 VKAPI_ATTR void VKAPI_CALL CmdSetEvent2KHR(
     VkCommandBuffer                             commandBuffer,
     VkEvent                                     event,
-    const VkDependencyInfoKHR*                  pDependencyInfo) {
+    const VkDependencyInfo*                     pDependencyInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdSetEvent2KHR(commandBuffer, event, pDependencyInfo);
 }
@@ -1221,7 +1207,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetEvent2KHR(
 VKAPI_ATTR void VKAPI_CALL CmdResetEvent2KHR(
     VkCommandBuffer                             commandBuffer,
     VkEvent                                     event,
-    VkPipelineStageFlags2KHR                    stageMask) {
+    VkPipelineStageFlags2                       stageMask) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdResetEvent2KHR(commandBuffer, event, stageMask);
 }
@@ -1230,21 +1216,21 @@ VKAPI_ATTR void VKAPI_CALL CmdWaitEvents2KHR(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    eventCount,
     const VkEvent*                              pEvents,
-    const VkDependencyInfoKHR*                  pDependencyInfos) {
+    const VkDependencyInfo*                     pDependencyInfos) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdWaitEvents2KHR(commandBuffer, eventCount, pEvents, pDependencyInfos);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdPipelineBarrier2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkDependencyInfoKHR*                  pDependencyInfo) {
+    const VkDependencyInfo*                     pDependencyInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdPipelineBarrier2KHR(commandBuffer, pDependencyInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdWriteTimestamp2KHR(
     VkCommandBuffer                             commandBuffer,
-    VkPipelineStageFlags2KHR                    stage,
+    VkPipelineStageFlags2                       stage,
     VkQueryPool                                 queryPool,
     uint32_t                                    query) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
@@ -1254,7 +1240,7 @@ VKAPI_ATTR void VKAPI_CALL CmdWriteTimestamp2KHR(
 VKAPI_ATTR VkResult VKAPI_CALL QueueSubmit2KHR(
     VkQueue                                     queue,
     uint32_t                                    submitCount,
-    const VkSubmitInfo2KHR*                     pSubmits,
+    const VkSubmitInfo2*                        pSubmits,
     VkFence                                     fence) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
     return disp->QueueSubmit2KHR(queue, submitCount, pSubmits, fence);
@@ -1262,7 +1248,7 @@ VKAPI_ATTR VkResult VKAPI_CALL QueueSubmit2KHR(
 
 VKAPI_ATTR void VKAPI_CALL CmdWriteBufferMarker2AMD(
     VkCommandBuffer                             commandBuffer,
-    VkPipelineStageFlags2KHR                    stage,
+    VkPipelineStageFlags2                       stage,
     VkBuffer                                    dstBuffer,
     VkDeviceSize                                dstOffset,
     uint32_t                                    marker) {
@@ -1283,42 +1269,42 @@ VKAPI_ATTR void VKAPI_CALL GetQueueCheckpointData2NV(
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyBuffer2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkCopyBufferInfo2KHR*                 pCopyBufferInfo) {
+    const VkCopyBufferInfo2*                    pCopyBufferInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdCopyBuffer2KHR(commandBuffer, pCopyBufferInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyImage2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkCopyImageInfo2KHR*                  pCopyImageInfo) {
+    const VkCopyImageInfo2*                     pCopyImageInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdCopyImage2KHR(commandBuffer, pCopyImageInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyBufferToImage2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkCopyBufferToImageInfo2KHR*          pCopyBufferToImageInfo) {
+    const VkCopyBufferToImageInfo2*             pCopyBufferToImageInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdCopyBufferToImage2KHR(commandBuffer, pCopyBufferToImageInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyImageToBuffer2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkCopyImageToBufferInfo2KHR*          pCopyImageToBufferInfo) {
+    const VkCopyImageToBufferInfo2*             pCopyImageToBufferInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdCopyImageToBuffer2KHR(commandBuffer, pCopyImageToBufferInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdBlitImage2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkBlitImageInfo2KHR*                  pBlitImageInfo) {
+    const VkBlitImageInfo2*                     pBlitImageInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdBlitImage2KHR(commandBuffer, pBlitImageInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdResolveImage2KHR(
     VkCommandBuffer                             commandBuffer,
-    const VkResolveImageInfo2KHR*               pResolveImageInfo) {
+    const VkResolveImageInfo2*                  pResolveImageInfo) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdResolveImage2KHR(commandBuffer, pResolveImageInfo);
 }
@@ -1372,6 +1358,20 @@ VKAPI_ATTR void VKAPI_CALL CmdSetDiscardRectangleEXT(
     const VkRect2D*                             pDiscardRectangles) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
     disp->CmdSetDiscardRectangleEXT(commandBuffer, firstDiscardRectangle, discardRectangleCount, pDiscardRectangles);
+}
+
+VKAPI_ATTR void VKAPI_CALL CmdSetDiscardRectangleEnableEXT(
+    VkCommandBuffer                             commandBuffer,
+    VkBool32                                    discardRectangleEnable) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
+    disp->CmdSetDiscardRectangleEnableEXT(commandBuffer, discardRectangleEnable);
+}
+
+VKAPI_ATTR void VKAPI_CALL CmdSetDiscardRectangleModeEXT(
+    VkCommandBuffer                             commandBuffer,
+    VkDiscardRectangleModeEXT                   discardRectangleMode) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
+    disp->CmdSetDiscardRectangleModeEXT(commandBuffer, discardRectangleMode);
 }
 
 
@@ -2200,6 +2200,14 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
         *addr = (void *)CmdSetDiscardRectangleEXT;
         return true;
     }
+    if (!strcmp("vkCmdSetDiscardRectangleEnableEXT", name)) {
+        *addr = (void *)CmdSetDiscardRectangleEnableEXT;
+        return true;
+    }
+    if (!strcmp("vkCmdSetDiscardRectangleModeEXT", name)) {
+        *addr = (void *)CmdSetDiscardRectangleModeEXT;
+        return true;
+    }
 
     // ---- VK_EXT_hdr_metadata extension commands
     if (!strcmp("vkSetHdrMetadataEXT", name)) {
@@ -2522,7 +2530,7 @@ PFN_vkVoidFunction get_extension_device_proc_terminator(struct loader_device *de
 // pointers to "terminator functions".
 const VkLayerInstanceDispatchTable instance_disp = {
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     .DestroyInstance = terminator_DestroyInstance,
     .EnumeratePhysicalDevices = terminator_EnumeratePhysicalDevices,
     .GetPhysicalDeviceFeatures = terminator_GetPhysicalDeviceFeatures,
@@ -2534,8 +2542,6 @@ const VkLayerInstanceDispatchTable instance_disp = {
     .GetInstanceProcAddr = vkGetInstanceProcAddr,
     .EnumerateDeviceExtensionProperties = terminator_EnumerateDeviceExtensionProperties,
     .EnumerateDeviceLayerProperties = terminator_EnumerateDeviceLayerProperties,
-
-    // ---- Core 1_1 commands
     .EnumeratePhysicalDeviceGroups = terminator_EnumeratePhysicalDeviceGroups,
     .GetPhysicalDeviceFeatures2 = terminator_GetPhysicalDeviceFeatures2,
     .GetPhysicalDeviceProperties2 = terminator_GetPhysicalDeviceProperties2,

@@ -5,6 +5,7 @@
 # Copyright (c) 2015-2017 LunarG, Inc.
 # Copyright (c) 2015-2017 Google Inc.
 # Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023-2023 RasterGrid Kft.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -112,6 +113,7 @@ class DispatchTableHelperOutputGenerator(OutputGenerator):
         copyright += ' * Copyright (c) 2015-2017 Valve Corporation\n'
         copyright += ' * Copyright (c) 2015-2017 LunarG, Inc.\n'
         copyright += ' * Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.\n'
+        copyright += ' * Copyright (c) 2023-2023 RasterGrid Kft.\n'
         copyright += ' *\n'
         copyright += ' * Licensed under the Apache License, Version 2.0 (the "License");\n'
         copyright += ' * you may not use this file except in compliance with the License.\n'
@@ -186,9 +188,24 @@ class DispatchTableHelperOutputGenerator(OutputGenerator):
         handle = self.registry.tree.find("types/type/[name='" + handle_type + "'][@category='handle']")
         if handle is None:
             return
+
+        feature = self.featureName
+        version_prefix = 'VK_VERSION'
+
+        if self.genOpts.apiname == 'vulkansc':
+            version_prefix = 'VKSC_VERSION'
+
+            if self.featureName in ['VK_VERSION_1_0', 'VK_VERSION_1_1', 'VK_VERSION_1_2']:
+                # Vulkan 1.0-1.2 is included in Vulkan SC 1.0
+                feature = 'VKSC_VERSION_1_0'
+
+            if "VK_VERSION" in feature:
+                # Do not handle commands in Vulkan versions not included in a Vulkan SC version
+                return
+
         if handle_type != 'VkInstance' and handle_type != 'VkPhysicalDevice' and name != 'vkGetInstanceProcAddr':
             self.device_dispatch_list.append((name, self.featureExtraProtect))
-            if "VK_VERSION" not in self.featureName and self.extension_type == 'device':
+            if version_prefix not in feature and self.extension_type == 'device':
                 self.device_extension_list.append(name)
                 # Build up stub function
                 decl = self.makeCDecls(cmdinfo.elem)[1]

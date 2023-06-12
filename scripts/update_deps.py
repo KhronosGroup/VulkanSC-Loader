@@ -118,6 +118,10 @@ examples of all of these elements.
 The name of the dependent repository.  This field can be referenced
 by the "deps.repo_name" structure to record a dependency.
 
+- api
+
+The name of the API the dependency is specific to (e.g. "vulkan").
+
 - url
 
 Specifies the URL of the repository.
@@ -341,6 +345,7 @@ class GoodRepo(object):
         self.build_step = json['build_step'] if ('build_step' in json) else 'build'
         self.build_platforms = json['build_platforms'] if ('build_platforms' in json) else []
         self.optional = set(json.get('optional', []))
+        self.api = json['api'] if ('api' in json) else None
         # Absolute paths for a repo's directories
         dir_top = os.path.abspath(args.dir)
         self.repo_dir = os.path.join(dir_top, self.sub_dir)
@@ -597,11 +602,10 @@ def CreateHelper(args, repos, filename):
     install_names = GetInstallNames(args)
     with open(filename, 'w') as helper_file:
         for repo in repos:
-            # Only process the required Vulkan or VulkanSC Headers Repo
-            if repo.name.lower().find('vulkan') !=-1:
-                repoName=repo.name.split('-')
-                if repoName[0].lower() != args.api:
-                    continue
+            # If the repo has an API tag and that does not match
+            # the target API then skip it
+            if repo.api is not None and repo.api != args.api:
+                continue
             if install_names and repo.name in install_names and repo.on_build_platform:
                 helper_file.write('set({var} "{dir}" CACHE STRING "" FORCE)\n'
                                   .format(
@@ -672,6 +676,12 @@ def main():
         help="Set build files configuration",
         default='debug')
     parser.add_argument(
+        '--api',
+        dest='api',
+        default='vulkan',
+        choices=['vulkan', 'vulkansc'],
+        help="Target API")
+    parser.add_argument(
         '--generator',
         dest='generator',
         help="Set the CMake generator",
@@ -682,13 +692,6 @@ def main():
         type=lambda a: set(a.lower().split(',')),
         help="Comma-separated list of 'optional' resources that may be skipped. Only 'tests' is currently supported as 'optional'",
         default=set())
-    parser.add_argument(
-        '--api',
-        dest='api',
-        choices=['vulkan','vulkansc'],
-        type=str.lower,
-        help="Set the api for cloning Vulkan or VulkanSC Headers repo",
-        default='vulkan')
 
     args = parser.parse_args()
     save_cwd = os.getcwd()
@@ -702,11 +705,11 @@ def main():
 
     print('Starting builds in {d}'.format(d=abs_top_dir))
     for repo in repos:
-        # Only process the required Vulkan or VulkanSC Headers Repo
-        if repo.name.lower().find('vulkan') !=-1:
-            repoName=repo.name.split('-')
-            if repoName[0].lower() != args.api:
-                continue
+        # If the repo has an API tag and that does not match
+        # the target API then skip it
+        if repo.api is not None and repo.api != args.api:
+            continue
+
         # If the repo has a platform whitelist, skip the repo
         # unless we are building on a whitelisted platform.
         if not repo.on_build_platform:

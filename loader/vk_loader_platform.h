@@ -4,6 +4,7 @@
  * Copyright (c) 2015-2021 Valve Corporation
  * Copyright (c) 2015-2021 LunarG, Inc.
  * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +70,6 @@
 #endif  // defined(_WIN32)
 
 #include "vulkan/vk_platform.h"
-#include "vulkan/vk_sdk_platform.h"
 #ifdef VULKANSC
 #include <vulkan/vulkan_sc.h>
 #else
@@ -78,11 +78,14 @@
 #include <vulkan/vk_layer.h>
 #include <vulkan/vk_icd.h>
 
+#include "vksc_header_wa.h"
+
 #include "vk_loader_layer.h"
 #include "vk_layer_dispatch_table.h"
 #include "vk_loader_extensions.h"
 
-#ifdef VULKANSC
+// If not building with the combined headers, then need some compatibility #defines
+#ifndef VULKAN_H_
 #define VK_DEBUG_REPORT_INFORMATION_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
 #define VK_DEBUG_REPORT_WARNING_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
 #define VK_DEBUG_REPORT_ERROR_BIT_EXT VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
@@ -101,13 +104,13 @@ typedef VkQueueFamilyProperties2 VkQueueFamilyProperties2KHR;
 typedef VkExternalMemoryProperties VkExternalMemoryPropertiesKHR;
 typedef VkPhysicalDeviceExternalSemaphoreInfo VkPhysicalDeviceExternalSemaphoreInfoKHR;
 
-
 // Other required macros
 #define VK_MAKE_VERSION(major, minor, patch) VK_MAKE_API_VERSION(VKSC_API_VARIANT, major, minor, patch)
 #define VK_VERSION_MAJOR(version) VK_API_VERSION_MAJOR(version)
 #define VK_VERSION_MINOR(version) VK_API_VERSION_MINOR(version)
 #define VK_VERSION_PATCH(version) VK_API_VERSION_PATCH(version)
-#endif // VULKANSC
+
+#endif // VULKAN_H_
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define LOADER_EXPORT __attribute__((visibility("default")))

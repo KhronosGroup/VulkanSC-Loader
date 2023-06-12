@@ -64,15 +64,15 @@ if(DEFINED VULKAN_HEADERS_INSTALL_DIR)
   # searching system environment variables like $PATH that may
   # contain SDK directories.
   if(VULKANSC)
-      find_path(VulkanHeaders_INCLUDE_DIR
-          NAMES vulkan/vulkan_sc.h
-          HINTS ${VULKAN_HEADERS_INSTALL_DIR}/include
-          NO_CMAKE_FIND_ROOT_PATH)
+    find_path(VulkanHeaders_INCLUDE_DIR
+        NAMES vulkan/vulkan_sc.h
+        HINTS ${VULKAN_HEADERS_INSTALL_DIR}/include
+        NO_CMAKE_FIND_ROOT_PATH)
   else()
-      find_path(VulkanHeaders_INCLUDE_DIR
-          NAMES vulkan/vulkan.h
-          HINTS ${VULKAN_HEADERS_INSTALL_DIR}/include
-          NO_CMAKE_FIND_ROOT_PATH)
+    find_path(VulkanHeaders_INCLUDE_DIR
+        NAMES vulkan/vulkan.h
+        HINTS ${VULKAN_HEADERS_INSTALL_DIR}/include
+        NO_CMAKE_FIND_ROOT_PATH)
   endif()
   find_path(VulkanRegistry_DIR
       NAMES vk.xml
@@ -107,19 +107,15 @@ set(VulkanHeaders_VERSION_MAJOR "0")
 set(VulkanHeaders_VERSION_MINOR "0")
 set(VulkanHeaders_VERSION_PATCH "0")
 
-if(VULKANSC)
-    if (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h")
-        set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h)
-    endif()
-else()
+if (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h")
+    set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h)
 # First, determine which header we need to grab the version information from.
 # Starting with Vulkan 1.1, we should use vulkan_core.h, but prior to that,
 # the information was in vulkan.h.
-    if (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_core.h")
-        set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_core.h)
-    else()
-        set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan.h)
-    endif()
+elseif (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_core.h")
+    set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_core.h)
+else()
+    set(VulkanHeaders_main_header ${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan.h)
 endif()
 
 # Find all lines in the header file that contain any version we may be interested in

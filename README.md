@@ -1,7 +1,9 @@
 # Vulkan and Vulkan SC Ecosystem Components
 
-This project provides the Khronos Vulkan ICD Desktop loader for Windows, Linux, and MacOS, and
+This project provides the Khronos Vulkan SC ICD Desktop loader for Windows, Linux, and MacOS, and
 the Khronos Vulkan SC Development ICD loader for Windows, Linux, and QNX.
+
+> **IMPORTANT NOTE:** This repository is to be used with the [Vulkan SC](https://www.khronos.org/vulkansc/) API and should not be confused with the similar repository that exists for the Vulkan API (see https://github.com/KhronosGroup/Vulkan-Loader). While it is possible to build the Vulkan version from this repository, this repository contains a forked version of the upstream code and may not be up-to-date with the latest changes in the upstream repository.
 
 ## CI Build Status
 

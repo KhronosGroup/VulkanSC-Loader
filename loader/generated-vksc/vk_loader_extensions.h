@@ -191,7 +191,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalSemaphoreProperti
 // ICD function pointer dispatch table
 struct loader_icd_term_dispatch {
 
-    // ---- Core 1_0 commands
+    // ---- Core SC 1_0 commands
     PFN_vkCreateInstance CreateInstance;
     PFN_vkDestroyInstance DestroyInstance;
     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
@@ -206,8 +206,6 @@ struct loader_icd_term_dispatch {
     PFN_vkEnumerateInstanceExtensionProperties EnumerateInstanceExtensionProperties;
     PFN_vkEnumerateDeviceExtensionProperties EnumerateDeviceExtensionProperties;
     PFN_vkEnumerateInstanceLayerProperties EnumerateInstanceLayerProperties;
-
-    // ---- Core 1_1 commands
     PFN_vkEnumerateInstanceVersion EnumerateInstanceVersion;
     PFN_vkEnumeratePhysicalDeviceGroups EnumeratePhysicalDeviceGroups;
     PFN_vkGetPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2;
