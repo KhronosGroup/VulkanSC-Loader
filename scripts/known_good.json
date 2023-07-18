@@ -19,7 +19,7 @@
             "cmake_options": [
                 "-DVULKANSC=ON"
             ],
-            "commit": "fece0e8e98d139ebc6eed30b430ed31c1ece2233"
+            "commit": "e8febd2664a72d0e4d029585822ea3fa127f916e"
         },
         {
             "name": "googletest",

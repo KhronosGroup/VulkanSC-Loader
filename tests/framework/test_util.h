@@ -456,6 +456,10 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
 #endif
         case (VK_RESULT_MAX_ENUM):
             return os << "VK_RESULT_MAX_ENUM";
+#if defined(VULKANSC)
+        default:
+            break;
+#endif
     }
     return os << static_cast<int32_t>(result);
 }

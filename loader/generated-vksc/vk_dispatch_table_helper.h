@@ -120,6 +120,9 @@ static VKAPI_ATTR void VKAPI_CALL StubCmdSetColorWriteEnableEXT(VkCommandBuffer 
 #ifdef VK_USE_PLATFORM_SCI
 static VKAPI_ATTR VkResult VKAPI_CALL StubCreateSemaphoreSciSyncPoolNV(VkDevice device, const VkSemaphoreSciSyncPoolCreateInfoNV* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSemaphoreSciSyncPoolNV* pSemaphorePool) { return VK_SUCCESS; };
 #endif // VK_USE_PLATFORM_SCI
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+static VKAPI_ATTR VkResult VKAPI_CALL StubGetScreenBufferPropertiesQNX(VkDevice device, const struct _screen_buffer* buffer, VkScreenBufferPropertiesQNX* pProperties) { return VK_SUCCESS; };
+#endif // VK_USE_PLATFORM_SCREEN_QNX
 
 
 
@@ -433,6 +436,10 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV) gpa(device, "vkCreateSemaphoreSciSyncPoolNV");
     if (table->CreateSemaphoreSciSyncPoolNV == nullptr) { table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV)StubCreateSemaphoreSciSyncPoolNV; }
 #endif // VK_USE_PLATFORM_SCI
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+    table->GetScreenBufferPropertiesQNX = (PFN_vkGetScreenBufferPropertiesQNX) gpa(device, "vkGetScreenBufferPropertiesQNX");
+    if (table->GetScreenBufferPropertiesQNX == nullptr) { table->GetScreenBufferPropertiesQNX = (PFN_vkGetScreenBufferPropertiesQNX)StubGetScreenBufferPropertiesQNX; }
+#endif // VK_USE_PLATFORM_SCREEN_QNX
 }
 
 

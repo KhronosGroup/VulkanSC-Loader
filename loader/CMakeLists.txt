@@ -79,6 +79,10 @@ elseif(UNIX AND NOT APPLE) # i.e.: Linux
     endif()
 
     if(VULKANSC)
+        if(BUILD_WSI_SCREEN_QNX_SUPPORT)
+            set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCREEN_QNX)
+        endif()
+
         if(BUILD_WSI_SCI_SUPPORT)
             set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCI)
         endif()

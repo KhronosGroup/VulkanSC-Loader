@@ -478,6 +478,11 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
 #ifdef VK_USE_PLATFORM_SCI
     table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV)gdpa(dev, "vkCreateSemaphoreSciSyncPoolNV");
 #endif // VK_USE_PLATFORM_SCI
+
+    // ---- VK_QNX_external_memory_screen_buffer extension commands
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+    table->GetScreenBufferPropertiesQNX = (PFN_vkGetScreenBufferPropertiesQNX)gdpa(dev, "vkGetScreenBufferPropertiesQNX");
+#endif // VK_USE_PLATFORM_SCREEN_QNX
 }
 
 // Init Instance function pointer dispatch table with core commands
@@ -880,6 +885,11 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
 #ifdef VK_USE_PLATFORM_SCI
     if (!strcmp(name, "CreateSemaphoreSciSyncPoolNV")) return (void *)table->CreateSemaphoreSciSyncPoolNV;
 #endif // VK_USE_PLATFORM_SCI
+
+    // ---- VK_QNX_external_memory_screen_buffer extension commands
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+    if (!strcmp(name, "GetScreenBufferPropertiesQNX")) return (void *)table->GetScreenBufferPropertiesQNX;
+#endif // VK_USE_PLATFORM_SCREEN_QNX
 
     return NULL;
 }
@@ -2022,6 +2032,19 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateSemaphoreSciSyncPoolNV(
 }
 
 #endif // VK_USE_PLATFORM_SCI
+
+// ---- VK_QNX_external_memory_screen_buffer extension trampoline/terminators
+
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+VKAPI_ATTR VkResult VKAPI_CALL GetScreenBufferPropertiesQNX(
+    VkDevice                                    device,
+    const struct _screen_buffer*                buffer,
+    VkScreenBufferPropertiesQNX*                pProperties) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
+    return disp->GetScreenBufferPropertiesQNX(device, buffer, pProperties);
+}
+
+#endif // VK_USE_PLATFORM_SCREEN_QNX
 // GPA helpers for extensions
 bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr) {
     *addr = NULL;
@@ -2458,6 +2481,14 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
         return true;
     }
 #endif // VK_USE_PLATFORM_SCI
+
+    // ---- VK_QNX_external_memory_screen_buffer extension commands
+#ifdef VK_USE_PLATFORM_SCREEN_QNX
+    if (!strcmp("vkGetScreenBufferPropertiesQNX", name)) {
+        *addr = (void *)GetScreenBufferPropertiesQNX;
+        return true;
+    }
+#endif // VK_USE_PLATFORM_SCREEN_QNX
     return false;
 }
 
