@@ -2,6 +2,7 @@
     "repos": [
         {
             "name": "Vulkan-Headers",
+            "api": "vulkan",
             "url": "https://github.com/KhronosGroup/Vulkan-Headers.git",
             "sub_dir": "Vulkan-Headers",
             "build_dir": "Vulkan-Headers/build",
@@ -9,15 +10,16 @@
             "commit": "v1.2.198"
         },
         {
-            "name" : "VulkanSC-Headers",
-            "url" : "https://github.com/KhronosGroup/Vulkan-Headers.git",
-            "sub_dir" : "VulkanSC-Headers",
-            "build_dir" : "VulkanSC-Headers/build",
-            "install_dir" : "VulkanSC-Headers/build/install",
-            "cmake_options" : [
-              "-DVULKANSC=ON"
+            "name": "Vulkan-Headers",
+            "api": "vulkansc",
+            "url": "https://github.com/KhronosGroup/VulkanSC-Headers.git",
+            "sub_dir": "Vulkan-Headers",
+            "build_dir": "Vulkan-Headers/build",
+            "install_dir": "Vulkan-Headers/build/install",
+            "cmake_options": [
+                "-DVULKANSC=ON"
             ],
-            "commit" : "vksc1.0.12"
+            "commit": "e8febd2664a72d0e4d029585822ea3fa127f916e"
         },
         {
             "name": "googletest",
@@ -49,7 +51,6 @@
     ],
     "install_names": {
         "Vulkan-Headers": "VULKAN_HEADERS_INSTALL_DIR",
-        "VulkanSC-Headers" : "VULKAN_HEADERS_INSTALL_DIR",
         "googletest": "GOOGLETEST_INSTALL_DIR",
         "detours": "DETOURS_INSTALL_DIR"
     }

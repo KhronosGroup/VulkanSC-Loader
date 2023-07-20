@@ -327,6 +327,15 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
         return result
 
     #
+    # Translate Vulkan API version to Vulkan SC API version
+    def translateVersion(self, version):
+        if self.genOpts.apiname == 'vulkansc':
+            if version in ['VK_VERSION_1_0', 'VK_VERSION_1_1', 'VK_VERSION_1_2']:
+                # Vulkan 1.0-1.2 is included in Vulkan SC 1.0
+                version = 'VKSC_VERSION_1_0'
+        return version
+
+    #
     # Determine if this API should be ignored or added to the instance or device dispatch table
     def AddCommandToDispatchList(self, extension_name, extension_type, name, cmdinfo, handle_type):
         handle = self.registry.tree.find("types/type/[name='" + handle_type + "'][@category='handle']")
@@ -359,6 +368,13 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             param_cdecl = self.makeCParamDecl(param, 0)
             cmd_params.append(self.CommandParam(type=param_type, name=param_name,
                                                 cdecl=param_cdecl))
+
+        extension_name = self.translateVersion(extension_name)
+
+        if self.genOpts.apiname == 'vulkansc':
+            if 'VK_VERSION_' in extension_name:
+                # Do not handle commands in Vulkan versions not included in a Vulkan SC version
+                return
 
         if handle is not None and handle_type != 'VkInstance' and handle_type != 'VkPhysicalDevice':
             # The Core Vulkan code will be wrapped in a feature called VK_VERSION_#_#

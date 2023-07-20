@@ -69,7 +69,7 @@ jobs:
               if: matrix.vksc_build == 'VULKANSC=OFF'
 
             - name: Verify generated source files
-              run: python scripts/generate_source.py --api vulkansc --verify external/VulkanSC-Headers/registry
+              run: python scripts/generate_source.py --api vulkansc --verify external/Vulkan-Headers/registry
               if: matrix.vksc_build == 'VULKANSC=ON'
 
             - name: Verify code formatting with clang-format

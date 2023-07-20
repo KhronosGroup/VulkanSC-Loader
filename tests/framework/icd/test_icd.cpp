@@ -433,6 +433,20 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkGetPhysicalDeviceImageFormatProperties2(
     return VK_SUCCESS;
 }
 
+#if defined(VULKANSC)
+VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalBufferProperties(
+    VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo* pExternalBufferInfo,
+    VkExternalBufferProperties* pExternalBufferProperties) {}
+
+VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice physicalDevice,
+                                                                      const VkPhysicalDeviceExternalFenceInfo* pExternalFenceInfo,
+                                                                      VkExternalFenceProperties* pExternalFenceProperties) {}
+
+VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalSemaphoreProperties(
+    VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalSemaphoreInfo* pExternalSemaphoreInfo,
+    VkExternalSemaphoreProperties* pExternalSemaphoreProperties) {}
+#endif
+
 //// trampolines
 
 #define TO_VOID_PFN(func) reinterpret_cast<PFN_vkVoidFunction>(func)
@@ -549,6 +563,15 @@ PFN_vkVoidFunction get_physical_device_func(VkInstance instance, const char* pNa
         if (string_eq(pName, "vkGetPhysicalDeviceImageFormatProperties2")) {
             return TO_VOID_PFN(test_vkGetPhysicalDeviceImageFormatProperties2);
         }
+
+#if defined(VULKANSC)
+        if (string_eq(pName, "vkGetPhysicalDeviceExternalBufferProperties"))
+            return TO_VOID_PFN(vkGetPhysicalDeviceExternalSemaphoreProperties);
+        if (string_eq(pName, "vkGetPhysicalDeviceExternalFenceProperties"))
+            return TO_VOID_PFN(vkGetPhysicalDeviceExternalSemaphoreProperties);
+        if (string_eq(pName, "vkGetPhysicalDeviceExternalSemaphoreProperties"))
+            return TO_VOID_PFN(vkGetPhysicalDeviceExternalSemaphoreProperties);
+#endif
     }
 #if !defined(VULKANSC)
     if (icd.supports_tooling_info_ext) {

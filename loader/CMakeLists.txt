@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2021 Valve Corporation
 # Copyright (c) 2014-2021 LunarG, Inc.
 # Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023-2023 RasterGrid Kft.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,6 +79,10 @@ elseif(UNIX AND NOT APPLE) # i.e.: Linux
     endif()
 
     if(VULKANSC)
+        if(BUILD_WSI_SCREEN_QNX_SUPPORT)
+            set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCREEN_QNX)
+        endif()
+
         if(BUILD_WSI_SCI_SUPPORT)
             set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS VK_USE_PLATFORM_SCI)
         endif()
@@ -362,47 +367,36 @@ else()
         find_library(COREFOUNDATION_LIBRARY NAMES CoreFoundation)
         target_link_libraries(${SONAME} "-framework CoreFoundation")
 
+        # Build vulkan.framework
+        set(FRAMEWORK_HEADERS
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_layer.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_platform.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_android.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_ios.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_macos.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_vi.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_wayland.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_win32.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xcb.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib_xrandr.h
+            ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_screen.h)
         if(VULKANSC)
-            # Build vulkansc.framework
-            set(FRAMEWORK_HEADERS
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_layer.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_platform.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_sdk_platform.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_android.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc_core.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc_core.hpp
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_ios.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_macos.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sci.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_vi.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_wayland.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_win32.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xcb.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib_xrandr.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_screen.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc.h)
-        else()
-            # Build vulkan.framework
-            set(FRAMEWORK_HEADERS
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_icd.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_layer.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_platform.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vk_sdk_platform.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_android.h
+            list(APPEND FRAMEWORK_HEADERS
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc.h
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sci.h)
+            if (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan_sc_core.h")
+                list(APPEND FRAMEWORK_HEADERS ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_sc_core.h)
+            endif()
+        endif()
+        if (EXISTS "${VulkanHeaders_INCLUDE_DIR}/vulkan/vulkan.h")
+            list(APPEND FRAMEWORK_HEADERS
                 ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_core.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_ios.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_macos.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_vi.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_wayland.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_win32.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xcb.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_xlib_xrandr.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_screen.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.h
-                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.hpp)
+                ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.h)
+            if (EXISTS "${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.hpp")
+                list(APPEND FRAMEWORK_HEADERS ${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan.hpp)
+            endif()
         endif()
         if(BUILD_STATIC_LOADER)
             add_library(${SONAME}-framework STATIC ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS} ${FRAMEWORK_HEADERS})

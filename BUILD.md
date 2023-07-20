@@ -186,6 +186,9 @@ then be regenerated using `scripts/generate_source.py`:
 
     python3 scripts/generate_source.py PATH_TO_VULKAN_HEADERS_REGISTRY_DIR
 
+To generate source code for Vulkan SC the `--api vulkansc` option must be
+passed to the `generate_source.py` command.
+
 A helper CMake target `VulkanLoader_generated_source` is also provided to simplify
 the invocation of `scripts/generate_source.py` from the build directory:
 
