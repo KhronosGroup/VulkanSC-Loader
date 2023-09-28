@@ -33,7 +33,6 @@
 #include "layer/layer_util.h"
 
 #if defined(VULKANSC)
-#include "loader/vksc_header_wa.h"
 #include "loader/generated-vksc/vk_layer_dispatch_table.h"
 #else
 #include "loader/generated/vk_layer_dispatch_table.h"

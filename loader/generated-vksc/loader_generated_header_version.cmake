@@ -25,5 +25,5 @@
 #
 ############################################################################
 
-set(LOADER_GENERATED_HEADER_VERSION "1.0.12")
+set(LOADER_GENERATED_HEADER_VERSION "1.0.13")
 

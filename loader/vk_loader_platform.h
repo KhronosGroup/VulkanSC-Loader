@@ -78,8 +78,6 @@
 #include <vulkan/vk_layer.h>
 #include <vulkan/vk_icd.h>
 
-#include "vksc_header_wa.h"
-
 #include "vk_loader_layer.h"
 #include "vk_layer_dispatch_table.h"
 #include "vk_loader_extensions.h"
