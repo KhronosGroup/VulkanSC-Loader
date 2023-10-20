@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -128,12 +130,14 @@ struct TestICD {
     // known_device_functions member)
     BUILDER_VECTOR(TestICD, VulkanFunction, custom_instance_functions, custom_instance_function)
 
+#ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
     // Must explicitely state support for the tooling info extension, that way we can control if vkGetInstanceProcAddr returns a
     // function pointer for vkGetPhysicalDeviceToolPropertiesEXT or vkGetPhysicalDeviceToolProperties (core version)
     BUILDER_VALUE(TestICD, bool, supports_tooling_info_ext, false);
     BUILDER_VALUE(TestICD, bool, supports_tooling_info_core, false);
     // List of tooling properties that this driver 'supports'
     BUILDER_VECTOR(TestICD, VkPhysicalDeviceToolPropertiesEXT, tooling_properties, tooling_property)
+#endif  // VULKANSC
     std::vector<DispatchableHandle<VkCommandBuffer>> allocated_command_buffers;
 
     VkInstanceCreateFlags passed_in_instance_create_flags{};

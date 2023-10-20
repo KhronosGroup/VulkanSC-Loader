@@ -10,7 +10,11 @@
 
 */
 
+#ifdef VULKANSC
+#include <vulkan/vulkan_sc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif
 
 #if defined(__cplusplus)
 extern "C" {

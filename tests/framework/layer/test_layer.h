@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2022 The Khronos Group Inc.
  * Copyright (c) 2021-2022 Valve Corporation
  * Copyright (c) 2021-2022 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -31,7 +33,11 @@
 
 #include "layer/layer_util.h"
 
+#ifdef VULKANSC
+#include "loader/generated-vksc/vk_layer_dispatch_table.h"
+#else
 #include "loader/generated/vk_layer_dispatch_table.h"
+#endif  // VULKANSC
 
 /*
 Interface Version 0
@@ -90,20 +96,32 @@ using FP_layer_callback = VkResult (*)(TestLayer& layer, void* data);
 
 struct TestLayer {
     fs::path manifest_file_path;
+#ifdef VULKANSC
+    uint32_t manifest_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 13);
+#else
     uint32_t manifest_version = VK_MAKE_API_VERSION(0, 1, 1, 2);
+#endif  // VULKANSC
 
     BUILDER_VALUE(TestLayer, bool, is_meta_layer, false)
 
     BUILDER_VALUE(TestLayer, uint32_t, api_version, VK_API_VERSION_1_0)
     BUILDER_VALUE(TestLayer, uint32_t, reported_layer_props, 1)
     BUILDER_VALUE(TestLayer, uint32_t, reported_extension_props, 0)
+#ifdef VULKANSC
+    BUILDER_VALUE(TestLayer, uint32_t, reported_instance_version, VKSC_API_VERSION_1_0)
+#else
     BUILDER_VALUE(TestLayer, uint32_t, reported_instance_version, VK_API_VERSION_1_0)
+#endif  // VULKANSC
     BUILDER_VALUE(TestLayer, uint32_t, implementation_version, 2)
     BUILDER_VALUE(TestLayer, uint32_t, min_implementation_version, 0)
     BUILDER_VALUE(TestLayer, std::string, description, {})
 
     // Some layers may try to change the API version during instance creation - we should allow testing of such behavior
+#ifdef VULKANSC
+    BUILDER_VALUE(TestLayer, uint32_t, alter_api_version, VKSC_API_VERSION_1_0)
+#else
     BUILDER_VALUE(TestLayer, uint32_t, alter_api_version, VK_API_VERSION_1_0)
+#endif  // VULKANSC
 
     BUILDER_VECTOR(TestLayer, std::string, alternative_function_names, alternative_function_name)
 

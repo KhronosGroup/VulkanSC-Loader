@@ -3,6 +3,7 @@
  * Copyright (c) 2021-2022 The Khronos Group Inc.
  * Copyright (c) 2021-2022 Valve Corporation
  * Copyright (c) 2021-2022 LunarG, Inc.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +237,9 @@ VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32
                                             struct loader_phys_dev_per_icd *icd_devices, uint32_t phys_dev_count,
                                             struct loader_physical_device_term **sorted_device_term) {
     VkResult res = VK_SUCCESS;
+#ifndef VULKANSC
     bool app_is_vulkan_1_1 = loader_check_version_meets_required(LOADER_VERSION_1_1_0, inst->app_api_version);
+#endif  // VULKANSC
 
     struct LinuxSortedDeviceInfo *sorted_device_info = loader_instance_heap_calloc(
         inst, phys_dev_count * sizeof(struct LinuxSortedDeviceInfo), VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
@@ -266,8 +269,10 @@ VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32
             sorted_device_info[index].vendor_id = dev_props.vendorID;
             sorted_device_info[index].device_id = dev_props.deviceID;
 
+#ifndef VULKANSC
             bool device_is_1_1_capable =
                 loader_check_version_meets_required(LOADER_VERSION_1_1_0, loader_make_version(dev_props.apiVersion));
+#endif  // VULKANSC
             if (!sorted_device_info[index].has_pci_bus_info) {
                 uint32_t ext_count = 0;
                 icd_term->dispatch.EnumerateDeviceExtensionProperties(sorted_device_info[index].physical_device, NULL, &ext_count,
@@ -297,11 +302,16 @@ VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32
                     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = (VkBaseInStructure *)&pci_props};
 
                 PFN_vkGetPhysicalDeviceProperties2 GetPhysDevProps2 = NULL;
+#ifndef VULKANSC
                 if (app_is_vulkan_1_1 && device_is_1_1_capable) {
                     GetPhysDevProps2 = icd_term->dispatch.GetPhysicalDeviceProperties2;
                 } else {
                     GetPhysDevProps2 = (PFN_vkGetPhysicalDeviceProperties2)icd_term->dispatch.GetPhysicalDeviceProperties2KHR;
                 }
+#else
+                // vkGetPhysicalDeviceProperties2 is part of Vulkan SC 1.0
+                GetPhysDevProps2 = icd_term->dispatch.GetPhysicalDeviceProperties2;
+#endif  // VULKANSC
                 if (NULL != GetPhysDevProps2) {
                     GetPhysDevProps2(sorted_device_info[index].physical_device, &dev_props2);
                     sorted_device_info[index].pci_domain = pci_props.pciDomain;
@@ -347,7 +357,9 @@ out:
 VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_t group_count,
                                            struct loader_physical_device_group_term *sorted_group_term) {
     VkResult res = VK_SUCCESS;
+#ifndef VULKANSC
     bool app_is_vulkan_1_1 = loader_check_version_meets_required(LOADER_VERSION_1_1_0, inst->app_api_version);
+#endif  // VULKANSC
 
     loader_log(inst, VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_DRIVER_BIT, 0, "linux_sort_physical_device_groups:  Original order:");
 
@@ -370,8 +382,10 @@ VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_
             sorted_group_term[group].internal_device_info[gpu].vendor_id = dev_props.vendorID;
             sorted_group_term[group].internal_device_info[gpu].device_id = dev_props.deviceID;
 
+#ifndef VULKANSC
             bool device_is_1_1_capable =
                 loader_check_version_meets_required(LOADER_VERSION_1_1_0, loader_make_version(dev_props.apiVersion));
+#endif  // VULKANSC
             if (!sorted_group_term[group].internal_device_info[gpu].has_pci_bus_info) {
                 uint32_t ext_count;
                 icd_term->dispatch.EnumerateDeviceExtensionProperties(
@@ -400,11 +414,16 @@ VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_
                     .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = (VkBaseInStructure *)&pci_props};
 
                 PFN_vkGetPhysicalDeviceProperties2 GetPhysDevProps2 = NULL;
+#ifndef VULKANSC
                 if (app_is_vulkan_1_1 && device_is_1_1_capable) {
                     GetPhysDevProps2 = icd_term->dispatch.GetPhysicalDeviceProperties2;
                 } else {
                     GetPhysDevProps2 = (PFN_vkGetPhysicalDeviceProperties2)icd_term->dispatch.GetPhysicalDeviceProperties2KHR;
                 }
+#else
+                // vkGetPhysicalDeviceProperties2 is part of Vulkan SC 1.0
+                GetPhysDevProps2 = icd_term->dispatch.GetPhysicalDeviceProperties2;
+#endif  // VULKANSC
                 if (NULL != GetPhysDevProps2) {
                     GetPhysDevProps2(sorted_group_term[group].internal_device_info[gpu].physical_device, &dev_props2);
                     sorted_group_term[group].internal_device_info[gpu].pci_domain = pci_props.pciDomain;

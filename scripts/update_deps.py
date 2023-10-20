@@ -663,7 +663,7 @@ def main():
         '--api',
         dest='api',
         default='vulkan',
-        choices=['vulkan'],
+        choices=['vulkan', 'vulkansc'],
         help="Target API")
     parser.add_argument(
         '--generator',

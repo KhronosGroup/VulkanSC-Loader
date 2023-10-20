@@ -4,6 +4,8 @@
  * Copyright (c) 2014-2021 Valve Corporation
  * Copyright (c) 2014-2021 LunarG, Inc.
  * Copyright (C) 2015 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +100,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceImageFormatProperties
                                                                      pImageFormatProperties);
 }
 
+#ifndef VULKANSC
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceSparseImageFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format,
                                                                                    VkImageType type, VkSampleCountFlagBits samples,
                                                                                    VkImageUsageFlags usage, VkImageTiling tiling,
@@ -110,6 +113,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceSparseImageFormatProperti
                                                                         tiling, pNumProperties, pProperties);
     }
 }
+#endif  // VULKANSC
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount,
                                                                          VkLayerProperties *pProperties) {
@@ -129,6 +133,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceFeatures2(VkPhysicalDevic
                                                                  VkPhysicalDeviceFeatures2 *pFeatures) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -179,12 +184,20 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceFeatures2(VkPhysicalDevic
             }
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD.
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceFeatures2 fpGetPhysicalDeviceFeatures2 = icd_term->dispatch.GetPhysicalDeviceFeatures2;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceFeatures2(phys_dev_term->phys_dev, pFeatures);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
                                                                    VkPhysicalDeviceProperties2 *pProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -242,12 +255,20 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceProperties2(VkPhysicalDev
             }
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD. This could be the core or KHR version
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceProperties2 fpGetPhysicalDeviceProperties2 = icd_term->dispatch.GetPhysicalDeviceProperties2;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceProperties2(phys_dev_term->phys_dev, pProperties);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceFormatProperties2(VkPhysicalDevice physicalDevice, VkFormat format,
                                                                          VkFormatProperties2 *pFormatProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -279,13 +300,22 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceFormatProperties2(VkPhysi
                        "pFormatProperties->pNext - this struct will be ignored");
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD.
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceFormatProperties2 fpGetPhysicalDeviceFormatProperties2 =
+        icd_term->dispatch.GetPhysicalDeviceFormatProperties2;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceFormatProperties2(phys_dev_term->phys_dev, format, pFormatProperties);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceImageFormatProperties2(
-    VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2KHR *pImageFormatInfo,
-    VkImageFormatProperties2KHR *pImageFormatProperties) {
+    VkPhysicalDevice physicalDevice, const VkPhysicalDeviceImageFormatInfo2 *pImageFormatInfo,
+    VkImageFormatProperties2 *pImageFormatProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -319,13 +349,22 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceImageFormatProperties
             phys_dev_term->phys_dev, pImageFormatInfo->format, pImageFormatInfo->type, pImageFormatInfo->tiling,
             pImageFormatInfo->usage, pImageFormatInfo->flags, &pImageFormatProperties->imageFormatProperties);
     }
+#else
+    // Get the function pointer to use to call into the ICD.
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceImageFormatProperties2 fpGetPhysicalDeviceImageFormatProperties2 =
+        icd_term->dispatch.GetPhysicalDeviceImageFormatProperties2;
+    // Pass the call to the driver
+    return fpGetPhysicalDeviceImageFormatProperties2(phys_dev_term->phys_dev, pImageFormatInfo, pImageFormatProperties);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceQueueFamilyProperties2(VkPhysicalDevice physicalDevice,
                                                                               uint32_t *pQueueFamilyPropertyCount,
-                                                                              VkQueueFamilyProperties2KHR *pQueueFamilyProperties) {
+                                                                              VkQueueFamilyProperties2 *pQueueFamilyProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -378,12 +417,21 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceQueueFamilyProperties2(Vk
             }
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD. This could be the core or KHR version
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceQueueFamilyProperties2 fpGetPhysicalDeviceQueueFamilyProperties2 =
+        icd_term->dispatch.GetPhysicalDeviceQueueFamilyProperties2;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceQueueFamilyProperties2(phys_dev_term->phys_dev, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceMemoryProperties2(VkPhysicalDevice physicalDevice,
                                                                          VkPhysicalDeviceMemoryProperties2 *pMemoryProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -415,8 +463,17 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceMemoryProperties2(VkPhysi
                        "pMemoryProperties->pNext - this struct will be ignored");
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD. This could be the core or KHR version
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceMemoryProperties2 fpGetPhysicalDeviceMemoryProperties2 =
+        icd_term->dispatch.GetPhysicalDeviceMemoryProperties2;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceMemoryProperties2(phys_dev_term->phys_dev, pMemoryProperties);
+#endif  // VULKANSC
 }
 
+#ifndef VULKANSC
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceSparseImageFormatProperties2(
     VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2KHR *pFormatInfo, uint32_t *pPropertyCount,
     VkSparseImageFormatProperties2KHR *pProperties) {
@@ -486,12 +543,14 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceSparseImageFormatProperti
         }
     }
 }
+#endif  // VULKANSC
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalBufferProperties(
     VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo,
     VkExternalBufferProperties *pExternalBufferProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -528,6 +587,14 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalBufferProperties(
                        "pExternalBufferProperties->pNext - this struct will be ignored");
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD.
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceExternalBufferProperties fpGetPhysicalDeviceExternalBufferProperties =
+        icd_term->dispatch.GetPhysicalDeviceExternalBufferProperties;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceExternalBufferProperties(phys_dev_term->phys_dev, pExternalBufferInfo, pExternalBufferProperties);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalSemaphoreProperties(
@@ -535,6 +602,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalSemaphoreProperti
     VkExternalSemaphoreProperties *pExternalSemaphoreProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -575,6 +643,14 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalSemaphoreProperti
                        "pExternalSemaphoreProperties->pNext - this struct will be ignored");
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD.
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceExternalSemaphoreProperties fpGetPhysicalDeviceExternalSemaphoreProperties =
+        icd_term->dispatch.GetPhysicalDeviceExternalSemaphoreProperties;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceExternalSemaphoreProperties(phys_dev_term->phys_dev, pExternalSemaphoreInfo, pExternalSemaphoreProperties);
+#endif  // VULKANSC
 }
 
 VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalFenceProperties(
@@ -582,6 +658,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalFenceProperties(
     VkExternalFenceProperties *pExternalFenceProperties) {
     struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
     struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+#ifndef VULKANSC
     const struct loader_instance *inst = icd_term->this_instance;
 
     assert(inst != NULL);
@@ -620,8 +697,17 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalFenceProperties(
                        "pExternalFenceProperties->pNext - this struct will be ignored");
         }
     }
+#else
+    // Get the function pointer to use to call into the ICD.
+    // In Vulkan SC this is core and no emulation is required.
+    PFN_vkGetPhysicalDeviceExternalFenceProperties fpGetPhysicalDeviceExternalFenceProperties =
+        icd_term->dispatch.GetPhysicalDeviceExternalFenceProperties;
+    // Pass the call to the driver
+    fpGetPhysicalDeviceExternalFenceProperties(phys_dev_term->phys_dev, pExternalFenceInfo, pExternalFenceProperties);
+#endif  // VULKANSC
 }
 
+#ifndef VULKANSC
 // 1.3 Core terminators
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceToolProperties(VkPhysicalDevice physicalDevice, uint32_t *pToolCount,
@@ -648,3 +734,4 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceToolProperties(VkPhys
     *pToolCount = 0;
     return VK_SUCCESS;
 }
+#endif  // VULKANSC

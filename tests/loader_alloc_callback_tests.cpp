@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -716,6 +718,7 @@ TEST(Allocation, CreateInstanceDeviceIntentionalAllocFail) {
 
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_7).set_discovery_type(ManifestDiscoveryType::none));
 
+#ifndef VULKANSC  // VK_LUNARG_direct_driver_loading is not supported in Vulkan SC
     VkDirectDriverLoadingInfoLUNARG ddl_info{};
     ddl_info.sType = VK_STRUCTURE_TYPE_DIRECT_DRIVER_LOADING_INFO_LUNARG;
     ddl_info.pfnGetInstanceProcAddr = env.icds.back().icd_library.get_symbol("vk_icdGetInstanceProcAddr");
@@ -725,6 +728,7 @@ TEST(Allocation, CreateInstanceDeviceIntentionalAllocFail) {
     ddl_list.mode = VK_DIRECT_DRIVER_LOADING_MODE_INCLUSIVE_LUNARG;
     ddl_list.driverCount = 1;
     ddl_list.pDrivers = &ddl_info;
+#endif  // VULKANSC
 
     const char* layer_name = "VK_LAYER_ImplicitAllocFail";
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -757,8 +761,10 @@ TEST(Allocation, CreateInstanceDeviceIntentionalAllocFail) {
 
         VkInstance instance;
         InstanceCreateInfo inst_create_info{};
+#ifndef VULKANSC  // VK_LUNARG_direct_driver_loading is not supported in Vulkan SC
         inst_create_info.add_extension(VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME);
         inst_create_info.instance_info.pNext = reinterpret_cast<const void*>(&ddl_list);
+#endif  // VULKANSC
         result = env.vulkan_functions.vkCreateInstance(inst_create_info.get(), tracker.get(), &instance);
         if (result == VK_ERROR_OUT_OF_HOST_MEMORY) {
             ASSERT_TRUE(tracker.empty());

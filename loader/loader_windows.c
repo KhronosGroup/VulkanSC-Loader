@@ -798,6 +798,7 @@ VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint
                                               struct loader_phys_dev_per_icd **sorted_devices) {
     VkResult res = VK_SUCCESS;
 
+#ifndef VULKANSC
     uint32_t sorted_alloc = 0;
     struct loader_icd_term *icd_term = NULL;
     IDXGIFactory6 *dxgi_factory = NULL;
@@ -915,6 +916,11 @@ out:
     }
     *sorted_devices_count = *sorted_devices_count;
     *sorted_devices = *sorted_devices;
+#else
+    (void)inst;
+    (void)sorted_devices;
+    *sorted_devices_count = 0;
+#endif  // VULKANSC
     return res;
 }
 

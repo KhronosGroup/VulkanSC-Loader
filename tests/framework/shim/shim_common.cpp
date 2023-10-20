@@ -2,6 +2,7 @@
  * Copyright (c) 2021 The Khronos Group Inc.
  * Copyright (c) 2021 Valve Corporation
  * Copyright (c) 2021 LunarG, Inc.
+ * Copyright (c) 2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -236,14 +237,22 @@ void PlatformShim::redirect_category(fs::path const& new_path, ManifestCategory 
 
     for (auto& path : paths) {
         if (!path.empty()) {
+#ifdef VULKANSC
+            redirect_path(fs::path(path) / "vulkansc" / category_path_name(category), new_path);
+#else
             redirect_path(fs::path(path) / "vulkan" / category_path_name(category), new_path);
+#endif  // VULKANSC
         }
     }
 }
 
 void PlatformShim::set_fake_path(ManifestCategory category, fs::path const& path) {
     // use /etc as the 'redirection path' by default since its always searched
+#ifdef VULKANSC
+    redirect_path(fs::path(SYSCONFDIR) / "vulkansc" / category_path_name(category), path);
+#else
     redirect_path(fs::path(SYSCONFDIR) / "vulkan" / category_path_name(category), path);
+#endif  // VULKANSC
 }
 
 void PlatformShim::redirect_dlopen_name(fs::path const& filename, fs::path const& actual_path) {
@@ -253,6 +262,10 @@ void PlatformShim::redirect_dlopen_name(fs::path const& filename, fs::path const
 bool PlatformShim::is_dlopen_redirect_name(fs::path const& filename) { return dlopen_redirection_map.count(filename.str()) == 1; }
 
 fs::path PlatformShim::query_default_redirect_path(ManifestCategory category) {
+#ifdef VULKANSC
+    return fs::path(SYSCONFDIR) / "vulkansc" / category_path_name(category);
+#else
     return fs::path(SYSCONFDIR) / "vulkan" / category_path_name(category);
+#endif  // VULKANSC
 }
 #endif

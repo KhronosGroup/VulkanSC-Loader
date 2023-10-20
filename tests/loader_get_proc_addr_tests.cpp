@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2022 The Khronos Group Inc.
  * Copyright (c) 2021-2022 Valve Corporation
  * Copyright (c) 2021-2022 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -33,7 +35,9 @@ TEST(GetProcAddr, VerifyGetInstanceProcAddr) {
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device("physical_device_0");
     {
         InstWrapper inst{env.vulkan_functions};
+#ifndef VULKANSC
         inst.create_info.set_api_version(VK_API_VERSION_1_1);
+#endif  // VULKANSC
         inst.CheckCreate();
 
         // NOTE: The vulkan_functions are queried using the platform get proc addr from the loader.  So we'll compare
@@ -44,6 +48,7 @@ TEST(GetProcAddr, VerifyGetInstanceProcAddr) {
         ASSERT_EQ(gipa_loader, gipa_queried);
     }
 
+#ifndef VULKANSC
     {
         InstWrapper inst{env.vulkan_functions};
         inst.create_info.set_api_version(VK_API_VERSION_1_3);
@@ -56,6 +61,7 @@ TEST(GetProcAddr, VerifyGetInstanceProcAddr) {
             env.vulkan_functions.vkGetInstanceProcAddr(inst.inst, "vkGetInstanceProcAddr"));
         ASSERT_EQ(gipa_loader, gipa_queried);
     }
+#endif  // VULKANSC
 }
 
 // Verify that the various ways to get vkGetDeviceProcAddr return the same value
@@ -114,6 +120,7 @@ TEST(GetProcAddr, GlobalFunctions) {
         auto CreateInstance = reinterpret_cast<PFN_vkCreateInstance>(gipa(NULL, "vkCreateInstance"));
         handle_assert_has_value(CreateInstance);
     }
+#ifndef VULKANSC  // The following checks do not apply to Vulkan SC
     // Now create an instance and query the functions again - should work because the instance version is less than 1.2
     for (int i = 0; i <= 2; i++) {
         InstWrapper inst{env.vulkan_functions};
@@ -144,10 +151,17 @@ TEST(GetProcAddr, GlobalFunctions) {
         PFN_vkCreateInstance CreateInstance = inst.load("vkCreateInstance");
         handle_assert_has_value(CreateInstance);
     }
+#endif  // VULKANSC
     {
+#ifdef VULKANSC
+        // Create a Vulkan SC 1.0 instance - now everything should return NULL
+        InstWrapper inst{env.vulkan_functions};
+        inst.create_info.api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 0);
+#else
         // Create a 1.3 instance - now everything should return NULL
         InstWrapper inst{env.vulkan_functions};
         inst.create_info.api_version = VK_MAKE_API_VERSION(0, 1, 3, 0);
+#endif  // VULKANSC
         inst.CheckCreate();
 
         PFN_vkEnumerateInstanceExtensionProperties EnumerateInstanceExtensionProperties =
@@ -222,6 +236,7 @@ TEST(GetDeviceProcAddr, SwapchainFuncsWithTerminator) {
             log.find("vkCreateSwapchainKHR: Driver's function pointer was NULL, returning VK_SUCCESS. Was the VK_KHR_swapchain "
                      "extension enabled?"));
         log.logger.clear();
+#ifndef VULKANSC  // vkDestroySwapchainKHR is not supported in Vulkan SC
         if (dev_funcs.vkDestroySwapchainKHR) dev_funcs.vkDestroySwapchainKHR(dev.dev, swapchain, nullptr);
         // try to call the vkCreateSwapchainKHR acquired from the instance - this *should* abort due to not enabling the extension
         if (inst_CreateSwapchainKHR) {
@@ -231,6 +246,7 @@ TEST(GetDeviceProcAddr, SwapchainFuncsWithTerminator) {
         }
         log.logger.clear();
         if (dev_funcs.vkDestroySwapchainKHR) dev_funcs.vkDestroySwapchainKHR(dev.dev, swapchain, nullptr);
+#endif  // VULKANSC
 
         VkDeviceGroupPresentModeFlagsKHR modes{};
         if (GetDeviceGroupSurfacePresentModesKHR) GetDeviceGroupSurfacePresentModesKHR(dev.dev, surface, &modes);
@@ -264,6 +280,7 @@ TEST(GetDeviceProcAddr, SwapchainFuncsWithTerminator) {
             log.find("vkCreateSwapchainKHR: Driver's function pointer was NULL, returning VK_SUCCESS. Was the VK_KHR_swapchain "
                      "extension enabled?"));
         log.logger.clear();
+#ifndef VULKANSC  // vkDestroySwapchainKHR is not supported in Vulkan SC
         if (dev_funcs.vkDestroySwapchainKHR) dev_funcs.vkDestroySwapchainKHR(dev.dev, swapchain, nullptr);
         if (inst_CreateSwapchainKHR) inst_CreateSwapchainKHR(dev.dev, &info, nullptr, &swapchain);
         ASSERT_FALSE(
@@ -271,6 +288,7 @@ TEST(GetDeviceProcAddr, SwapchainFuncsWithTerminator) {
                      "extension enabled?"));
         log.logger.clear();
         if (dev_funcs.vkDestroySwapchainKHR) dev_funcs.vkDestroySwapchainKHR(dev.dev, swapchain, nullptr);
+#endif  // VULKANSC
 
         VkDeviceGroupPresentModeFlagsKHR modes{};
         if (GetDeviceGroupSurfacePresentModesKHR) GetDeviceGroupSurfacePresentModesKHR(dev.dev, surface, &modes);
@@ -301,6 +319,7 @@ TEST(GetProcAddr, PreserveLayerGettingVkCreateDeviceWithNullInstance) {
     dev.CheckCreate(phys_dev);
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance5 is not supported in Vulkan SC
 // The following tests - AppQueries11FunctionsWhileOnlyEnabling10, AppQueries12FunctionsWhileOnlyEnabling11, and
 // AppQueries13FunctionsWhileOnlyEnabling12 - check that vkGetDeviceProcAddr only returning functions from core versions up to
 // the apiVersion declared in VkApplicationInfo. Function querying should succeed if VK_KHR_maintenance_5 is not enabled, and they
@@ -474,3 +493,4 @@ TEST(GetDeviceProcAddr, AppQueries13FunctionsWhileOnlyEnabling12) {
         }
     }
 }
+#endif  // VULKANSC

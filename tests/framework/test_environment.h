@@ -2,6 +2,7 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -147,8 +148,10 @@ struct VulkanFunctions {
     PFN_vkGetPhysicalDeviceFormatProperties2 vkGetPhysicalDeviceFormatProperties2 = nullptr;
     PFN_vkGetPhysicalDeviceImageFormatProperties vkGetPhysicalDeviceImageFormatProperties = nullptr;
     PFN_vkGetPhysicalDeviceImageFormatProperties2 vkGetPhysicalDeviceImageFormatProperties2 = nullptr;
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
     PFN_vkGetPhysicalDeviceSparseImageFormatProperties vkGetPhysicalDeviceSparseImageFormatProperties = nullptr;
     PFN_vkGetPhysicalDeviceSparseImageFormatProperties2 vkGetPhysicalDeviceSparseImageFormatProperties2 = nullptr;
+#endif  // VULKANSC
     PFN_vkGetPhysicalDeviceProperties vkGetPhysicalDeviceProperties = nullptr;
     PFN_vkGetPhysicalDeviceProperties2 vkGetPhysicalDeviceProperties2 = nullptr;
     PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties = nullptr;
@@ -252,10 +255,14 @@ struct DeviceFunctions {
     PFN_vkGetDeviceQueue vkGetDeviceQueue = nullptr;
     PFN_vkCreateCommandPool vkCreateCommandPool = nullptr;
     PFN_vkAllocateCommandBuffers vkAllocateCommandBuffers = nullptr;
+#ifndef VULKANSC  // vkDestroyCommandPool is not supported in Vulkan SC
     PFN_vkDestroyCommandPool vkDestroyCommandPool = nullptr;
+#endif  // VULKANSC
     PFN_vkCreateSwapchainKHR vkCreateSwapchainKHR = nullptr;
     PFN_vkGetSwapchainImagesKHR vkGetSwapchainImagesKHR = nullptr;
+#ifndef VULKANSC  // vkDestroySwapchainKHR is not supported in Vulkan SC
     PFN_vkDestroySwapchainKHR vkDestroySwapchainKHR = nullptr;
+#endif  // VULKANSC
 
     DeviceFunctions() = default;
     DeviceFunctions(const VulkanFunctions& vulkan_functions, VkDevice device);

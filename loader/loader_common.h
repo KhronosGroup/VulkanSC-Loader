@@ -4,6 +4,8 @@
  * Copyright (c) 2014-2022 Valve Corporation
  * Copyright (c) 2014-2022 LunarG, Inc.
  * Copyright (C) 2015 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +32,11 @@
 #pragma once
 
 #include "vulkan/vk_platform.h"
+#ifdef VULKANSC
+#include <vulkan/vulkan_sc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif  // VULKANSC
 #include <vulkan/vk_layer.h>
 #include <vulkan/vk_icd.h>
 
@@ -287,7 +293,9 @@ struct loader_instance {
     uint32_t phys_dev_ext_disp_function_count;
     char *phys_dev_ext_disp_functions[MAX_NUM_UNKNOWN_EXTS];
 
+#ifndef VULKANSC
     struct loader_msg_callback_map_entry *icd_msg_callback_map;
+#endif  // VULKANSC
 
     struct loader_string_list enabled_layer_names;
 
@@ -475,10 +483,12 @@ struct loader_phys_dev_per_icd {
     struct loader_icd_term *icd_term;
 };
 
+#ifndef VULKANSC
 struct loader_msg_callback_map_entry {
     VkDebugReportCallbackEXT icd_obj;
     VkDebugReportCallbackEXT loader_obj;
 };
+#endif  // VULKANSC
 
 typedef enum loader_filter_string_type {
     FILTER_STRING_FULLNAME = 0,

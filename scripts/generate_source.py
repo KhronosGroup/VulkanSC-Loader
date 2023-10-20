@@ -3,6 +3,8 @@
 # Copyright (c) 2019 Valve Corporation
 # Copyright (c) 2019 LunarG, Inc.
 # Copyright (c) 2019 Google Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023-2023 RasterGrid Kft.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,21 +37,39 @@ verify_exclude = ['.clang-format']
 def main(argv):
     parser = argparse.ArgumentParser(description='Generate source code for this repository')
     parser.add_argument('registry', metavar='REGISTRY_PATH', help='path to the Vulkan-Headers registry directory')
+    parser.add_argument('--api',
+                        default='vulkan',
+                        choices=['vulkan', 'vulkansc'],
+                        help='Specify API name to generate')
     parser.add_argument('--generated-version', help='sets the header version used to generate the repo')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-i', '--incremental', action='store_true', help='only update repo files that change')
     group.add_argument('-v', '--verify', action='store_true', help='verify repo files match generator output')
     args = parser.parse_args(argv)
 
+    vksc_filenames =['vk_layer_dispatch_table.h',
+                     'vk_loader_extensions.h',
+                     'vk_loader_extensions.c']
+
+    vk_filenames   =['vk_layer_dispatch_table.h',
+                     'vk_loader_extensions.h',
+                     'vk_loader_extensions.c',
+                     'vk_object_types.h']
+
+    gen_filenames = vk_filenames
+
+    if args.api == 'vulkansc' :
+        gen_filenames = vksc_filenames
+
     gen_cmds = [[common_codegen.repo_relative('scripts/loader_genvk.py'),
+                 '-api', args.api,
                  '-registry', os.path.abspath(os.path.join(args.registry,  'vk.xml')),
                  '-quiet',
-                 filename] for filename in ['vk_layer_dispatch_table.h',
-                                            'vk_loader_extensions.h',
-                                            'vk_loader_extensions.c',
-                                            'vk_object_types.h']]
+                 filename] for filename in gen_filenames]
 
     repo_dir = common_codegen.repo_relative('loader/generated')
+    if args.api == 'vulkansc':
+        repo_dir = common_codegen.repo_relative('loader/generated-vksc')
 
     # get directory where generators will run
     if args.verify or args.incremental:

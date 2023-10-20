@@ -4,6 +4,8 @@
 # Copyright (c) 2015-2022 Valve Corporation
 # Copyright (c) 2015-2022 LunarG, Inc.
 # Copyright (c) 2015-2017 Google Inc.
+# Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023-2023 RasterGrid Kft.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -194,6 +196,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
         copyright += ' * Copyright (c) 2015-2022 The Khronos Group Inc.\n'
         copyright += ' * Copyright (c) 2015-2022 Valve Corporation\n'
         copyright += ' * Copyright (c) 2015-2022 LunarG, Inc.\n'
+        copyright += ' * Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.\n'
+        copyright += ' * Copyright (c) 2023-2023 RasterGrid Kft.\n'
         copyright += ' *\n'
         copyright += ' * Licensed under the Apache License, Version 2.0 (the "License");\n'
         copyright += ' * you may not use this file except in compliance with the License.\n'
@@ -336,6 +340,15 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
         return result
 
     #
+    # Translate Vulkan API version to Vulkan SC API version
+    def translateVersion(self, version):
+        if self.genOpts.apiname == 'vulkansc':
+            if version in ['VK_VERSION_1_0', 'VK_VERSION_1_1', 'VK_VERSION_1_2']:
+                # Vulkan 1.0-1.2 is included in Vulkan SC 1.0
+                version = 'VKSC_VERSION_1_0'
+        return version
+
+    #
     # Determine if this API should be ignored or added to the instance or device dispatch table
     def AddCommandToDispatchList(self, extension_name, extension_type, name, cmdinfo, handle_type):
         handle = self.registry.tree.find("types/type/[name='" + handle_type + "'][@category='handle']")
@@ -369,10 +382,27 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             cmd_params.append(self.CommandParam(type=param_type, name=param_name,
                                                 cdecl=param_cdecl))
 
+        extension_name = self.translateVersion(extension_name)
+
+        if self.genOpts.apiname == 'vulkansc':
+            if 'VK_VERSION_' in extension_name:
+                # Do not handle commands in Vulkan versions not included in a Vulkan SC version
+                return
+
         if handle is not None and handle_type != 'VkInstance' and handle_type != 'VkPhysicalDevice':
             # The Core Vulkan code will be wrapped in a feature called VK_VERSION_#_#
             # For example: VK_VERSION_1_0 wraps the core 1.0 Vulkan functionality
             if 'VK_VERSION_' in extension_name:
+                self.core_commands.append(
+                    self.CommandData(name=name, ext_name=extension_name,
+                                     ext_type='device',
+                                     require=require,
+                                     protect=self.featureExtraProtect,
+                                     return_type = return_type,
+                                     handle_type = handle_type,
+                                     params = cmd_params,
+                                     cdecl=self.makeCDecls(cmdinfo.elem)[0]))
+            elif 'VKSC_VERSION_' in extension_name:
                 self.core_commands.append(
                     self.CommandData(name=name, ext_name=extension_name,
                                      ext_type='device',
@@ -406,7 +436,16 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                                      handle_type = handle_type,
                                      params = cmd_params,
                                      cdecl=self.makeCDecls(cmdinfo.elem)[0]))
-
+            elif 'VKSC_VERSION_' in extension_name:
+                self.core_commands.append(
+                    self.CommandData(name=name, ext_name=extension_name,
+                                     ext_type='instance',
+                                     require=require,
+                                     protect=self.featureExtraProtect,
+                                     return_type = return_type,
+                                     handle_type = handle_type,
+                                     params = cmd_params,
+                                     cdecl=self.makeCDecls(cmdinfo.elem)[0]))
             else:
                 self.ext_instance_dispatch_list.append((name, self.featureExtraProtect))
                 self.ext_commands.append(
@@ -538,6 +577,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                     if cur_cmd.ext_name != cur_extension_name:
                         if 'VK_VERSION_' in cur_cmd.ext_name:
                             table += '\n    // ---- Core %s commands\n' % cur_cmd.ext_name[11:]
+                        elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                            table += '\n    // ---- Core SC %s commands\n' % cur_cmd.ext_name[13:]
                         else:
                             table += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
                         cur_extension_name = cur_cmd.ext_name
@@ -581,6 +622,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                     if cur_cmd.ext_name != cur_extension_name:
                         if 'VK_VERSION_' in cur_cmd.ext_name:
                             table += '\n    // ---- Core %s commands\n' % cur_cmd.ext_name[11:]
+                        elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                            table += '\n    // ---- Core SC %s commands\n' % cur_cmd.ext_name[13:]
                         else:
                             table += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
                         cur_extension_name = cur_cmd.ext_name
@@ -630,6 +673,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                     if cur_cmd.ext_name != cur_extension_name:
                         if 'VK_VERSION_' in cur_cmd.ext_name:
                             table += '\n    // ---- Core %s commands\n' % cur_cmd.ext_name[11:]
+                        elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                            table += '\n    // ---- Core SC %s commands\n' % cur_cmd.ext_name[13:]
                         else:
                             table += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
                         cur_extension_name = cur_cmd.ext_name
@@ -691,6 +736,9 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                         if 'VK_VERSION_' in cur_cmd.ext_name:
                             table += '\n    // ---- Core %s\n' % cur_cmd.ext_name[11:]
                             required = cur_cmd.ext_name == 'VK_VERSION_1_0'
+                        elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                            table += '\n    // ---- Core SC %s\n' % cur_cmd.ext_name[13:]
+                            required = cur_cmd.ext_name == 'VKSC_VERSION_1_0'
                         else:
                             table += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
                             required = False
@@ -724,7 +772,7 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
         union = ''
         union += 'struct loader_instance_extension_enables {\n'
         for ext in extensions:
-            if ('VK_VERSION_' in ext.name or ext.name in WSI_EXT_NAMES or
+            if ('VK_VERSION_' in ext.name or 'VKSC_VERSION_' in ext.name or ext.name in WSI_EXT_NAMES or
                 ext.type == 'device' or ext.num_commands == 0):
                 continue
 
@@ -821,6 +869,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                     if cur_cmd.ext_name != cur_extension_name:
                         if 'VK_VERSION_' in cur_cmd.ext_name:
                             tables += '\n    // ---- Core %s commands\n' % cur_cmd.ext_name[11:]
+                        elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                            tables += '\n    // ---- Core SC %s commands\n' % cur_cmd.ext_name[13:]
                         else:
                             tables += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
                         cur_extension_name = cur_cmd.ext_name
@@ -915,6 +965,10 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                                 tables += '\n    // ---- Core %s commands\n' % cur_cmd.ext_name[11:]
                                 if cur_type == 'device':
                                     version_check = f'        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_{cur_cmd.ext_name[11:]}) return NULL;\n'
+                            elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                                tables += '\n    // ---- Core SC %s commands\n' % cur_cmd.ext_name[13:]
+                                if cur_type == 'device':
+                                    version_check = f'        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_{cur_cmd.ext_name[13:]}) return NULL;\n'
                             else:
 
                                 tables += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
@@ -1000,6 +1054,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             if ext_cmd.ext_name != cur_extension_name:
                 if 'VK_VERSION_' in ext_cmd.ext_name:
                     funcs += '\n// ---- Core %s trampoline/terminators\n\n' % ext_cmd.ext_name[11:]
+                elif 'VKSC_VERSION_' in ext_cmd.ext_name:
+                    funcs += '\n// ---- Core SC %s trampoline/terminators\n\n' % ext_cmd.ext_name[13:]
                 else:
                     funcs += '\n// ---- %s extension trampoline/terminators\n\n' % ext_cmd.ext_name
                 cur_extension_name = ext_cmd.ext_name
@@ -1387,6 +1443,7 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
 
         for cur_cmd in self.ext_commands:
             if ('VK_VERSION_' in cur_cmd.ext_name or
+                'VKSC_VERSION_' in cur_cmd.ext_name or
                 cur_cmd.ext_name in WSI_EXT_NAMES or
                 cur_cmd.ext_name in AVOID_EXT_NAMES or
                 cur_cmd.name in AVOID_CMD_NAMES ):
@@ -1438,7 +1495,7 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
         create_func += 'void extensions_create_instance(struct loader_instance *ptr_instance, const VkInstanceCreateInfo *pCreateInfo) {\n'
         create_func += '    for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {\n'
         for ext in entries:
-            if ('VK_VERSION_' in ext.name or ext.name in WSI_EXT_NAMES or
+            if ('VK_VERSION_' in ext.name or 'VKSC_VERSION_' in ext.name or ext.name in WSI_EXT_NAMES or
                 ext.name in AVOID_EXT_NAMES or ext.name in AVOID_CMD_NAMES or
                 ext.type == 'device' or ext.num_commands == 0):
                 continue
@@ -1490,6 +1547,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             if ext_cmd.name in DEVICE_CMDS_NEED_TERM:
                 if 'VK_VERSION_' in ext_cmd.ext_name:
                     term_func += f'    // ---- Core {ext_cmd.ext_name[11:]} commands\n'
+                elif 'VKSC_VERSION_' in ext_cmd.ext_name:
+                    term_func += f'    // ---- Core SC {ext_cmd.ext_name[13:]} commands\n'
                 else:
                     last_protect = ext_cmd.protect
                     if ext_cmd.protect is not None:
@@ -1529,6 +1588,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             if ext_cmd.name in DEVICE_CMDS_NEED_TERM:
                 if 'VK_VERSION_' in ext_cmd.ext_name:
                     term_func += f'    // ---- Core {ext_cmd.ext_name[11:]} commands\n'
+                elif 'VKSC_VERSION_' in ext_cmd.ext_name:
+                    term_func += f'    // ---- Core SC {ext_cmd.ext_name[13:]} commands\n'
                 else:
                     last_protect = ext_cmd.protect
                     if ext_cmd.protect is not None:
@@ -1556,6 +1617,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             if ext_cmd.name in DEVICE_CMDS_MUST_USE_TRAMP:
                 if 'VK_VERSION_' in ext_cmd.ext_name:
                     tramp_protos += f'    // ---- Core {ext_cmd.ext_name[11:]} commands\n'
+                elif 'VKSC_VERSION_' in ext_cmd.ext_name:
+                    tramp_protos += f'    // ---- Core SC {ext_cmd.ext_name[13:]} commands\n'
                 else:
                     last_protect = ext_cmd.protect
                     if ext_cmd.protect is not None:
@@ -1588,6 +1651,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
             if ext_cmd.name in DEVICE_CMDS_NEED_TERM:
                 if 'VK_VERSION_' in ext_cmd.ext_name:
                     term_func += f'    // ---- Core {ext_cmd.ext_name[11:]} commands\n'
+                elif 'VKSC_VERSION_' in ext_cmd.ext_name:
+                    term_func += f'    // ---- Core SC {ext_cmd.ext_name[13:]} commands\n'
                 else:
                     last_protect = ext_cmd.protect
                     if ext_cmd.protect is not None:
@@ -1636,6 +1701,8 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
                     if cur_cmd.ext_name != cur_extension_name:
                         if 'VK_VERSION_' in cur_cmd.ext_name:
                             table += '\n    // ---- Core %s commands\n' % cur_cmd.ext_name[11:]
+                        elif 'VKSC_VERSION_' in cur_cmd.ext_name:
+                            table += '\n    // ---- Core SC %s commands\n' % cur_cmd.ext_name[13:]
                         else:
                             table += '\n    // ---- %s extension commands\n' % cur_cmd.ext_name
                         cur_extension_name = cur_cmd.ext_name
@@ -1676,7 +1743,7 @@ class LoaderExtensionOutputGenerator(OutputGenerator):
         table += '// before passing the list of extensions to the application.\n'
         table += 'const char *const LOADER_INSTANCE_EXTENSIONS[] = {\n'
         for ext in extensions:
-            if ext.type == 'device' or 'VK_VERSION_' in ext.name:
+            if ext.type == 'device' or 'VK_VERSION_' in ext.name or 'VKSC_VERSION_' in ext.name:
                 continue
 
             if ext.protect is not None:

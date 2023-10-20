@@ -217,5 +217,7 @@ bool loader_check_version_meets_required(loader_api_version required, loader_api
 #endif
 
 #if !defined(LOADER_VERSION_1_1_0)
+#ifndef VULKANSC
 #define LOADER_VERSION_1_1_0 loader_combine_version(1, 1, 0)
+#endif  // VULKANSC
 #endif

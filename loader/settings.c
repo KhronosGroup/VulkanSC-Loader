@@ -226,6 +226,24 @@ VkResult check_if_settings_path_exists(const struct loader_instance* inst, char*
     return VK_SUCCESS;
 }
 VkResult get_unix_settings_path(const struct loader_instance* inst, char** settings_file_path) {
+#ifdef VULKANSC
+    VkResult res =
+        check_if_settings_path_exists(inst, loader_secure_getenv("HOME", inst),
+                                      "/.local/share/vulkansc/loader_settings.d/" VK_LOADER_SETTINGS_FILENAME, settings_file_path);
+    if (res == VK_SUCCESS) {
+        return res;
+    }
+    // If HOME isn't set, fallback to XDG_DATA_HOME
+    res = check_if_settings_path_exists(inst, loader_secure_getenv("XDG_DATA_HOME", inst),
+                                        "/vulkansc/loader_settings.d/" VK_LOADER_SETTINGS_FILENAME, settings_file_path);
+    if (res == VK_SUCCESS) {
+        return res;
+    }
+    // if XDG_DATA_HOME isn't set, fallback to /etc.
+    // note that the settings_fil_path_suffix stays the same since its the same layout as for XDG_DATA_HOME
+    return check_if_settings_path_exists(inst, "/etc", "/vulkansc/loader_settings.d/" VK_LOADER_SETTINGS_FILENAME,
+                                         settings_file_path);
+#else
     VkResult res =
         check_if_settings_path_exists(inst, loader_secure_getenv("HOME", inst),
                                       "/.local/share/vulkan/loader_settings.d/" VK_LOADER_SETTINGS_FILENAME, settings_file_path);
@@ -242,6 +260,7 @@ VkResult get_unix_settings_path(const struct loader_instance* inst, char** setti
     // note that the settings_fil_path_suffix stays the same since its the same layout as for XDG_DATA_HOME
     return check_if_settings_path_exists(inst, "/etc", "/vulkan/loader_settings.d/" VK_LOADER_SETTINGS_FILENAME,
                                          settings_file_path);
+#endif  // VULKANSC
 }
 
 bool check_if_settings_are_equal(loader_settings* a, loader_settings* b) {

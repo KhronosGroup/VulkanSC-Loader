@@ -1,6 +1,8 @@
 # ~~~
 # Copyright (c) 2014-2023 Valve Corporation
 # Copyright (c) 2014-2023 LunarG, Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# Copyright (c) 2023-2023 RasterGrid Kft.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +18,30 @@
 # ~~~
 cmake_minimum_required(VERSION 3.17.2)
 
-project(VULKAN_LOADER VERSION 1.3.268)
+if(VULKANSC)
+    project(VULKAN_LOADER VERSION 1.0.13)
+else()
+    project(VULKAN_LOADER VERSION 1.3.268)
+endif()
+
+# This variable enables downstream users to customize the target API
+# variant (e.g. Vulkan SC)
+set(API_TYPE "vulkan")
+
+if(VULKANSC)
+    set(API_TYPE vulkansc)
+    # Add preprocessor definition for the Vulkan SC projects.
+    # This "VULKANSC" definition can be used to deactivate the loader code that is not required for the VULKANSC builds.
+    add_definitions(-DVULKANSC)
+endif()
 
 add_subdirectory(scripts)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+# Add support for VULKANSC mode from the command line
+set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
 
 # By default, loader & tests are built without sanitizers
 # Use these options to force a specific sanitizer on the loader and test executables
@@ -95,11 +115,22 @@ endif()
 
 add_library(platform_wsi INTERFACE)
 if(WIN32)
-    target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_WIN32_KHR)
+    if(NOT VULKANSC)
+        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_WIN32_KHR)
+    endif()
 elseif(ANDROID)
     message(FATAL_ERROR "Android build not supported!")
 elseif(APPLE)
-    target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
+    if(NOT VULKANSC)
+        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
+    endif()
+elseif(UNIX AND NOT APPLE AND VULKANSC)
+    option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" OFF)
+    option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" OFF)
+    option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
+    option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
+    option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
+    option(BUILD_WSI_SCI_SUPPORT "Build SCI WSI support" OFF)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
     option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
     option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" ON)
@@ -130,6 +161,9 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
     if(BUILD_WSI_SCREEN_QNX_SUPPORT)
         # Part of OS, no additional include directories are required
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCREEN_QNX)
+    endif()
+    if(BUILD_WSI_SCI_SUPPORT)
+        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCI)
     endif()
 else()
     message(FATAL_ERROR "Unsupported Platform!")
@@ -242,7 +276,7 @@ if(LOADER_CODEGEN)
     add_custom_target(loader_codegen
         COMMAND Python3::Interpreter ${PROJECT_SOURCE_DIR}/scripts/generate_source.py
             "${VULKAN_HEADERS_INSTALL_DIR}/${CMAKE_INSTALL_DATADIR}/vulkan/registry"
-            --generated-version ${VulkanHeaders_VERSION} --incremental
+            --generated-version ${VulkanHeaders_VERSION} --incremental --api ${API_TYPE}
     )
 endif()
 

@@ -1,6 +1,8 @@
-# Vulkan Loader
+# Vulkan SC Loader
 
-This project provides the Khronos official Vulkan Loader for all platforms except [Android](https://android.googlesource.com/platform/frameworks/native/+/master/vulkan/)
+This project provides the Khronos official Vulkan SC Loader for all platforms.
+
+> **IMPORTANT NOTE:** This repository is to be used with the [Vulkan SC](https://www.khronos.org/vulkansc/) API and should not be confused with the similar repository that exists for the Vulkan API (see https://github.com/KhronosGroup/Vulkan-Loader). While it is possible to build the Vulkan version from this repository, this repository contains a forked version of the upstream code and may not be up-to-date with the latest changes in the upstream repository.
 
 ## Introduction
 
@@ -10,14 +12,31 @@ Vulkan also supports multiple global contexts (instances, in Vulkan terminology)
 The ICD loader is a library that is placed between a Vulkan application and any number of Vulkan drivers, in order to support multiple drivers and the instance-level functionality that works across these drivers.
 Additionally, the loader manages inserting Vulkan layer libraries, such as validation layers, between an application and the drivers.
 
-This repository contains the Vulkan loader that is used for Linux, Windows, MacOS, and iOS.
-There is also a separate loader, maintained by Google, which is used on Android.
+Vulkan SC is an API derived from Vulkan with various changes applied to fulfill the special
+requirements of safety critical applications. The Vulkan SC API has a large overlap with Vulkan.
+As such, we endeavor to leverage as many of the Vulkan Ecosystem components as possible.
+
+This repository contains the Vulkan SC loader that is used for Linux, Windows, and QNX.
 
 The following components are available in this repository:
 
 - [ICD Loader](loader/)
 - [Loader Documentation](docs/LoaderInterfaceArchitecture.md)
 - [Tests](tests/)
+
+This repository contains the Vulkan SC Loader which is intended for **development** environments,
+and is not expected to be used in **production** (safety) environments.
+
+**NOTE**: This repository is a downstream fork of
+[KhronosGroup/Vulkan-Loader](https://github.com/KhronosGroup/Vulkan-Loader)
+which is periodically rebased.
+
+This repository continues to have a functioning Vulkan loader with equivalent functionality
+to the upstream branch point.
+
+The choice of Vulkan or Vulkan SC support is determined at build time.
+
+The `sc_main` branch is currently based on the `sdk-1.3.257` Vulkan-Loader tag and contains Vulkan SC modifications to support the Vulkan SC 1.0 API.
 
 ## Contact Information
 
@@ -43,6 +62,8 @@ Updates to this repository which correspond to a new Vulkan specification releas
 
 This scheme was adopted following the `1.3.266` Vulkan specification release.
 
+For Vulkan SC, updates to a new API version will be tagged using the following format `vksc<`_`version`_`>.<`_`patch`_`>` (e.g., `vksc1.0.13`).
+
 ## License
 
 This work is released as open source under a Apache-style license from Khronos including a Khronos copyright.
@@ -52,3 +73,5 @@ This work is released as open source under a Apache-style license from Khronos i
 While this project has been developed primarily by LunarG, Inc., there are many other
 companies and individuals making this possible: Valve Corporation, funding
 project development; Khronos providing oversight and hosting of the project.
+
+Original Vulkan SC modifications have been contributed by NVIDIA CORPORATION.

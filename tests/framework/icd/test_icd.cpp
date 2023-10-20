@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -173,7 +175,12 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateInstanceLayerProperties(uint32_t*
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateInstanceVersion(uint32_t* pApiVersion) {
     if (pApiVersion != nullptr) {
+#ifdef VULKANSC
+        // Make sure to include Vulkan SC API variant in the enumerated API version
+        *pApiVersion = icd.icd_api_version | VK_MAKE_API_VERSION(VKSC_API_VARIANT, 0, 0, 0);
+#else
         *pApiVersion = icd.icd_api_version;
+#endif
     }
     return VK_SUCCESS;
 }
@@ -186,7 +193,11 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateInstance(const VkInstanceCreateInfo*
     }
 
     if (icd.icd_api_version < VK_API_VERSION_1_1) {
+#ifdef VULKANSC
+        if (pCreateInfo->pApplicationInfo->apiVersion > VKSC_API_VERSION_1_0) {
+#else
         if (pCreateInfo->pApplicationInfo->apiVersion > VK_API_VERSION_1_0) {
+#endif
             return VK_ERROR_INCOMPATIBLE_DRIVER;
         }
     }
@@ -298,7 +309,7 @@ test_vkEnumeratePhysicalDeviceGroups([[maybe_unused]] VkInstance instance, uint3
         for (size_t device_group = 0; device_group < group_count; device_group++) {
             if (nullptr != pPhysicalDeviceGroupProperties[device_group].pNext) {
                 VkBaseInStructure* base = reinterpret_cast<VkBaseInStructure*>(pPhysicalDeviceGroupProperties[device_group].pNext);
-                if (base->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT) {
+                if (base->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT) {
                     FakePnextSharedWithICD* fake = reinterpret_cast<FakePnextSharedWithICD*>(base);
                     fake->value = 0xDECAFBAD;
                 }
@@ -343,6 +354,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkDestroyDebugUtilsMessengerEXT([[maybe_unused]]
 }
 
 // Debug utils & debug marker ext stubs
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
 VKAPI_ATTR VkResult VKAPI_CALL test_vkDebugMarkerSetObjectTagEXT(VkDevice dev, const VkDebugMarkerObjectTagInfoEXT* pTagInfo) {
     if (pTagInfo && pTagInfo->objectType == VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT) {
         VkPhysicalDevice pd = (VkPhysicalDevice)(uintptr_t)(pTagInfo->object);
@@ -374,6 +386,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkDebugMarkerSetObjectNameEXT(VkDevice dev, 
 VKAPI_ATTR void VKAPI_CALL test_vkCmdDebugMarkerBeginEXT(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT*) {}
 VKAPI_ATTR void VKAPI_CALL test_vkCmdDebugMarkerEndEXT(VkCommandBuffer) {}
 VKAPI_ATTR void VKAPI_CALL test_vkCmdDebugMarkerInsertEXT(VkCommandBuffer, const VkDebugMarkerMarkerInfoEXT*) {}
+#endif  // VULKANSC
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkSetDebugUtilsObjectNameEXT(VkDevice dev, const VkDebugUtilsObjectNameInfoEXT* pNameInfo) {
     if (pNameInfo && pNameInfo->objectType == VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
@@ -467,6 +480,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkDestroyDevice(VkDevice device, [[maybe_unused]
     phys_dev.device_create_infos.erase(phys_dev.device_create_infos.begin() + fd.dev_index);
 }
 
+#ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
 VKAPI_ATTR VkResult VKAPI_CALL generic_tool_props_function([[maybe_unused]] VkPhysicalDevice physicalDevice, uint32_t* pToolCount,
                                                            VkPhysicalDeviceToolPropertiesEXT* pToolProperties) {
     if (icd.tooling_properties.size() == 0) {
@@ -494,6 +508,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkGetPhysicalDeviceToolProperties(VkPhysical
                                                                       VkPhysicalDeviceToolPropertiesEXT* pToolProperties) {
     return generic_tool_props_function(physicalDevice, pToolCount, pToolProperties);
 }
+#endif  // VULKANSC
 
 template <typename T>
 T to_nondispatch_handle(uint64_t handle) {
@@ -526,6 +541,8 @@ void common_nondispatch_handle_creation(std::vector<uint64_t>& handles, HandleTy
         *pHandle = to_nondispatch_handle<HandleType>(handles.back());
     }
 }
+
+#ifndef VULKANSC  // Usual WSI platforms are not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateAndroidSurfaceKHR(VkInstance instance, const VkAndroidSurfaceCreateInfoKHR* pCreateInfo,
@@ -589,6 +606,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL test_vkGetPhysicalDeviceXlibPresentationSupportKH
     return VK_TRUE;
 }
 #endif  // VK_USE_PLATFORM_XLIB_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
 VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateDirectFBSurfaceEXT(VkInstance instance,
@@ -831,16 +849,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkGetDisplayPlaneCapabilitiesKHR(VkPhysicalD
 VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateDisplayPlaneSurfaceKHR(
     [[maybe_unused]] VkInstance instance, [[maybe_unused]] const VkDisplaySurfaceCreateInfoKHR* pCreateInfo,
     [[maybe_unused]] const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface) {
-    if (nullptr != pSurface) {
-        uint64_t fake_surf_handle = reinterpret_cast<uint64_t>(new uint8_t);
-        icd.surface_handles.push_back(fake_surf_handle);
-#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__)) || defined(_M_X64) || defined(__ia64) || \
-    defined(_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
-        *pSurface = reinterpret_cast<VkSurfaceKHR>(fake_surf_handle);
-#else
-        *pSurface = fake_surf_handle;
-#endif
-    }
+    common_nondispatch_handle_creation(icd.surface_handles, pSurface);
     return VK_SUCCESS;
 }
 
@@ -916,6 +925,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkGetDeviceQueue([[maybe_unused]] VkDevice devic
 }
 
 // VK_EXT_acquire_drm_display
+#ifndef VULKANSC  // VK_EXT_acquire_drm_display is not supported in Vulkan SC
 VKAPI_ATTR VkResult VKAPI_CALL test_vkAcquireDrmDisplayEXT(VkPhysicalDevice, int32_t, VkDisplayKHR) { return VK_SUCCESS; }
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkGetDrmDisplayEXT(VkPhysicalDevice physicalDevice, [[maybe_unused]] int32_t drmFd,
@@ -925,6 +935,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkGetDrmDisplayEXT(VkPhysicalDevice physical
     }
     return VK_SUCCESS;
 }
+#endif  // VULKANSC
 
 //// stubs
 // 1.0
@@ -950,12 +961,14 @@ VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDe
         memcpy(pMemoryProperties, &icd.GetPhysDevice(physicalDevice).memory_properties, sizeof(VkPhysicalDeviceMemoryProperties));
     }
 }
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
 VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceSparseImageFormatProperties(
     VkPhysicalDevice physicalDevice, [[maybe_unused]] VkFormat format, [[maybe_unused]] VkImageType type,
     [[maybe_unused]] VkSampleCountFlagBits samples, [[maybe_unused]] VkImageUsageFlags usage, [[maybe_unused]] VkImageTiling tiling,
     uint32_t* pPropertyCount, VkSparseImageFormatProperties* pProperties) {
     FillCountPtr(icd.GetPhysDevice(physicalDevice).sparse_image_format_properties, pPropertyCount, pProperties);
 }
+#endif  // VULKANSC
 VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice, VkFormat format,
                                                                     VkFormatProperties* pFormatProperties) {
     if (nullptr != pFormatProperties) {
@@ -1018,6 +1031,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceQueueFamilyProperties2(VkPhys
         }
     }
 }
+#ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
 VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceSparseImageFormatProperties2(
     VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2* pFormatInfo, uint32_t* pPropertyCount,
     VkSparseImageFormatProperties2* pProperties) {
@@ -1036,6 +1050,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceSparseImageFormatProperties2(
         }
     }
 }
+#endif  // VULKANSC
 VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceFormatProperties2(VkPhysicalDevice physicalDevice, VkFormat format,
                                                                      VkFormatProperties2* pFormatProperties) {
     if (nullptr != pFormatProperties) {
@@ -1172,7 +1187,10 @@ FRAMEWORK_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vk_icdEnumerateAdapterPhysicalDe
 //// trampolines
 
 PFN_vkVoidFunction get_instance_func_ver_1_1([[maybe_unused]] VkInstance instance, const char* pName) {
-    if (icd.icd_api_version >= VK_API_VERSION_1_1) {
+#ifndef VULKANSC  // Vulkan 1.1 features are included in core Vulkan SC 1.0
+    if (icd.icd_api_version >= VK_API_VERSION_1_1)
+#endif  // VULKANSC
+    {
         if (string_eq(pName, "test_vkEnumerateInstanceVersion")) {
             return icd.can_query_vkEnumerateInstanceVersion ? to_vkVoidFunction(test_vkEnumerateInstanceVersion) : nullptr;
         }
@@ -1212,15 +1230,18 @@ PFN_vkVoidFunction get_physical_device_func_wsi([[maybe_unused]] VkInstance inst
         if (string_eq(pName, "vkGetDisplayPlaneCapabilitiesKHR")) return to_vkVoidFunction(test_vkGetDisplayPlaneCapabilitiesKHR);
         if (string_eq(pName, "vkCreateDisplayPlaneSurfaceKHR")) return to_vkVoidFunction(test_vkCreateDisplayPlaneSurfaceKHR);
     }
+#ifndef VULKANSC  // VK_EXT_acquire_drm_display is not supported in Vulkan SC
     if (IsInstanceExtensionEnabled("VK_EXT_acquire_drm_display")) {
         if (string_eq(pName, "vkAcquireDrmDisplayEXT")) return to_vkVoidFunction(test_vkAcquireDrmDisplayEXT);
         if (string_eq(pName, "vkGetDrmDisplayEXT")) return to_vkVoidFunction(test_vkGetDrmDisplayEXT);
     }
+#endif  // VULKANSC
     return nullptr;
 }
 
 PFN_vkVoidFunction get_instance_func_wsi(VkInstance instance, const char* pName) {
     if (icd.min_icd_interface_version >= 3 && icd.enable_icd_wsi == true) {
+#ifndef VULKANSC  // Usual WSI platforms are not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
         if (string_eq(pName, "vkCreateAndroidSurfaceKHR")) {
             icd.is_using_icd_wsi = true;
@@ -1264,6 +1285,7 @@ PFN_vkVoidFunction get_instance_func_wsi(VkInstance instance, const char* pName)
             return to_vkVoidFunction(test_vkGetPhysicalDeviceWin32PresentationSupportKHR);
         }
 #endif
+#endif  // VULKANSC
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
         if (string_eq(pName, "vkCreateDirectFBSurfaceEXT")) {
             return to_vkVoidFunction(test_vkCreateDirectFBSurfaceEXT);
@@ -1333,12 +1355,15 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
     if (string_eq(pName, "vkGetPhysicalDeviceFeatures")) return to_vkVoidFunction(test_vkGetPhysicalDeviceFeatures);
     if (string_eq(pName, "vkGetPhysicalDeviceProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceProperties);
     if (string_eq(pName, "vkGetPhysicalDeviceMemoryProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceMemoryProperties);
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
     if (string_eq(pName, "vkGetPhysicalDeviceSparseImageFormatProperties"))
         return to_vkVoidFunction(test_vkGetPhysicalDeviceSparseImageFormatProperties);
+#endif  // VULKANSC
     if (string_eq(pName, "vkGetPhysicalDeviceFormatProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceFormatProperties);
     if (string_eq(pName, "vkGetPhysicalDeviceImageFormatProperties"))
         return to_vkVoidFunction(test_vkGetPhysicalDeviceImageFormatProperties);
 
+#ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
     if (IsInstanceExtensionEnabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
         if (string_eq(pName, "vkGetPhysicalDeviceFeatures2KHR")) return to_vkVoidFunction(test_vkGetPhysicalDeviceFeatures2);
         if (string_eq(pName, "vkGetPhysicalDeviceProperties2KHR")) return to_vkVoidFunction(test_vkGetPhysicalDeviceProperties2);
@@ -1369,6 +1394,7 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
         if (string_eq(pName, "vkGetPhysicalDeviceExternalFencePropertiesKHR"))
             return to_vkVoidFunction(test_vkGetPhysicalDeviceExternalFenceProperties);
     }
+#endif  // VULKANSC
 
     // The following physical device extensions only need 1 device to support them for the ICD to export
     // them
@@ -1391,7 +1417,10 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
         if (string_eq(pName, "vkGetCalibratedTimestampsEXT")) return to_vkVoidFunction(test_vkGetCalibratedTimestampsEXT);
     }
 
-    if (icd.icd_api_version >= VK_MAKE_API_VERSION(0, 1, 1, 0)) {
+#ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
+    if (icd.icd_api_version >= VK_MAKE_API_VERSION(0, 1, 1, 0))
+#endif  // VULKANSC
+    {
         if (string_eq(pName, "vkGetPhysicalDeviceFeatures2")) return to_vkVoidFunction(test_vkGetPhysicalDeviceFeatures2);
         if (string_eq(pName, "vkGetPhysicalDeviceProperties2")) return to_vkVoidFunction(test_vkGetPhysicalDeviceProperties2);
         if (string_eq(pName, "vkGetPhysicalDeviceFormatProperties2"))
@@ -1402,8 +1431,10 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
         if (string_eq(pName, "vkGetPhysicalDeviceQueueFamilyProperties2"))
             return to_vkVoidFunction(test_vkGetPhysicalDeviceQueueFamilyProperties2);
 
+#ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
         if (string_eq(pName, "vkGetPhysicalDeviceSparseImageFormatProperties2"))
             return to_vkVoidFunction(test_vkGetPhysicalDeviceSparseImageFormatProperties2);
+#endif  // VULKANSC
 
         if (string_eq(pName, "vkGetPhysicalDeviceImageFormatProperties2")) {
             return to_vkVoidFunction(test_vkGetPhysicalDeviceImageFormatProperties2);
@@ -1417,6 +1448,7 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
             return to_vkVoidFunction(test_vkGetPhysicalDeviceExternalFenceProperties);
     }
 
+#ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
     if (icd.supports_tooling_info_core) {
         if (string_eq(pName, "vkGetPhysicalDeviceToolProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceToolProperties);
     }
@@ -1424,6 +1456,7 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
         if (string_eq(pName, "vkGetPhysicalDeviceToolPropertiesEXT"))
             return to_vkVoidFunction(test_vkGetPhysicalDeviceToolPropertiesEXT);
     }
+#endif  // VULKANSC
 
     for (auto& phys_dev : icd.physical_devices) {
         for (auto& func : phys_dev.custom_physical_device_functions) {
@@ -1439,9 +1472,11 @@ PFN_vkVoidFunction get_instance_func(VkInstance instance, const char* pName) {
     if (string_eq(pName, "vkDestroyInstance")) return to_vkVoidFunction(test_vkDestroyInstance);
     if (string_eq(pName, "vkEnumeratePhysicalDevices")) return to_vkVoidFunction(test_vkEnumeratePhysicalDevices);
 
+#ifndef VULKANSC  // VK_KHR_device_group_creation is included in core Vulkan SC 1.0
     if (IsInstanceExtensionEnabled(VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME)) {
         if (string_eq(pName, "vkEnumeratePhysicalDeviceGroupsKHR")) return to_vkVoidFunction(test_vkEnumeratePhysicalDeviceGroups);
     }
+#endif  // VULKANSC
 
     PFN_vkVoidFunction ret_phys_dev = get_physical_device_func(instance, pName);
     if (ret_phys_dev != nullptr) return ret_phys_dev;
@@ -1499,6 +1534,7 @@ PFN_vkVoidFunction get_device_func(VkDevice device, const char* pName) {
         if (string_eq(pName, "vkGetDeviceGroupSurfacePresentModesKHR"))
             return to_vkVoidFunction(test_vkGetDeviceGroupSurfacePresentModesKHR);
     }
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     if (should_check(create_info.enabled_extensions, device, "VK_EXT_debug_marker")) {
         if (string_eq(pName, "vkDebugMarkerSetObjectTagEXT")) return to_vkVoidFunction(test_vkDebugMarkerSetObjectTagEXT);
         if (string_eq(pName, "vkDebugMarkerSetObjectNameEXT")) return to_vkVoidFunction(test_vkDebugMarkerSetObjectNameEXT);
@@ -1506,6 +1542,7 @@ PFN_vkVoidFunction get_device_func(VkDevice device, const char* pName) {
         if (string_eq(pName, "vkCmdDebugMarkerEndEXT")) return to_vkVoidFunction(test_vkCmdDebugMarkerEndEXT);
         if (string_eq(pName, "vkCmdDebugMarkerInsertEXT")) return to_vkVoidFunction(test_vkCmdDebugMarkerInsertEXT);
     }
+#endif  // VULKANSC
     if (IsInstanceExtensionEnabled("VK_EXT_debug_utils")) {
         if (string_eq(pName, "vkSetDebugUtilsObjectNameEXT")) return to_vkVoidFunction(test_vkSetDebugUtilsObjectNameEXT);
         if (string_eq(pName, "vkSetDebugUtilsObjectTagEXT")) return to_vkVoidFunction(test_vkSetDebugUtilsObjectTagEXT);

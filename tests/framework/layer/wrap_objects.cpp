@@ -28,7 +28,11 @@
 #include <vector>
 
 #include "vulkan/vk_layer.h"
+#ifdef VULKANSC
+#include "vksc_dispatch_table_helper.h"
+#else
 #include "vk_dispatch_table_helper.h"
+#endif  // VULKANSC
 #include "loader/vk_loader_layer.h"
 
 // Export full support of instance extension VK_EXT_direct_mode_display extension
@@ -451,6 +455,7 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkEnumerateDeviceExtensionProperties(VkPhysi
                 }
 
                 ext_count = 0;
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0
 #if TEST_LAYER_EXPORT_MAINT_1
                 if (ext_count < count) {
 #if defined(_WIN32)
@@ -463,6 +468,7 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkEnumerateDeviceExtensionProperties(VkPhysi
                     ext_count++;
                 }
 #endif
+#endif  // VULKANSC
 #if TEST_LAYER_EXPORT_PRESENT_IMAGE
                 if (ext_count < count) {
 #if defined(_WIN32)
@@ -529,19 +535,23 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkCreateDevice(VkPhysicalDevice physicalDevi
     layer_init_device_dispatch_table(dev->obj, &dev->disp, pfn_get_dev_proc_addr);
 
     for (uint32_t ext = 0; ext < pCreateInfo->enabledExtensionCount; ++ext) {
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0
         if (!strcmp(pCreateInfo->ppEnabledExtensionNames[ext], VK_KHR_MAINTENANCE1_EXTENSION_NAME)) {
 #if TEST_LAYER_EXPORT_MAINT_1
             dev->maintanence_1_enabled = true;
 #endif
         }
+#endif  // VULKANSC
         if (!strcmp(pCreateInfo->ppEnabledExtensionNames[ext], VK_KHR_SHARED_PRESENTABLE_IMAGE_EXTENSION_NAME)) {
 #if TEST_LAYER_EXPORT_PRESENT_IMAGE
             dev->present_image_enabled = true;
 #endif
         }
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
         if (!strcmp(pCreateInfo->ppEnabledExtensionNames[ext], VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
             dev->debug_marker_enabled = true;
         }
+#endif  // VULKANSC
     }
     dev->debug_utils_enabled = phys_dev->inst->debug_utils_enabled;
 
@@ -568,13 +578,16 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkGetPhysicalDeviceSurfaceCapabilities2EXT(V
     return VK_SUCCESS;
 }
 
+#ifndef VULKANSC  // vkTrimCommandPool is not supported in Vulkan SC
 // Fake device extension support
 VKAPI_ATTR void VKAPI_CALL wrap_vkTrimCommandPoolKHR(VkDevice, VkCommandPool, VkCommandPoolTrimFlags) {}
+#endif  // VULKANSC
 
 // Return an odd error so we can verify that this actually got called
 VKAPI_ATTR VkResult VKAPI_CALL wrap_vkGetSwapchainStatusKHR(VkDevice, VkSwapchainKHR) { return VK_ERROR_NATIVE_WINDOW_IN_USE_KHR; }
 
 // Debug utils & debug marker ext stubs
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
 VKAPI_ATTR VkResult VKAPI_CALL wrap_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *pTagInfo) {
     VkDebugMarkerObjectTagInfoEXT new_info = *pTagInfo;
     wrapped_dev_obj *dev;
@@ -622,6 +635,7 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkDebugMarkerSetObjectNameEXT(VkDevice devic
 // vkCmdDebugMarkerBeginEXT
 // vkCmdDebugMarkerEndEXT
 // vkCmdDebugMarkerInsertEXT
+#endif  // VULKANSC
 
 VKAPI_ATTR VkResult VKAPI_CALL wrap_vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtilsObjectNameInfoEXT *pNameInfo) {
     VkDebugUtilsObjectNameInfoEXT new_info = *pNameInfo;
@@ -680,10 +694,13 @@ PFN_vkVoidFunction layer_intercept_device_proc(wrapped_dev_obj *dev, const char 
     if (!strcmp(name, "CreateDevice")) return (PFN_vkVoidFunction)wrap_vkCreateDevice;
     if (!strcmp(name, "DestroyDevice")) return (PFN_vkVoidFunction)wrap_vkDestroyDevice;
 
+#ifndef VULKANSC  // vkTrimCommandPool is not supported in Vulkan SC
     if (dev->maintanence_1_enabled && !strcmp(name, "TrimCommandPoolKHR")) return (PFN_vkVoidFunction)wrap_vkTrimCommandPoolKHR;
+#endif  // VULKANSC
     if (dev->present_image_enabled && !strcmp(name, "GetSwapchainStatusKHR"))
         return (PFN_vkVoidFunction)wrap_vkGetSwapchainStatusKHR;
 
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     if (dev->debug_marker_enabled && !strcmp(name, "DebugMarkerSetObjectTagEXT"))
         return (PFN_vkVoidFunction)wrap_vkDebugMarkerSetObjectTagEXT;
     if (dev->debug_marker_enabled && !strcmp(name, "DebugMarkerSetObjectNameEXT"))
@@ -692,6 +709,7 @@ PFN_vkVoidFunction layer_intercept_device_proc(wrapped_dev_obj *dev, const char 
         return (PFN_vkVoidFunction)wrap_vkSetDebugUtilsObjectNameEXT;
     if (dev->debug_utils_enabled && !strcmp(name, "SetDebugUtilsObjectTagEXT"))
         return (PFN_vkVoidFunction)wrap_vkSetDebugUtilsObjectTagEXT;
+#endif  // VULKANSC
 
     return NULL;
 }
@@ -784,11 +802,15 @@ PFN_vkVoidFunction layer_intercept_instance_proc(wrapped_inst_obj *inst, const c
 
     // instance_proc needs to be able to query device commands even if the extension isn't enabled (because it isn't known at this
     // time)
+#ifndef VULKANSC  // vkTrimCommandPool is not supported in Vulkan SC
     if (!strcmp(name, "TrimCommandPoolKHR")) return (PFN_vkVoidFunction)wrap_vkTrimCommandPoolKHR;
+#endif  // VULKANSC
     if (!strcmp(name, "GetSwapchainStatusKHR")) return (PFN_vkVoidFunction)wrap_vkGetSwapchainStatusKHR;
 
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     if (!strcmp(name, "DebugMarkerSetObjectTagEXT")) return (PFN_vkVoidFunction)wrap_vkDebugMarkerSetObjectTagEXT;
     if (!strcmp(name, "DebugMarkerSetObjectNameEXT")) return (PFN_vkVoidFunction)wrap_vkDebugMarkerSetObjectNameEXT;
+#endif  // VULKANSC
     if (inst->debug_utils_enabled && !strcmp(name, "SetDebugUtilsObjectNameEXT"))
         return (PFN_vkVoidFunction)wrap_vkSetDebugUtilsObjectNameEXT;
     if (inst->debug_utils_enabled && !strcmp(name, "SetDebugUtilsObjectTagEXT"))

@@ -801,7 +801,9 @@ TEST(WsiTests, SwapchainFunctional) {
         ASSERT_GT(count, 0U);
         std::array<VkImage, 16> images;
         ASSERT_EQ(VK_SUCCESS, funcs.vkGetSwapchainImagesKHR(dev, swapchain, &count, images.data()));
+#ifndef VULKANSC  // vkDestroySwapchain is not supported in Vulkan SC
         funcs.vkDestroySwapchainKHR(dev, swapchain, nullptr);
+#endif  // VULKANSC
     }
     {  // Use GIPA gotten functions
         DeviceWrapper dev{inst};
@@ -811,10 +813,14 @@ TEST(WsiTests, SwapchainFunctional) {
 
         PFN_vkCreateSwapchainKHR inst_CreateSwapchainKHR = inst.load("vkCreateSwapchainKHR");
         PFN_vkGetSwapchainImagesKHR inst_GetSwapchainImagesKHR = inst.load("vkGetSwapchainImagesKHR");
+#ifndef VULKANSC  // vkDestroySwapchain is not supported in Vulkan SC
         PFN_vkDestroySwapchainKHR inst_DestroySwapchainKHR = inst.load("vkDestroySwapchainKHR");
+#endif  // VULKANSC
         ASSERT_TRUE(nullptr != inst_CreateSwapchainKHR);
         ASSERT_TRUE(nullptr != inst_GetSwapchainImagesKHR);
+#ifndef VULKANSC  // vkDestroySwapchain is not supported in Vulkan SC
         ASSERT_TRUE(nullptr != inst_DestroySwapchainKHR);
+#endif  // VULKANSC
 
         VkSwapchainKHR swapchain{};
         VkSwapchainCreateInfoKHR swap_create_info{};
@@ -826,7 +832,9 @@ TEST(WsiTests, SwapchainFunctional) {
         ASSERT_GT(count, 0U);
         std::array<VkImage, 16> images;
         ASSERT_EQ(VK_SUCCESS, inst_GetSwapchainImagesKHR(dev, swapchain, &count, images.data()));
+#ifndef VULKANSC  // vkDestroySwapchain is not supported in Vulkan SC
         inst_DestroySwapchainKHR(dev, swapchain, nullptr);
+#endif  // VULKANSC
     }
     {  // forget to enable the extension
         DeviceWrapper dev{inst};
@@ -835,7 +843,9 @@ TEST(WsiTests, SwapchainFunctional) {
         DeviceFunctions funcs{*inst.functions, dev};
         ASSERT_EQ(funcs.vkCreateSwapchainKHR, nullptr);
         ASSERT_EQ(funcs.vkGetSwapchainImagesKHR, nullptr);
+#ifndef VULKANSC  // vkDestroySwapchain is not supported in Vulkan SC
         ASSERT_EQ(funcs.vkDestroySwapchainKHR, nullptr);
+#endif  // VULKANSC
     }
     {  // forget to set the surface
         DeviceWrapper dev{inst};

@@ -51,6 +51,7 @@ Instructions for building this repository on Linux, Windows, and MacOS.
   - [Building on Fuchsia](#building-on-fuchsia)
     - [SDK Symbols](#sdk-symbols)
   - [Building on QNX](#building-on-qnx)
+  - [Building Vulkan SC Loader](#building-vulkan-sc-loader)
   - [Cross Compilation](#cross-compilation)
     - [Unknown function handling which requires explicit assembly implementations](#unknown-function-handling-which-requires-explicit-assembly-implementations)
       - [Platforms which fully support unknown function handling](#platforms-which-fully-support-unknown-function-handling)
@@ -116,6 +117,10 @@ This repository has a required dependency on the [Vulkan Headers repository](htt
 The Vulkan-Headers repository contains the Vulkan API definition files that are
 required to build the loader.
 
+For Vulkan SC, the `sc_main` branch or an appropriately tagged Vulkan SC version
+(e.g., `vksc1.0.13`) of the [Vulkan SC Headers repository](https://github.com/KhronosGroup/VulkanSC-Headers)
+repository must be checked out.
+
 #### Test Dependencies
 
 The loader tests depend on the [Google Test](https://github.com/google/googletest) library and
@@ -143,12 +148,12 @@ to checkout dependent repository revisions that are known to be compatible with
 the revision of this repository that you currently have checked out.
 
 You can choose to do this automatically or manually.
-The first step to either is cloning the Vulkan-Loader repo and stepping into
+The first step to either is cloning the VulkanSC-Loader repo and stepping into
 that newly cloned folder:
 
 ```
-  git clone git@github.com:KhronosGroup/Vulkan-Loader.git
-  cd Vulkan-Loader
+  git clone git@github.com:KhronosGroup/VulkanSC-Loader.git
+  cd VulkanSC-Loader
 ```
 
 #### Automatically
@@ -215,6 +220,9 @@ cmake -S . -B build -D LOADER_CODEGEN=ON
 cmake --build . --target loader_codegen
 ```
 
+To generate source code for Vulkan SC the `--api vulkansc` option must be
+passed to the `generate_source.py` command.
+
 ### Build Options
 
 When generating build files through CMake, several options can be specified to
@@ -223,12 +231,14 @@ The following is a table of all on/off options currently supported by this repos
 
 | Option                          | Platform      | Default | Description                                                                                                                                                                       |
 | ------------------------------- | ------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VULKANSC                        | All           | `OFF`   | Controls whether the loader is built for Vulkan (`OFF`, the default), or for Vulkan SC (`ON`). |
 | BUILD_TESTS                     | All           | `OFF`   | Controls whether or not the loader tests are built.                                                                                                                               |
 | BUILD_WSI_XCB_SUPPORT           | Linux         | `ON`    | Build the loader with the XCB entry points enabled. Without this, the XCB headers should not be needed, but the extension `VK_KHR_xcb_surface` won't be available.                |
 | BUILD_WSI_XLIB_SUPPORT          | Linux         | `ON`    | Build the loader with the Xlib entry points enabled. Without this, the X11 headers should not be needed, but the extension `VK_KHR_xlib_surface` won't be available.              |
 | BUILD_WSI_WAYLAND_SUPPORT       | Linux         | `ON`    | Build the loader with the Wayland entry points enabled. Without this, the Wayland headers should not be needed, but the extension `VK_KHR_wayland_surface` won't be available.    |
 | BUILD_WSI_DIRECTFB_SUPPORT      | Linux         | `OFF`   | Build the loader with the DirectFB entry points enabled. Without this, the DirectFB headers should not be needed, but the extension `VK_EXT_directfb_surface` won't be available. |
 | BUILD_WSI_SCREEN_QNX_SUPPORT    | QNX           | `OFF`   | Build the loader with the QNX Screen entry points enabled. Without this the extension `VK_QNX_screen_surface` won't be available.                                                 |
+| BUILD_WSI_SCI_SUPPORT           | Linux, QNX    | `OFF`   | Vulkan SC only. Build the loader with the SCI entry points enabled. |
 | ENABLE_WIN10_ONECORE            | Windows       | `OFF`   | Link the loader to the [OneCore](https://msdn.microsoft.com/en-us/library/windows/desktop/mt654039.aspx) umbrella library, instead of the standard Win32 ones.                    |
 | USE_GAS                         | Linux         | `ON`    | Controls whether to build assembly files with the GNU assembler, else fallback to C code.                                                                                         |
 | USE_MASM                        | Windows       | `ON`    | Controls whether to build assembly files with MS assembler, else fallback to C code                                                                                               |
@@ -282,7 +292,7 @@ work with the solution interactively.
 
 Open a developer command prompt and enter:
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -A x64 -D UPDATE_DEPS=ON ..
@@ -298,7 +308,7 @@ configuration of the solution.
 Change your current directory to the top of the cloned repository directory,
 create a build directory and generate the Visual Studio project files:
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -D UPDATE_DEPS=ON -G "Visual Studio 16 2019" -A x64 ..
@@ -323,7 +333,7 @@ install directory must be provided. This can be done automatically by the
 either case, the variable should point to the installation directory of a
 Vulkan-Headers repository built with the install target.
 
-The above steps create a Windows solution file named `Vulkan-Loader.sln` in
+The above steps create a Windows solution file named `VulkanSC-Loader.sln` in
 the build directory.
 
 At this point, you can build the solution from the command line or open the
@@ -343,7 +353,7 @@ to make a Release build.
 
 #### Build the Solution With Visual Studio
 
-Launch Visual Studio and open the "Vulkan-Loader.sln" solution file in the
+Launch Visual Studio and open the "VulkanSC-Loader.sln" solution file in the
 build folder. You may select "Debug" or "Release" from the Solution
 Configurations drop-down list. Start a build by selecting the Build->Build
 Solution menu item.
@@ -387,7 +397,7 @@ CMake with the `--build` option or `make` to build from the command line.
 
 #### Linux Quick Start
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -D UPDATE_DEPS=ON ..
@@ -400,7 +410,7 @@ See below for the details.
 Change your current directory to the top of the cloned repository directory,
 create a build directory and generate the make files.
 
-    cd Vulkan-Loader
+    cd VulkanSC-Loader
     mkdir build
     cd build
     cmake -D CMAKE_BUILD_TYPE=Debug \
@@ -550,9 +560,9 @@ Setup Homebrew and components
 
 ### Clone the Repository
 
-Clone the Vulkan-Loader repository:
+Clone the VulkanSC-Loader repository:
 
-    git clone https://github.com/KhronosGroup/Vulkan-Loader.git
+    git clone https://github.com/KhronosGroup/VulkanSC-Loader.git
 
 ### MacOS build
 
@@ -587,7 +597,7 @@ To create and open an Xcode project:
     mkdir build-xcode
     cd build-xcode
     cmake -GXcode ..
-    open Vulkan-Loader.xcodeproj
+    open VulkanSC-Loader.xcodeproj
 
 Within Xcode, you can select Debug or Release builds in the project's Build
 Settings.
@@ -609,6 +619,13 @@ the shell/batch script provided with QNX installation.
 
 Then change working directory to the "build-qnx" in this project and type "make".
 It will build the ICD loader for all CPU targets supported by QNX.
+
+## Building Vulkan SC Loader
+
+Commands for building the Vulkan SC version of the tools are similar to the instructions in the sections above with a few minor differences:
+
+1) When running `update_deps.py` and/or `generate_source.py`, the option `--api vulkansc` should be specified.
+2) When running `cmake` configuration, the option `-DVULKANSC=ON` should be passed in.
 
 ## Cross Compilation
 

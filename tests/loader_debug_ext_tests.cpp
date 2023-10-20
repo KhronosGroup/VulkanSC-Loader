@@ -33,6 +33,7 @@
 // =========================================
 //
 
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
 // Prototype declaration for callback so we can use it in class utility methods
 VkBool32 VKAPI_CALL test_DebugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object,
                                              size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage,
@@ -354,6 +355,7 @@ TEST_F(ManualReport, InfoMessage) {
     // Message should be found
     ASSERT_EQ(true, message_found);
 }
+#endif  // VULKANSC
 
 //
 // VK_EXT_debug_util specific tests
@@ -509,6 +511,7 @@ TEST_F(CreateDestroyInstanceMessenger, WarnInCreateIgnored) {
     ASSERT_EQ(false, message_found);
 }
 
+#ifndef VULKANSC  // Does not apply to Vulkan SC
 // Test debug utils (error/warning) created in vkCreateInstance with warning in vkCreateInstance
 TEST_F(CreateDestroyInstanceMessenger, WarnInCreate) {
     expected_message = "The API Variant specified";
@@ -526,6 +529,7 @@ TEST_F(CreateDestroyInstanceMessenger, WarnInCreate) {
 
     ASSERT_EQ(true, message_found);
 }
+#endif  // VULKANSC
 
 // Test debug utils error created in vkCreateInstance with error in vkEnumeratePhysicalDevices.
 // This should not be logged because we have only defined the debug utils logging for vkCreateInstance
@@ -856,7 +860,9 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
     InstWrapper inst(env.vulkan_functions);
     if (enable_debug_extensions) {
         inst.create_info.add_extension("VK_EXT_debug_utils");
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
         inst.create_info.add_extension("VK_EXT_debug_report");
+#endif  // VULKANSC
     }
     inst.create_info.setup_WSI();
     ASSERT_NO_FATAL_FAILURE(inst.CheckCreate());
@@ -866,6 +872,10 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
     DeviceWrapper dev{inst};
     dev.create_info.add_extension("VK_KHR_swapchain");
     dev.create_info.add_device_queue(DeviceQueueCreateInfo{}.add_priority(0.0f));
+#ifdef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
+    (void)hardware_supports_debug_exts;
+    ASSERT_NO_FATAL_FAILURE(dev.CheckCreate(phys_dev));
+#else
     if (enable_debug_extensions) {
         dev.create_info.add_extension("VK_EXT_debug_marker");
     }
@@ -879,6 +889,7 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
     } else {
         ASSERT_NO_FATAL_FAILURE(dev.CheckCreate(phys_dev));
     }
+#endif  // VULKANSC
     DeviceFunctions dev_funcs{env.vulkan_functions, dev};
 
     VkSurfaceKHR surface{};
@@ -895,12 +906,14 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
         return use_GIPA ? inst.load(func_name) : dev.load(func_name);
     };
 
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     // Debug marker
     PFN_vkDebugMarkerSetObjectTagEXT DebugMarkerSetObjectTagEXT = load_function("vkDebugMarkerSetObjectTagEXT");
     PFN_vkDebugMarkerSetObjectNameEXT DebugMarkerSetObjectNameEXT = load_function("vkDebugMarkerSetObjectNameEXT");
     PFN_vkCmdDebugMarkerBeginEXT CmdDebugMarkerBeginEXT = load_function("vkCmdDebugMarkerBeginEXT");
     PFN_vkCmdDebugMarkerEndEXT CmdDebugMarkerEndEXT = load_function("vkCmdDebugMarkerEndEXT");
     PFN_vkCmdDebugMarkerInsertEXT CmdDebugMarkerInsertEXT = load_function("vkCmdDebugMarkerInsertEXT");
+#endif  // VULKANSC
     // Debug utils
     PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT = load_function("vkSetDebugUtilsObjectNameEXT");
     PFN_vkSetDebugUtilsObjectTagEXT SetDebugUtilsObjectTagEXT = load_function("vkSetDebugUtilsObjectTagEXT");
@@ -911,6 +924,7 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
     PFN_vkCmdEndDebugUtilsLabelEXT CmdEndDebugUtilsLabelEXT = load_function("vkCmdEndDebugUtilsLabelEXT");
     PFN_vkCmdInsertDebugUtilsLabelEXT CmdInsertDebugUtilsLabelEXT = load_function("vkCmdInsertDebugUtilsLabelEXT");
 
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     // Debug marker functions - should always be found when using GIPA but when using GDPA found only when the extension is enabled
     if (use_GIPA) {
         ASSERT_TRUE(nullptr != DebugMarkerSetObjectTagEXT);
@@ -925,6 +939,7 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
         ASSERT_EQ(enable_debug_extensions, nullptr != CmdDebugMarkerEndEXT);
         ASSERT_EQ(enable_debug_extensions, nullptr != CmdDebugMarkerInsertEXT);
     }
+#endif  // VULKANSC
 
     // Debug utils functions - should only be found if the extension was enabled (because its instance level)
     ASSERT_EQ(enable_debug_extensions, nullptr != SetDebugUtilsObjectNameEXT);
@@ -972,6 +987,7 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
         utils_object_tag.objectType = VK_OBJECT_TYPE_SURFACE_KHR;
         ASSERT_EQ(VK_SUCCESS, SetDebugUtilsObjectTagEXT(dev.dev, &utils_object_tag));
     }
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     VkDebugMarkerObjectTagInfoEXT marker_object_tag{};
     VkDebugMarkerObjectNameInfoEXT marker_object_name{};
     if (use_GIPA && !enable_debug_extensions) {
@@ -1014,6 +1030,7 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
             ASSERT_EQ(VK_SUCCESS, DebugMarkerSetObjectNameEXT(dev.dev, &marker_object_name));
         }
     }
+#endif  // VULKANSC
     VkQueue queue{};
     dev.functions->vkGetDeviceQueue(dev.dev, 0, 0, &queue);
     VkDebugUtilsLabelEXT utils_label{};
@@ -1035,7 +1052,9 @@ void CheckDeviceFunctions(FrameworkEnvironment& env, bool use_GIPA, bool enable_
     if (CmdEndDebugUtilsLabelEXT) CmdEndDebugUtilsLabelEXT(cmd_buf);
     if (CmdInsertDebugUtilsLabelEXT) CmdInsertDebugUtilsLabelEXT(cmd_buf, &utils_label);
 
+#ifndef VULKANSC  // vkDestroySwapchainKHR is not supported in Vulkan SC
     dev_funcs.vkDestroySwapchainKHR(dev.dev, swapchain, nullptr);
+#endif  // VULKANSC
     env.vulkan_functions.vkDestroySurfaceKHR(inst.inst, surface, nullptr);
 }
 
@@ -1055,9 +1074,12 @@ TEST(GetProcAddr, DebugFuncsWithTerminator) {
     ASSERT_NO_FATAL_FAILURE(CheckDeviceFunctions(env, true, true, false));
 
     // Now set the hardware to support the extensions and run the situations again
+#ifdef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
+    driver.add_instance_extensions({"VK_EXT_debug_utils"});
+#else
     driver.add_instance_extensions({"VK_EXT_debug_utils", "VK_EXT_debug_report"});
     driver.physical_devices.at(0).add_extensions({"VK_EXT_debug_marker"});
-
+#endif  // VULKANSC
     // Use getDeviceProcAddr & vary enabling the debug extensions
     ASSERT_NO_FATAL_FAILURE(CheckDeviceFunctions(env, false, false, true));
     ASSERT_NO_FATAL_FAILURE(CheckDeviceFunctions(env, false, true, true));
@@ -1087,9 +1109,13 @@ TEST(GetProcAddr, DebugFuncsWithTrampoline) {
                                                          .set_name("VK_LAYER_test_layer")
                                                          .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
                                                          .set_disable_environment("DISABLE_ME")
+#ifdef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
+                                                         .add_instance_extension({VK_EXT_DEBUG_UTILS_EXTENSION_NAME})),
+#else
                                                          .add_instance_extensions({{VK_EXT_DEBUG_REPORT_EXTENSION_NAME},
                                                                                    {VK_EXT_DEBUG_UTILS_EXTENSION_NAME}})
                                                          .add_device_extension({VK_EXT_DEBUG_MARKER_EXTENSION_NAME})),
+#endif  // VULKANSC
                            "test_layer.json");
 
     // // Use getDeviceProcAddr & vary enabling the debug extensions
@@ -1123,8 +1149,12 @@ TEST(GetProcAddr, DebugFuncsWithDebugExtsForceAdded) {
                                                          .set_disable_environment("DISABLE_ME")),
                            "test_layer.json");
     env.get_test_layer()
+#ifdef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
+        .add_injected_instance_extension({VK_EXT_DEBUG_UTILS_EXTENSION_NAME});
+#else
         .add_injected_instance_extensions({{VK_EXT_DEBUG_REPORT_EXTENSION_NAME}, {VK_EXT_DEBUG_UTILS_EXTENSION_NAME}})
         .add_injected_device_extension({VK_EXT_DEBUG_MARKER_EXTENSION_NAME});
+#endif  // VULKANSC
 
     // Use getDeviceProcAddr & vary enabling the debug extensions
     ASSERT_NO_FATAL_FAILURE(CheckDeviceFunctions(env, false, false, true));
@@ -1139,7 +1169,11 @@ TEST(DebugUtils, WrappingLayer) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
         .set_min_icd_interface_version(5)
+#ifdef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
+        .add_physical_device(PhysicalDevice{}.finish())
+#else
         .add_physical_device(PhysicalDevice{}.add_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME).finish())
+#endif  // VULKANSC
         .add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
     const char* wrap_objects_name = "VK_LAYER_LUNARG_wrap_objects";
@@ -1152,7 +1186,9 @@ TEST(DebugUtils, WrappingLayer) {
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     inst.create_info.add_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif  // VULKANSC
     inst.create_info.add_layer(wrap_objects_name);
     inst.CheckCreate();
     DebugUtilsWrapper log{inst};
@@ -1160,7 +1196,9 @@ TEST(DebugUtils, WrappingLayer) {
 
     auto phys_dev = inst.GetPhysDev();
     DeviceWrapper device{inst};
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     device.create_info.add_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+#endif  // VULKANSC
     device.CheckCreate(phys_dev);
     {
         PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT = inst.load("vkSetDebugUtilsObjectNameEXT");
@@ -1198,6 +1236,7 @@ TEST(DebugUtils, WrappingLayer) {
         info.objectHandle = (uint64_t)inst.inst;
         ASSERT_EQ(VK_SUCCESS, SetDebugUtilsObjectTagEXT(device, &info));
     }
+#ifndef VULKANSC
     // Debug marker
     {
         PFN_vkDebugMarkerSetObjectNameEXT DebugMarkerSetObjectNameEXT = inst.load("vkDebugMarkerSetObjectNameEXT");
@@ -1235,4 +1274,5 @@ TEST(DebugUtils, WrappingLayer) {
         info.object = (uint64_t)inst.inst;
         ASSERT_EQ(VK_SUCCESS, DebugMarkerSetObjectTagEXT(device, &info));
     }
+#endif  // VULKANSC
 }

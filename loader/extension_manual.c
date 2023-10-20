@@ -2,6 +2,8 @@
  * Copyright (c) 2015-2022 The Khronos Group Inc.
  * Copyright (c) 2015-2022 Valve Corporation
  * Copyright (c) 2015-2022 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +39,7 @@
 // These functions, for whatever reason, require more complex changes than
 // can easily be automatically generated.
 
+#ifndef VULKANSC
 // ---- VK_NV_external_memory_capabilities extension trampoline/terminators
 
 VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceExternalImageFormatPropertiesNV(
@@ -84,6 +87,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceExternalImageFormatPr
     return icd_term->dispatch.GetPhysicalDeviceExternalImageFormatPropertiesNV(
         phys_dev_term->phys_dev, format, type, tiling, usage, flags, externalHandleType, pExternalImageFormatProperties);
 }
+#endif  // VULKANSC
 
 // ---- VK_EXT_display_surface_counter extension trampoline/terminators
 
@@ -179,6 +183,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_ReleaseDisplayEXT(VkPhysicalDevice phy
     return icd_term->dispatch.ReleaseDisplayEXT(phys_dev_term->phys_dev, display);
 }
 
+#ifndef VULKANSC
 // ---- VK_EXT_acquire_xlib_display extension trampoline/terminators
 
 #if defined(VK_USE_PLATFORM_XLIB_XRANDR_EXT)
@@ -400,3 +405,4 @@ out:
 
     return res;
 }
+#endif  // VULKANSC

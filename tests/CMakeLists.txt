@@ -1,6 +1,7 @@
 # ~~~
 # Copyright (c) 2014-2022 Valve Corporation
 # Copyright (c) 2014-2022 LunarG, Inc.
+# Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,4 +78,8 @@ if(NOT CMAKE_CROSSCOMPILING)
     gtest_discover_tests(test_regression PROPERTIES DISCOVERY_TIMEOUT 100)
 else()
     gtest_add_tests(TARGET test_regression)
+    # Used to skip certain tests that require rebuilding
+    # 32 bit and 64 bit dummy libs. For more info see
+    # comments for TEST(TryLoadWrongBinaries, WrongICD).
+    add_compile_definitions(CROSS_COMPILING)
 endif()

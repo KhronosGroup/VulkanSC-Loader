@@ -96,6 +96,7 @@ TEST(ICDInterfaceVersion2Plus, l5_icd5) {
     // normal.
 }
 
+#ifndef VULKANSC  // EnumerateAdapterPhysicalDevices is not supported in Vulkan SC
 #if defined(WIN32)
 // This test makes sure that EnumerateAdapterPhysicalDevices on drivers found in the Khronos/Vulkan/Drivers registry
 TEST(ICDInterfaceVersion2PlusEnumerateAdapterPhysicalDevices, version_6_in_drivers_registry) {
@@ -304,6 +305,8 @@ TEST(ICDInterfaceVersion2PlusEnumerateAdapterPhysicalDevices, VerifyGroupResults
 }
 
 #endif  // defined(WIN32)
+#endif  // VULKANSC
+
 TEST(ICDInterfaceVersion7, SingleDriver) {
     FrameworkEnvironment env{};
     auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_7_WITH_ADDITIONAL_EXPORTS)).add_physical_device({});
@@ -465,6 +468,7 @@ TEST(MultipleDriverConfig, DifferentICDsWithDevicesAndGroups) {
     ASSERT_EQ(group_count, returned_group_count);
 }
 
+#ifndef VULKANSC  // Device sorting is not supported in Vulkan SC
 #if defined(WIN32)
 // This is testing when there are drivers that support the Windows device adapter sorting mechanism by exporting
 // EnumerateAdapterPhysicalDevices and drivers that do not expose that functionality
@@ -542,6 +546,7 @@ TEST(MultipleICDConfig, version_5_and_version_6) {
     }
 }
 #endif  // defined(WIN32)
+#endif  // VULKANSC
 
 // shim function pointers for 1.3
 // Should use autogen for this - it generates 'shim' functions for validation layers, maybe that could be used here.
@@ -574,6 +579,7 @@ void test_vkCmdSetStencilTestEnable(VkCommandBuffer, VkBool32) {}
 void test_vkCmdSetViewportWithCount(VkCommandBuffer, uint32_t, const VkViewport*) {}
 void test_vkCmdWaitEvents2(VkCommandBuffer, uint32_t, const VkEvent*, const VkDependencyInfo*) {}
 void test_vkCmdWriteTimestamp2(VkCommandBuffer, VkPipelineStageFlags2, VkQueryPool, uint32_t) {}
+#ifndef VULKANSC  // VK_EXT_private_data is not supported in Vulkan SC
 VkResult test_vkCreatePrivateDataSlot(VkDevice, const VkPrivateDataSlotCreateInfo*, const VkAllocationCallbacks*,
                                       VkPrivateDataSlot*) {
     return VK_SUCCESS;
@@ -841,6 +847,7 @@ TEST(LayerManifest, ExplicitNonVulkanVariant) {
     ASSERT_TRUE(log.find(std::string("Layer \"") + explicit_layer_name +
                          "\" has an \'api_version\' field which contains a non-zero variant value of 1.  Skipping Layer."));
 }
+#endif  // VULKANSC
 
 TEST(DriverManifest, UnknownManifestVersion) {
     FrameworkEnvironment env{};
@@ -930,6 +937,7 @@ struct DriverInfo {
     bool expect_to_find = false;
 };
 
+#ifndef VULKANSC  // VK_LUNARG_direct_driver_loading is not supported in Vulkan SC
 void CheckDirectDriverLoading(FrameworkEnvironment& env, std::vector<DriverInfo> const& normal_drivers,
                               std::vector<DriverInfo> const& direct_drivers, bool exclusive) {
     std::vector<VkDirectDriverLoadingInfoLUNARG> ddl_infos;
@@ -1368,6 +1376,7 @@ TEST(DirectDriverLoading, DriverDoesNotExportNegotiateFunction) {
                      "VkDirectDriverLoadingInfoLUNARG structure at index 0, skipping."));
     }
 }
+#endif  // VULKANSC
 
 TEST(DriverManifest, VersionMismatchWithEnumerateInstanceVersion) {
     FrameworkEnvironment env{};

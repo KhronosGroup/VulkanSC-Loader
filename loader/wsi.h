@@ -103,6 +103,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceSurfacePresentModesKH
 VKAPI_ATTR VkResult VKAPI_CALL terminator_GetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfaceKHR surface,
                                                                                VkDeviceGroupPresentModeFlagsKHR *pModes);
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo,
                                                                 const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface);
@@ -133,6 +134,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL terminator_GetPhysicalDeviceXlibPresentationSuppo
                                                                                       uint32_t queueFamilyIndex, Display *dpy,
                                                                                       VisualID visualID);
 #endif
+#endif  // VULKANSC
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDirectFBSurfaceEXT(VkInstance instance,
                                                                    const VkDirectFBSurfaceCreateInfoEXT *pCreateInfo,

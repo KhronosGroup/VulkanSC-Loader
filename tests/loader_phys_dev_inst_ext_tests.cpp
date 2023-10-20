@@ -56,6 +56,7 @@ void FillInRandomDeviceProps(VkPhysicalDeviceProperties& props, uint32_t api_ver
 // VK_KHR_get_physical_device_properties2
 //
 
+#ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
 // Test vkGetPhysicalDeviceProperties2KHR where nothing supports it.
 TEST(LoaderInstPhysDevExts, PhysDevProps2KHRNoSupport) {
     FrameworkEnvironment env{};
@@ -3252,6 +3253,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFencePropsMixed) {
         }
     }
 }
+#endif  // VULKANSC
 
 //
 // VK_KHR_get_surface_capabilities2
@@ -5530,6 +5532,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCaps2KHRMixed) {
 // VK_EXT_acquire_drm_display
 //
 
+#ifndef VULKANSC  // VK_EXT_acquire_drm_display is not supported in Vulkan SC
 // Test vkAcquireDrmDisplayEXT where nothing supports it.
 TEST(LoaderInstPhysDevExts, AcquireDrmDisplayEXTNoSupport) {
     FrameworkEnvironment env{};
@@ -5890,6 +5893,7 @@ TEST(LoaderInstPhysDevExts, DifferentInstanceExtensions) {
         GetPhysicalDeviceExternalFenceProperties(physical_devices[dev], &ext_fence_info, &ext_fence_props);
     }
 }
+#endif  // VULKANSC
 
 TEST(LoaderInstPhysDevExts, DifferentPhysicalDeviceExtensions) {
     FrameworkEnvironment env{};

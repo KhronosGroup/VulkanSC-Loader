@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -218,10 +220,17 @@ TEST(EnvVarICDOverrideSetup, XDG) {
     inst.CheckCreate();
 
     auto check_paths = [](DebugUtilsLogger const& debug_log, ManifestCategory category) {
+#ifdef VULKANSC
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober/vulkansc") / category_path_name(category)).str()));
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober2/vulkansc") / category_path_name(category)).str()));
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober3/vulkansc") / category_path_name(category)).str()));
+        EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober4/with spaces/vulkansc") / category_path_name(category)).str()));
+#else
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober/vulkan") / category_path_name(category)).str()));
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober2/vulkan") / category_path_name(category)).str()));
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober3/vulkan") / category_path_name(category)).str()));
         EXPECT_TRUE(debug_log.find((fs::path("/tmp/goober4/with spaces/vulkan") / category_path_name(category)).str()));
+#endif  // VULKANSC
     };
     check_paths(env.debug_log, ManifestCategory::icd);
     check_paths(env.debug_log, ManifestCategory::implicit_layer);
@@ -384,6 +393,8 @@ TEST(EnvVarICDOverrideSetup, TestOnlyAddLayerEnvVar) {
 
 #endif
 
+// TODO: Vulkan SC - This depends on Vulkan 1.3 for some reason
+#ifndef VULKANSC
 // Test that the driver filter select will only enable driver manifest files that match the filter
 TEST(EnvVarICDOverrideSetup, FilterSelectDriver) {
     FrameworkEnvironment env{};
@@ -748,3 +759,4 @@ TEST(EnvVarICDOverrideSetup, FilterSelectAndDisableDriver) {
     ASSERT_FALSE(env.debug_log.find_prefix_then_postfix("CDE_ICD.json", "ignored because not selected by env var"));
     ASSERT_FALSE(env.debug_log.find_prefix_then_postfix("CDE_ICD.json", "ignored because it was disabled by env var"));
 }
+#endif  // VULKANSC

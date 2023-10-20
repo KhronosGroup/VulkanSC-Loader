@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -210,6 +212,12 @@ TEST(EnumerateInstanceExtensionProperties, UsageChecks) {
         std::array<VkExtensionProperties, 6> extensions;
         ASSERT_EQ(VK_SUCCESS,
                   env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+        ASSERT_EQ(extension_count, 3U);  // default extensions + our two extensions
+        EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
+        EXPECT_TRUE(string_eq(extensions.at(1).extensionName, second_ext.extensionName.c_str()));
+        EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
         ASSERT_EQ(extension_count, 6U);  // default extensions + our two extensions
 
         EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
@@ -218,8 +226,16 @@ TEST(EnumerateInstanceExtensionProperties, UsageChecks) {
         EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(4).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(5).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
     }
     {  // Two Pass
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+        auto extensions = env.GetInstanceExtensions(3);
+        // loader always adds the debug utils extension
+        EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
+        EXPECT_TRUE(string_eq(extensions.at(1).extensionName, second_ext.extensionName.c_str()));
+        EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
         auto extensions = env.GetInstanceExtensions(6);
         // loader always adds the debug report & debug utils extensions
         EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
@@ -228,9 +244,11 @@ TEST(EnumerateInstanceExtensionProperties, UsageChecks) {
         EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(4).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(5).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
     }
 }
 
+#ifndef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
 TEST(EnumerateInstanceExtensionProperties, PropertyCountLessThanAvailable) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2));
@@ -260,6 +278,7 @@ TEST(EnumerateInstanceExtensionProperties, PropertyCountLessThanAvailable) {
         ASSERT_TRUE(string_eq(extensions[0].extensionName, "VK_EXT_debug_report"));
     }
 }
+#endif  // VULKANSC
 
 TEST(EnumerateInstanceExtensionProperties, FilterUnkownInstanceExtensions) {
     FrameworkEnvironment env{};
@@ -269,16 +288,28 @@ TEST(EnumerateInstanceExtensionProperties, FilterUnkownInstanceExtensions) {
     Extension second_ext{"SecondTestExtension"};
     env.reset_icd().add_instance_extensions({first_ext, second_ext});
     {
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+        auto extensions = env.GetInstanceExtensions(1);
+        // loader always adds the debug utils extension
+        EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
         auto extensions = env.GetInstanceExtensions(4);
         // loader always adds the debug report & debug utils extensions
         EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
     }
     {  // Disable unknown instance extension filtering
         EnvVarWrapper disable_inst_ext_filter_env_var{"VK_LOADER_DISABLE_INST_EXT_FILTER", "1"};
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+        auto extensions = env.GetInstanceExtensions(3);
+        EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
+        EXPECT_TRUE(string_eq(extensions.at(1).extensionName, second_ext.extensionName.c_str()));
+        EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
         auto extensions = env.GetInstanceExtensions(6);
         EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
         EXPECT_TRUE(string_eq(extensions.at(1).extensionName, second_ext.extensionName.c_str()));
@@ -286,6 +317,7 @@ TEST(EnumerateInstanceExtensionProperties, FilterUnkownInstanceExtensions) {
         EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(4).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(5).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
     }
 }
 
@@ -683,8 +715,7 @@ TEST(EnumeratePhysicalDevices, OneCall) {
 TEST(EnumeratePhysicalDevices, TwoCall) {
     FrameworkEnvironment env{};
     auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-                       .set_min_icd_interface_version(5)
-                       .add_instance_extension({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME});
+                       .set_min_icd_interface_version(5);
 
     const uint32_t real_device_count = 2;
     for (uint32_t i = 0; i < real_device_count; i++) {
@@ -709,8 +740,7 @@ TEST(EnumeratePhysicalDevices, TwoCall) {
 TEST(EnumeratePhysicalDevices, MatchOneAndTwoCallNumbers) {
     FrameworkEnvironment env{};
     auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-                       .set_min_icd_interface_version(5)
-                       .add_instance_extension({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME});
+                       .set_min_icd_interface_version(5);
 
     const uint32_t real_device_count = 3;
     for (uint32_t i = 0; i < real_device_count; i++) {
@@ -745,8 +775,7 @@ TEST(EnumeratePhysicalDevices, MatchOneAndTwoCallNumbers) {
 TEST(EnumeratePhysicalDevices, TwoCallIncomplete) {
     FrameworkEnvironment env{};
     auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-                       .set_min_icd_interface_version(5)
-                       .add_instance_extension({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME});
+                       .set_min_icd_interface_version(5);
 
     const uint32_t real_device_count = 2;
     for (uint32_t i = 0; i < real_device_count; i++) {
@@ -1307,6 +1336,14 @@ TEST(CreateDevice, ConsecutiveCreateWithoutDestruction) {
     }
 }
 
+// This test uses prebuilt binaries that must be rebuilt for
+// non x86 platforms. Attempting to rebuild them by uncommenting lines
+// in tests/framework/data/CMakeLists.txt can create further errors due to the
+// use of "-m32" and "-m64" which are not available on certain cross compilers.
+// As a result, separate 32 bit and 64 bit cross compilers are needed, which
+// may be difficult to setup with current cmake infrastructure, so this test
+// will be skipped for now when cross compiling.
+#if !defined(CROSS_COMPILING)
 TEST(TryLoadWrongBinaries, WrongICD) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device("physical_device_0");
@@ -1332,6 +1369,7 @@ TEST(TryLoadWrongBinaries, WrongICD) {
     ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDevices(inst, &driver_count, nullptr));
     ASSERT_EQ(driver_count, 1U);
 }
+#endif
 
 TEST(TryLoadWrongBinaries, WrongExplicit) {
     FrameworkEnvironment env{};
@@ -1589,6 +1627,7 @@ TEST(TryLoadWrongBinaries, WrongArchLayer) {
     ASSERT_TRUE(log.find("Layer library architecture doesn't match the current running architecture, skipping this layer"));
 }
 
+#ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
 TEST(EnumeratePhysicalDeviceGroups, OneCall) {
     FrameworkEnvironment env{};
     auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2, VK_API_VERSION_1_1))
@@ -1642,7 +1681,7 @@ TEST(EnumeratePhysicalDeviceGroups, OneCall) {
             ASSERT_EQ(true, found[dev]);
         }
         for (auto& group : group_props) {
-            VkDeviceGroupDeviceCreateInfoKHR group_info{};
+            VkDeviceGroupDeviceCreateInfo group_info{};
             group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
             group_info.physicalDeviceCount = group.physicalDeviceCount;
             group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -1660,7 +1699,7 @@ TEST(EnumeratePhysicalDeviceGroups, OneCall) {
             const VkBaseInStructure* pNext = reinterpret_cast<const VkBaseInStructure*>(dev.create_info.dev.pNext);
             while (pNext != nullptr) {
                 if (pNext->sType == VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO) {
-                    ASSERT_EQ(&group_info, reinterpret_cast<const VkDeviceGroupDeviceCreateInfoKHR*>(pNext));
+                    ASSERT_EQ(&group_info, reinterpret_cast<const VkDeviceGroupDeviceCreateInfo*>(pNext));
                 }
                 if (pNext->sType == 100000) {
                     ASSERT_EQ(&spacer_structure, pNext);
@@ -1687,8 +1726,8 @@ TEST(EnumeratePhysicalDeviceGroups, OneCall) {
 
         uint32_t group_count = static_cast<uint32_t>(driver.physical_device_groups.size());
         uint32_t returned_group_count = group_count;
-        std::vector<VkPhysicalDeviceGroupPropertiesKHR> group_props{};
-        group_props.resize(group_count, VkPhysicalDeviceGroupPropertiesKHR{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR});
+        std::vector<VkPhysicalDeviceGroupProperties> group_props{};
+        group_props.resize(group_count, VkPhysicalDeviceGroupProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR});
         ASSERT_EQ(VK_SUCCESS, vkEnumeratePhysicalDeviceGroupsKHR(inst, &returned_group_count, group_props.data()));
         ASSERT_EQ(group_count, returned_group_count);
 
@@ -1709,7 +1748,7 @@ TEST(EnumeratePhysicalDeviceGroups, OneCall) {
             ASSERT_EQ(true, found[dev]);
         }
         for (auto& group : group_props) {
-            VkDeviceGroupDeviceCreateInfoKHR group_info{};
+            VkDeviceGroupDeviceCreateInfo group_info{};
             group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
             group_info.physicalDeviceCount = group.physicalDeviceCount;
             group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -1779,7 +1818,7 @@ TEST(EnumeratePhysicalDeviceGroups, TwoCall) {
             ASSERT_EQ(true, found[dev]);
         }
         for (auto& group : group_props) {
-            VkDeviceGroupDeviceCreateInfoKHR group_info{};
+            VkDeviceGroupDeviceCreateInfo group_info{};
             group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
             group_info.physicalDeviceCount = group.physicalDeviceCount;
             group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -1807,8 +1846,8 @@ TEST(EnumeratePhysicalDeviceGroups, TwoCall) {
         ASSERT_EQ(VK_SUCCESS, vkEnumeratePhysicalDeviceGroupsKHR(inst, &returned_group_count, nullptr));
         ASSERT_EQ(group_count, returned_group_count);
 
-        std::vector<VkPhysicalDeviceGroupPropertiesKHR> group_props{};
-        group_props.resize(group_count, VkPhysicalDeviceGroupPropertiesKHR{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR});
+        std::vector<VkPhysicalDeviceGroupProperties> group_props{};
+        group_props.resize(group_count, VkPhysicalDeviceGroupProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR});
         ASSERT_EQ(VK_SUCCESS, vkEnumeratePhysicalDeviceGroupsKHR(inst, &returned_group_count, group_props.data()));
         ASSERT_EQ(group_count, returned_group_count);
 
@@ -1829,7 +1868,7 @@ TEST(EnumeratePhysicalDeviceGroups, TwoCall) {
             ASSERT_EQ(true, found[dev]);
         }
         for (auto& group : group_props) {
-            VkDeviceGroupDeviceCreateInfoKHR group_info{};
+            VkDeviceGroupDeviceCreateInfo group_info{};
             group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
             group_info.physicalDeviceCount = group.physicalDeviceCount;
             group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -1895,7 +1934,7 @@ TEST(EnumeratePhysicalDeviceGroups, TwoCallIncomplete) {
             ASSERT_EQ(true, found);
         }
         for (auto& group : group_props) {
-            VkDeviceGroupDeviceCreateInfoKHR group_info{};
+            VkDeviceGroupDeviceCreateInfo group_info{};
             group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
             group_info.physicalDeviceCount = group.physicalDeviceCount;
             group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -1919,13 +1958,13 @@ TEST(EnumeratePhysicalDeviceGroups, TwoCallIncomplete) {
         ASSERT_EQ(group_count, returned_group_count);
 
         returned_group_count = 1;
-        std::array<VkPhysicalDeviceGroupPropertiesKHR, 1> group_props{};
+        std::array<VkPhysicalDeviceGroupProperties, 1> group_props{};
         group_props[0].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
         ASSERT_EQ(VK_INCOMPLETE, vkEnumeratePhysicalDeviceGroupsKHR(inst, &returned_group_count, group_props.data()));
         ASSERT_EQ(1U, returned_group_count);
 
         returned_group_count = 2;
-        std::array<VkPhysicalDeviceGroupPropertiesKHR, 2> group_props_2{};
+        std::array<VkPhysicalDeviceGroupProperties, 2> group_props_2{};
         group_props_2[0].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
         group_props_2[1].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
         ASSERT_EQ(VK_SUCCESS, vkEnumeratePhysicalDeviceGroupsKHR(inst, &returned_group_count, group_props_2.data()));
@@ -1945,7 +1984,7 @@ TEST(EnumeratePhysicalDeviceGroups, TwoCallIncomplete) {
             ASSERT_EQ(true, found);
         }
         for (auto& group : group_props) {
-            VkDeviceGroupDeviceCreateInfoKHR group_info{};
+            VkDeviceGroupDeviceCreateInfo group_info{};
             group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
             group_info.physicalDeviceCount = group.physicalDeviceCount;
             group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -1985,7 +2024,7 @@ TEST(EnumeratePhysicalDeviceGroups, TestCoreVersusExtensionSameReturns) {
     uint32_t core_group_count = 0;
     std::vector<VkPhysicalDeviceGroupProperties> core_group_props{};
     uint32_t ext_group_count = 0;
-    std::vector<VkPhysicalDeviceGroupPropertiesKHR> ext_group_props{};
+    std::vector<VkPhysicalDeviceGroupProperties> ext_group_props{};
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.set_api_version(1, 1, 0);
@@ -2011,7 +2050,7 @@ TEST(EnumeratePhysicalDeviceGroups, TestCoreVersusExtensionSameReturns) {
     ASSERT_EQ(ext_group_count, returned_group_count);
 
     ext_group_props.resize(returned_group_count,
-                           VkPhysicalDeviceGroupPropertiesKHR{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR});
+                           VkPhysicalDeviceGroupProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR});
     ASSERT_EQ(VK_SUCCESS, vkEnumeratePhysicalDeviceGroupsKHR(inst, &returned_group_count, ext_group_props.data()));
     ASSERT_EQ(ext_group_count, returned_group_count);
 
@@ -2036,7 +2075,7 @@ TEST(EnumeratePhysicalDeviceGroups, TestCoreVersusExtensionSameReturns) {
         }
     }
     for (auto& group : core_group_props) {
-        VkDeviceGroupDeviceCreateInfoKHR group_info{};
+        VkDeviceGroupDeviceCreateInfo group_info{};
         group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
         group_info.physicalDeviceCount = group.physicalDeviceCount;
         group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -2045,6 +2084,7 @@ TEST(EnumeratePhysicalDeviceGroups, TestCoreVersusExtensionSameReturns) {
         dev.CheckCreate(group.physicalDevices[0]);
     }
 }
+#endif  // VULKANSC
 
 // Start with 6 devices in 3 different groups, and then add a group,
 // querying vkEnumeratePhysicalDeviceGroups before and after the add.
@@ -2131,7 +2171,7 @@ TEST(EnumeratePhysicalDeviceGroups, CallThriceAddGroupInBetween) {
         }
     }
     for (auto& group : group_props_after) {
-        VkDeviceGroupDeviceCreateInfoKHR group_info{};
+        VkDeviceGroupDeviceCreateInfo group_info{};
         group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
         group_info.physicalDeviceCount = group.physicalDeviceCount;
         group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -2218,7 +2258,7 @@ TEST(EnumeratePhysicalDeviceGroups, CallTwiceRemoveGroupInBetween) {
         }
     }
     for (auto& group : group_props_after) {
-        VkDeviceGroupDeviceCreateInfoKHR group_info{};
+        VkDeviceGroupDeviceCreateInfo group_info{};
         group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
         group_info.physicalDeviceCount = group.physicalDeviceCount;
         group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -2304,7 +2344,7 @@ TEST(EnumeratePhysicalDeviceGroups, CallTwiceAddDeviceInBetween) {
         }
     }
     for (auto& group : group_props_after) {
-        VkDeviceGroupDeviceCreateInfoKHR group_info{};
+        VkDeviceGroupDeviceCreateInfo group_info{};
         group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
         group_info.physicalDeviceCount = group.physicalDeviceCount;
         group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -2401,7 +2441,7 @@ TEST(EnumeratePhysicalDeviceGroups, CallTwiceRemoveDeviceInBetween) {
         }
     }
     for (auto& group : group_props_after) {
-        VkDeviceGroupDeviceCreateInfoKHR group_info{};
+        VkDeviceGroupDeviceCreateInfo group_info{};
         group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
         group_info.physicalDeviceCount = group.physicalDeviceCount;
         group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -2519,7 +2559,7 @@ TEST(EnumeratePhysicalDeviceGroups, MultipleAddRemoves) {
         ASSERT_EQ(group_props_after_add_device[group].physicalDeviceCount, after_add_dev_expected_counts[group]);
     }
     for (auto& group : group_props_after_add_device) {
-        VkDeviceGroupDeviceCreateInfoKHR group_info{};
+        VkDeviceGroupDeviceCreateInfo group_info{};
         group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
         group_info.physicalDeviceCount = group.physicalDeviceCount;
         group_info.pPhysicalDevices = &group.physicalDevices[0];
@@ -2623,7 +2663,7 @@ TEST(EnumeratePhysicalDeviceGroups, FakePNext) {
     std::array<VkPhysicalDeviceGroupProperties, max_phys_dev_groups> physical_device_groups{};
     for (uint32_t group = 0; group < max_phys_dev_groups; ++group) {
         physical_device_groups[group].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
-        fake_structs[group].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT;
+        fake_structs[group].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT;
         physical_device_groups[group].pNext = &fake_structs[group];
     }
     ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDeviceGroups(inst, &group_count, physical_device_groups.data()));
@@ -2635,6 +2675,7 @@ TEST(EnumeratePhysicalDeviceGroups, FakePNext) {
     }
 }
 
+#ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
 TEST(ExtensionManual, ToolingProperties) {
     VkPhysicalDeviceToolPropertiesEXT icd_tool_props{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TOOL_PROPERTIES_EXT,
                                                      nullptr,
@@ -2706,6 +2747,7 @@ TEST(ExtensionManual, ToolingProperties) {
         string_eq(props.name, icd_tool_props.name);
     }
 }
+#endif  // VULKANSC
 TEST(CreateInstance, InstanceNullLayerPtr) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2));
@@ -2727,6 +2769,7 @@ TEST(CreateInstance, InstanceNullExtensionPtr) {
     ASSERT_EQ(env.vulkan_functions.vkCreateInstance(&info, VK_NULL_HANDLE, &inst), VK_ERROR_EXTENSION_NOT_PRESENT);
 }
 
+#ifndef VULKANSC  // Device sorting is not supported in Vulkan SC
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__)
 // NOTE: Sort order only affects Linux
 TEST(SortedPhysicalDevices, DevicesSortEnabled10NoAppExt) {
@@ -3558,7 +3601,9 @@ TEST(SortedPhysicalDevices, DeviceGroupsSortedDisabled) {
 }
 
 #endif  // __linux__ || __FreeBSD__ || __OpenBSD__ || __GNU__
+#endif  // VULKANSC
 
+#ifndef VULKANSC  // VK_KHR_portability_enumeration is not supported in Vulkan SC
 const char* portability_driver_warning =
     "vkCreateInstance: Found drivers that contain devices which support the portability subset, but "
     "the instance does not enumerate portability drivers! Applications that wish to enumerate portability "
@@ -3787,6 +3832,7 @@ TEST(PortabilityICDConfiguration, PortabilityAndRegularICDPreInstanceFunctions) 
         ASSERT_EQ(layer_count, 0U);
     }
 }
+#endif  // VULKANSC
 
 #if defined(_WIN32)
 TEST(AppPackageDriverDiscovery, AppPackageTest) {

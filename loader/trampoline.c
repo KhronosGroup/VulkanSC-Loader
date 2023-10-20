@@ -4,6 +4,8 @@
  * Copyright (c) 2015-2023 Valve Corporation
  * Copyright (c) 2015-2023 LunarG, Inc.
  * Copyright (C) 2015 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +82,13 @@ LOADER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkI
 
             // First check if instance is valid - loader_get_instance() returns NULL if it isn't.
             struct loader_instance *ptr_instance = loader_get_instance(instance);
+#ifdef VULKANSC
+            if (ptr_instance != NULL) {
+#else
             if (ptr_instance != NULL &&
                 loader_check_version_meets_required(loader_combine_version(1, 3, 0), ptr_instance->app_api_version)) {
                 // New behavior
+#endif  // VULKANSC
                 return NULL;
             } else {
                 // Old behavior
@@ -537,6 +543,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
         goto out;
     }
 
+#ifndef VULKANSC
     // Handle cases of VK_EXT_debug_report
     // Setup the temporary callback(s) here to catch early issues:
     res = util_CreateDebugReportCallbacks(ptr_instance, pCreateInfo->pNext, pAllocator);
@@ -544,6 +551,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
         // Failure of setting up one or more of the callback.
         goto out;
     }
+#endif  // VULKANSC
 
     VkResult settings_file_res = get_loader_settings(ptr_instance, &ptr_instance->settings);
     if (settings_file_res == VK_ERROR_OUT_OF_HOST_MEMORY) {
@@ -554,6 +562,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
         log_settings(ptr_instance, &ptr_instance->settings);
     }
 
+#ifndef VULKANSC
     // Check the VkInstanceCreateInfoFlags wether to allow the portability enumeration flag
     if ((pCreateInfo->flags & VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR) == 1) {
         ptr_instance->portability_enumeration_flag_bit_set = true;
@@ -571,15 +580,21 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
             }
         }
     }
+#endif  // VULKANSC
 
-    // Make sure the application provided API version has 0 for its variant
+    // Make sure the application provided API version has the correct variant
     if (NULL != pCreateInfo->pApplicationInfo) {
         uint32_t variant_version = VK_API_VERSION_VARIANT(pCreateInfo->pApplicationInfo->apiVersion);
-        if (0 != variant_version) {
+#ifdef VULKANSC
+        const uint32_t expected_variant = VKSC_API_VARIANT;
+#else
+        const uint32_t expected_variant = 0;
+#endif  // VULKANSC
+        if (expected_variant != variant_version) {
             loader_log(ptr_instance, VULKAN_LOADER_WARN_BIT, 0,
                        "vkCreateInstance: The API Variant specified in pCreateInfo->pApplicationInfo.apiVersion is %d instead of "
-                       "the expected value of 0.",
-                       variant_version);
+                       "the expected value of %d.",
+                       variant_version, expected_variant);
         }
     }
 
@@ -615,6 +630,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
 
     if (ptr_instance->icd_tramp_list.count == 0) {
         // No drivers found
+#ifndef VULKANSC
         if (skipped_portability_drivers) {
             if (ptr_instance->portability_enumeration_extension_enabled && !ptr_instance->portability_enumeration_flag_bit_set) {
                 loader_log(ptr_instance, VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
@@ -638,6 +654,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
                            "flags and enable the VK_KHR_portability_enumeration instance extension.");
             }
         }
+#endif  // VULKANSC
         loader_log(ptr_instance, VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_DRIVER_BIT, 0, "vkCreateInstance: Found no drivers!");
         res = VK_ERROR_INCOMPATIBLE_DRIVER;
         goto out;
@@ -1108,6 +1125,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkAllocateMemory(VkDevice device, c
     return disp->AllocateMemory(device, pAllocateInfo, pAllocator, pMemory);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkFreeMemory(VkDevice device, VkDeviceMemory mem,
                                                       const VkAllocationCallbacks *pAllocator) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(device);
@@ -1119,6 +1137,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkFreeMemory(VkDevice device, VkDeviceM
 
     disp->FreeMemory(device, mem, pAllocator);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkMapMemory(VkDevice device, VkDeviceMemory mem, VkDeviceSize offset,
                                                          VkDeviceSize size, VkFlags flags, void **ppData) {
@@ -1227,6 +1246,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetImageMemoryRequirements(VkDevice d
     disp->GetImageMemoryRequirements(device, image, pMemoryRequirements);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL
 vkGetImageSparseMemoryRequirements(VkDevice device, VkImage image, uint32_t *pSparseMemoryRequirementCount,
                                    VkSparseImageMemoryRequirements *pSparseMemoryRequirements) {
@@ -1268,6 +1288,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkQueueBindSparse(VkQueue queue, ui
 
     return disp->QueueBindSparse(queue, bindInfoCount, pBindInfo, fence);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateFence(VkDevice device, const VkFenceCreateInfo *pCreateInfo,
                                                            const VkAllocationCallbacks *pAllocator, VkFence *pFence) {
@@ -1418,6 +1439,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateQueryPool(VkDevice device, 
     return disp->CreateQueryPool(device, pCreateInfo, pAllocator, pQueryPool);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyQueryPool(VkDevice device, VkQueryPool queryPool,
                                                             const VkAllocationCallbacks *pAllocator) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(device);
@@ -1429,6 +1451,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyQueryPool(VkDevice device, VkQ
 
     disp->DestroyQueryPool(device, queryPool, pAllocator);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkGetQueryPoolResults(VkDevice device, VkQueryPool queryPool, uint32_t firstQuery,
                                                                    uint32_t queryCount, size_t dataSize, void *pData,
@@ -1551,6 +1574,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyImageView(VkDevice device, VkI
     disp->DestroyImageView(device, imageView, pAllocator);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateShaderModule(VkDevice device, const VkShaderModuleCreateInfo *pCreateInfo,
                                                                   const VkAllocationCallbacks *pAllocator,
                                                                   VkShaderModule *pShader) {
@@ -1575,6 +1599,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyShaderModule(VkDevice device, 
 
     disp->DestroyShaderModule(device, shaderModule, pAllocator);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreatePipelineCache(VkDevice device, const VkPipelineCacheCreateInfo *pCreateInfo,
                                                                    const VkAllocationCallbacks *pAllocator,
@@ -1601,6 +1626,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyPipelineCache(VkDevice device,
     disp->DestroyPipelineCache(device, pipelineCache, pAllocator);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkGetPipelineCacheData(VkDevice device, VkPipelineCache pipelineCache,
                                                                     size_t *pDataSize, void *pData) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(device);
@@ -1624,6 +1650,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkMergePipelineCaches(VkDevice devi
 
     return disp->MergePipelineCaches(device, dstCache, srcCacheCount, pSrcCaches);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache,
                                                                        uint32_t createInfoCount,
@@ -1755,6 +1782,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateDescriptorPool(VkDevice dev
     return disp->CreateDescriptorPool(device, pCreateInfo, pAllocator, pDescriptorPool);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool,
                                                                  const VkAllocationCallbacks *pAllocator) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(device);
@@ -1766,6 +1794,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyDescriptorPool(VkDevice device
 
     disp->DestroyDescriptorPool(device, descriptorPool, pAllocator);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkResetDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool,
                                                                    VkDescriptorPoolResetFlags flags) {
@@ -1894,6 +1923,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateCommandPool(VkDevice device
     return disp->CreateCommandPool(device, pCreateInfo, pAllocator, pCommandPool);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyCommandPool(VkDevice device, VkCommandPool commandPool,
                                                               const VkAllocationCallbacks *pAllocator) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(device);
@@ -1905,6 +1935,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyCommandPool(VkDevice device, V
 
     disp->DestroyCommandPool(device, commandPool, pAllocator);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkResetCommandPool(VkDevice device, VkCommandPool commandPool,
                                                                 VkCommandPoolResetFlags flags) {
@@ -2596,11 +2627,14 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceFeatures2(VkPhysical
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_get_physical_device_properties2) {
         disp->GetPhysicalDeviceFeatures2KHR(unwrapped_phys_dev, pFeatures);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceFeatures2(unwrapped_phys_dev, pFeatures);
     }
 }
@@ -2615,11 +2649,14 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceProperties2(VkPhysic
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_get_physical_device_properties2) {
         disp->GetPhysicalDeviceProperties2KHR(unwrapped_phys_dev, pProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceProperties2(unwrapped_phys_dev, pProperties);
     }
 }
@@ -2634,11 +2671,14 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceFormatProperties2(Vk
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_get_physical_device_properties2) {
         disp->GetPhysicalDeviceFormatProperties2KHR(unwrapped_phys_dev, format, pFormatProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceFormatProperties2(unwrapped_phys_dev, format, pFormatProperties);
     }
 }
@@ -2654,11 +2694,14 @@ vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physicalDevice, const
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_get_physical_device_properties2) {
         return disp->GetPhysicalDeviceImageFormatProperties2KHR(unwrapped_phys_dev, pImageFormatInfo, pImageFormatProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         return disp->GetPhysicalDeviceImageFormatProperties2(unwrapped_phys_dev, pImageFormatInfo, pImageFormatProperties);
     }
 }
@@ -2673,11 +2716,14 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceQueueFamilyPropertie
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_get_physical_device_properties2) {
         disp->GetPhysicalDeviceQueueFamilyProperties2KHR(unwrapped_phys_dev, pQueueFamilyPropertyCount, pQueueFamilyProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceQueueFamilyProperties2(unwrapped_phys_dev, pQueueFamilyPropertyCount, pQueueFamilyProperties);
     }
 }
@@ -2692,15 +2738,19 @@ vkGetPhysicalDeviceMemoryProperties2(VkPhysicalDevice physicalDevice, VkPhysical
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_get_physical_device_properties2) {
         disp->GetPhysicalDeviceMemoryProperties2KHR(unwrapped_phys_dev, pMemoryProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceMemoryProperties2(unwrapped_phys_dev, pMemoryProperties);
     }
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceSparseImageFormatProperties2(
     VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSparseImageFormatInfo2 *pFormatInfo, uint32_t *pPropertyCount,
     VkSparseImageFormatProperties2 *pProperties) {
@@ -2720,6 +2770,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceSparseImageFormatPro
         disp->GetPhysicalDeviceSparseImageFormatProperties2(unwrapped_phys_dev, pFormatInfo, pPropertyCount, pProperties);
     }
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalBufferProperties(
     VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalBufferInfo *pExternalBufferInfo,
@@ -2732,17 +2783,20 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalBufferProper
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_external_memory_capabilities) {
         disp->GetPhysicalDeviceExternalBufferPropertiesKHR(unwrapped_phys_dev, pExternalBufferInfo, pExternalBufferProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceExternalBufferProperties(unwrapped_phys_dev, pExternalBufferInfo, pExternalBufferProperties);
     }
 }
 
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalSemaphoreProperties(
-    VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalSemaphoreInfoKHR *pExternalSemaphoreInfo,
+    VkPhysicalDevice physicalDevice, const VkPhysicalDeviceExternalSemaphoreInfo *pExternalSemaphoreInfo,
     VkExternalSemaphoreProperties *pExternalSemaphoreProperties) {
     VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
     if (VK_NULL_HANDLE == unwrapped_phys_dev) {
@@ -2752,12 +2806,15 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalSemaphorePro
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_external_semaphore_capabilities) {
         disp->GetPhysicalDeviceExternalSemaphorePropertiesKHR(unwrapped_phys_dev, pExternalSemaphoreInfo,
                                                               pExternalSemaphoreProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceExternalSemaphoreProperties(unwrapped_phys_dev, pExternalSemaphoreInfo,
                                                            pExternalSemaphoreProperties);
     }
@@ -2774,11 +2831,14 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetPhysicalDeviceExternalFencePropert
         abort(); /* Intentionally fail so user can correct issue. */
     }
     const VkLayerInstanceDispatchTable *disp = loader_get_instance_layer_dispatch(physicalDevice);
+#ifndef VULKANSC
     const struct loader_instance *inst = ((struct loader_physical_device_tramp *)physicalDevice)->this_instance;
 
     if (inst != NULL && inst->enabled_known_extensions.khr_external_fence_capabilities) {
         disp->GetPhysicalDeviceExternalFencePropertiesKHR(unwrapped_phys_dev, pExternalFenceInfo, pExternalFenceProperties);
-    } else {
+    } else
+#endif  // VULKANSC
+    {
         disp->GetPhysicalDeviceExternalFenceProperties(unwrapped_phys_dev, pExternalFenceInfo, pExternalFenceProperties);
     }
 }
@@ -2862,6 +2922,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetBufferMemoryRequirements2(VkDevice
     disp->GetBufferMemoryRequirements2(device, pInfo, pMemoryRequirements);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetImageSparseMemoryRequirements2(
     VkDevice device, const VkImageSparseMemoryRequirementsInfo2 *pInfo, uint32_t *pSparseMemoryRequirementCount,
     VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements) {
@@ -2885,6 +2946,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkTrimCommandPool(VkDevice device, VkCo
     }
     disp->TrimCommandPool(device, commandPool, flags);
 }
+#endif  // VULKANSC
 
 LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *pQueueInfo, VkQueue *pQueue) {
     const VkLayerDispatchTable *disp = loader_get_dispatch(device);
@@ -2935,6 +2997,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetDescriptorSetLayoutSupport(VkDevic
     disp->GetDescriptorSetLayoutSupport(device, pCreateInfo, pSupport);
 }
 
+#ifndef VULKANSC
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL
 vkCreateDescriptorUpdateTemplate(VkDevice device, const VkDescriptorUpdateTemplateCreateInfo *pCreateInfo,
                                  const VkAllocationCallbacks *pAllocator, VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate) {
@@ -2970,6 +3033,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkUpdateDescriptorSetWithTemplate(VkDev
     }
     disp->UpdateDescriptorSetWithTemplate(device, descriptorSet, descriptorUpdateTemplate, pData);
 }
+#endif  // VULKANSC
 
 // ---- Vulkan core 1.2 trampolines
 
@@ -3122,6 +3186,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkResetQueryPool(VkDevice device, VkQue
     disp->ResetQueryPool(device, queryPool, firstQuery, queryCount);
 }
 
+#ifndef VULKANSC
 // ---- Vulkan core 1.3 trampolines
 
 // Instance
@@ -3348,3 +3413,4 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkQueueSubmit2(VkQueue queue, uint3
     const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
     return disp->QueueSubmit2(queue, submitCount, pSubmits, fence);
 }
+#endif  // VULKANSC

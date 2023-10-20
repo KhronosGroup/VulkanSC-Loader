@@ -3,6 +3,8 @@
  * Copyright (c) 2015-2021 Valve Corporation
  * Copyright (c) 2015-2021 LunarG, Inc.
  * Copyright (C) 2015-2016 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +34,9 @@
 #endif
 
 #include "vulkan/vk_layer.h"
+#ifndef VULKANSC
 #include "vk_object_types.h"
+#endif  // VULKANSC
 
 #include "allocation.h"
 #include "debug_utils.h"
@@ -83,6 +87,7 @@ VkBool32 util_SubmitDebugUtilsMessageEXT(const struct loader_instance *inst, VkD
 
     if (NULL != pCallbackData) {
         VkLayerDbgFunctionNode *pTrav = inst->DbgFunctionHead;
+#ifndef VULKANSC
         VkDebugReportObjectTypeEXT object_type = VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT;
         VkDebugReportFlagsEXT object_flags = 0;
         uint64_t object_handle = 0;
@@ -91,7 +96,7 @@ VkBool32 util_SubmitDebugUtilsMessageEXT(const struct loader_instance *inst, VkD
         if (0 < pCallbackData->objectCount) {
             debug_utils_AnnotObjectToDebugReportObject(pCallbackData->pObjects, &object_type, &object_handle);
         }
-
+#endif  // VULKANSC
         while (pTrav) {
             if (pTrav->is_messenger && (pTrav->messenger.messageSeverity & messageSeverity) &&
                 (pTrav->messenger.messageType & messageTypes)) {
@@ -99,13 +104,14 @@ VkBool32 util_SubmitDebugUtilsMessageEXT(const struct loader_instance *inst, VkD
                     bail = true;
                 }
             }
+#ifndef VULKANSC
             if (!pTrav->is_messenger && pTrav->report.msgFlags & object_flags) {
                 if (pTrav->report.pfnMsgCallback(object_flags, object_type, object_handle, 0, pCallbackData->messageIdNumber,
                                                  pCallbackData->pMessageIdName, pCallbackData->pMessage, pTrav->pUserData)) {
                     bail = true;
                 }
             }
-
+#endif  // VULKANSC
             pTrav = pTrav->pNext;
         }
     }
@@ -288,6 +294,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_SubmitDebugUtilsMessageEXT(VkInstance inst
 
 // VK_EXT_debug_report related items
 
+#ifndef VULKANSC
 VkResult util_CreateDebugReportCallback(struct loader_instance *inst, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
                                         const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT callback) {
     VkLayerDbgFunctionNode *pNewDbgFuncNode = NULL;
@@ -546,11 +553,14 @@ VKAPI_ATTR void VKAPI_CALL terminator_DebugReportMessageEXT(VkInstance instance,
 
     loader_platform_thread_unlock_mutex(&loader_lock);
 }
+#endif  // VULKANSC
 
 // General utilities
 
 const VkExtensionProperties debug_utils_extension_info[] = {
+#ifndef VULKANSC
     {VK_EXT_DEBUG_REPORT_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_SPEC_VERSION},
+#endif  // VULKANSC
     {VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_UTILS_SPEC_VERSION},
 };
 
@@ -572,9 +582,12 @@ VkResult add_debug_extensions_to_ext_list(const struct loader_instance *inst, st
 
 void check_for_enabled_debug_extensions(struct loader_instance *ptr_instance, const VkInstanceCreateInfo *pCreateInfo) {
     for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
+#ifndef VULKANSC
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DEBUG_REPORT_EXTENSION_NAME) == 0) {
             ptr_instance->enabled_known_extensions.ext_debug_report = 1;
-        } else if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0) {
+        } else
+#endif  // VULKANSC
+        if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0) {
             ptr_instance->enabled_known_extensions.ext_debug_utils = 1;
         }
     }
@@ -585,6 +598,7 @@ bool debug_extensions_InstanceGpa(struct loader_instance *ptr_instance, const ch
 
     *addr = NULL;
 
+#ifndef VULKANSC
     if (!strcmp("vkCreateDebugReportCallbackEXT", name)) {
         *addr =
             ptr_instance->enabled_known_extensions.ext_debug_report == 1 ? (void *)debug_utils_CreateDebugReportCallbackEXT : NULL;
@@ -597,6 +611,7 @@ bool debug_extensions_InstanceGpa(struct loader_instance *ptr_instance, const ch
         *addr = ptr_instance->enabled_known_extensions.ext_debug_report == 1 ? (void *)debug_utils_DebugReportMessageEXT : NULL;
         return true;
     }
+#endif  // VULKANSC
     if (!strcmp("vkCreateDebugUtilsMessengerEXT", name)) {
         *addr =
             ptr_instance->enabled_known_extensions.ext_debug_utils == 1 ? (void *)debug_utils_CreateDebugUtilsMessengerEXT : NULL;
@@ -613,6 +628,7 @@ bool debug_extensions_InstanceGpa(struct loader_instance *ptr_instance, const ch
     return ret_type;
 }
 
+#ifndef VULKANSC
 bool debug_utils_ReportFlagsToAnnotFlags(VkDebugReportFlagsEXT dr_flags, bool default_flag_is_spec,
                                          VkDebugUtilsMessageSeverityFlagBitsEXT *da_severity,
                                          VkDebugUtilsMessageTypeFlagsEXT *da_type) {
@@ -697,3 +713,4 @@ bool debug_utils_AnnotObjectToDebugReportObject(const VkDebugUtilsObjectNameInfo
     *dr_object_handle = da_object_name_info->objectHandle;
     return true;
 }
+#endif  // VULKANSC

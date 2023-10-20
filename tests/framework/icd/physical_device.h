@@ -48,7 +48,9 @@ struct PhysicalDevice {
 
     BUILDER_VECTOR(PhysicalDevice, MockQueueFamilyProperties, queue_family_properties, queue_family_properties)
     BUILDER_VECTOR(PhysicalDevice, VkFormatProperties, format_properties, format_properties)
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
     BUILDER_VECTOR(PhysicalDevice, VkSparseImageFormatProperties, sparse_image_format_properties, sparse_image_format_properties)
+#endif  // VULKANSC
 
     BUILDER_VECTOR(PhysicalDevice, Extension, extensions, extension)
 

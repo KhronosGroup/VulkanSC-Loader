@@ -3,6 +3,8 @@
  * Copyright (c) 2015-2021 Valve Corporation
  * Copyright (c) 2015-2021 LunarG, Inc.
  * Copyright (C) 2015-2016 Google Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +33,7 @@
 VkResult add_debug_extensions_to_ext_list(const struct loader_instance *inst, struct loader_extension_list *ext_list);
 void check_for_enabled_debug_extensions(struct loader_instance *ptr_instance, const VkInstanceCreateInfo *pCreateInfo);
 bool debug_extensions_InstanceGpa(struct loader_instance *ptr_instance, const char *name, void **addr);
+#ifndef VULKANSC
 bool debug_utils_ReportFlagsToAnnotFlags(VkDebugReportFlagsEXT dr_flags, bool default_flag_is_spec,
                                          VkDebugUtilsMessageSeverityFlagBitsEXT *da_severity,
                                          VkDebugUtilsMessageTypeFlagsEXT *da_type);
@@ -40,7 +43,7 @@ bool debug_utils_ReportObjectToAnnotObject(VkDebugReportObjectTypeEXT dr_object_
                                            VkDebugUtilsObjectNameInfoEXT *da_object_name_info);
 bool debug_utils_AnnotObjectToDebugReportObject(const VkDebugUtilsObjectNameInfoEXT *da_object_name_info,
                                                 VkDebugReportObjectTypeEXT *dr_object_type, uint64_t *dr_object_handle);
-
+#endif  // VULKANSC
 void destroy_debug_callbacks_chain(struct loader_instance *inst, const VkAllocationCallbacks *pAllocator);
 
 // VK_EXT_debug_utils related items
@@ -60,6 +63,7 @@ VkBool32 util_SubmitDebugUtilsMessageEXT(const struct loader_instance *inst, VkD
                                          VkDebugUtilsMessageTypeFlagsEXT messageTypes,
                                          const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData);
 
+#ifndef VULKANSC
 // VK_EXT_debug_report related items
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugReportCallbackEXT(VkInstance instance,
@@ -77,3 +81,4 @@ VKAPI_ATTR void VKAPI_CALL terminator_DebugReportMessageEXT(VkInstance instance,
 VkResult util_CreateDebugReportCallbacks(struct loader_instance *inst, const void *pChain, const VkAllocationCallbacks *pAllocator);
 VkBool32 util_DebugReportMessage(const struct loader_instance *inst, VkFlags msgFlags, VkDebugReportObjectTypeEXT objectType,
                                  uint64_t srcObject, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg);
+#endif  // VULKANSC

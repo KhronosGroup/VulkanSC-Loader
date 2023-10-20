@@ -2,6 +2,7 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -58,8 +59,10 @@ void init_vulkan_functions(VulkanFunctions& funcs) {
     funcs.vkGetPhysicalDeviceFormatProperties2 = GPA(vkGetPhysicalDeviceFormatProperties2);
     funcs.vkGetPhysicalDeviceImageFormatProperties = GPA(vkGetPhysicalDeviceImageFormatProperties);
     funcs.vkGetPhysicalDeviceImageFormatProperties2 = GPA(vkGetPhysicalDeviceImageFormatProperties2);
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
     funcs.vkGetPhysicalDeviceSparseImageFormatProperties = GPA(vkGetPhysicalDeviceSparseImageFormatProperties);
     funcs.vkGetPhysicalDeviceSparseImageFormatProperties2 = GPA(vkGetPhysicalDeviceSparseImageFormatProperties2);
+#endif  // VULKANSC
     funcs.vkGetPhysicalDeviceProperties = GPA(vkGetPhysicalDeviceProperties);
     funcs.vkGetPhysicalDeviceProperties2 = GPA(vkGetPhysicalDeviceProperties2);
     funcs.vkGetPhysicalDeviceQueueFamilyProperties = GPA(vkGetPhysicalDeviceQueueFamilyProperties);
@@ -96,6 +99,7 @@ void init_vulkan_functions(VulkanFunctions& funcs) {
     funcs.vkGetPhysicalDeviceSurfaceCapabilities2KHR = GPA(vkGetPhysicalDeviceSurfaceCapabilities2KHR);
     funcs.vkGetPhysicalDeviceSurfaceFormats2KHR = GPA(vkGetPhysicalDeviceSurfaceFormats2KHR);
 
+#ifndef VULKANSC  // Usual WSI platforms are not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
     funcs.vkCreateAndroidSurfaceKHR = GPA(vkCreateAndroidSurfaceKHR);
 #endif  // VK_USE_PLATFORM_ANDROID_KHR
@@ -118,10 +122,12 @@ void init_vulkan_functions(VulkanFunctions& funcs) {
 #if defined(VK_USE_PLATFORM_METAL_EXT)
     funcs.vkCreateMetalSurfaceEXT = GPA(vkCreateMetalSurfaceEXT);
 #endif  // VK_USE_PLATFORM_METAL_EXT
+#endif  // VULKANSC
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
     funcs.vkCreateScreenSurfaceQNX = GPA(vkCreateScreenSurfaceQNX);
     funcs.vkGetPhysicalDeviceScreenPresentationSupportQNX = GPA(vkGetPhysicalDeviceScreenPresentationSupportQNX);
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+#ifndef VULKANSC  // Usual WSI platforms are not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
     funcs.vkCreateWaylandSurfaceKHR = GPA(vkCreateWaylandSurfaceKHR);
     funcs.vkGetPhysicalDeviceWaylandPresentationSupportKHR = GPA(vkGetPhysicalDeviceWaylandPresentationSupportKHR);
@@ -138,6 +144,7 @@ void init_vulkan_functions(VulkanFunctions& funcs) {
     funcs.vkCreateWin32SurfaceKHR = GPA(vkCreateWin32SurfaceKHR);
     funcs.vkGetPhysicalDeviceWin32PresentationSupportKHR = GPA(vkGetPhysicalDeviceWin32PresentationSupportKHR);
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
     funcs.vkDestroyDevice = GPA(vkDestroyDevice);
     funcs.vkGetDeviceQueue = GPA(vkGetDeviceQueue);
@@ -159,10 +166,14 @@ DeviceFunctions::DeviceFunctions(const VulkanFunctions& vulkan_functions, VkDevi
     vkGetDeviceQueue = load(device, "vkGetDeviceQueue");
     vkCreateCommandPool = load(device, "vkCreateCommandPool");
     vkAllocateCommandBuffers = load(device, "vkAllocateCommandBuffers");
+#ifndef VULKANSC  // vkDestroyCommandPool is not supported in Vulkan SC
     vkDestroyCommandPool = load(device, "vkDestroyCommandPool");
+#endif  // VULKANSC
     vkCreateSwapchainKHR = load(device, "vkCreateSwapchainKHR");
     vkGetSwapchainImagesKHR = load(device, "vkGetSwapchainImagesKHR");
+#ifndef VULKANSC  // vkDestroySwapchainKHR is not supported in Vulkan SC
     vkDestroySwapchainKHR = load(device, "vkDestroySwapchainKHR");
+#endif  // VULKANSC
 }
 
 InstWrapper::InstWrapper(VulkanFunctions& functions, VkAllocationCallbacks* callbacks) noexcept
@@ -405,26 +416,47 @@ FrameworkEnvironment::FrameworkEnvironment(FrameworkSettings const& settings) no
 #if COMMON_UNIX_PLATFORMS
         auto home = get_env_var("HOME");
         auto unsecured_location = get_folder(ManifestLocation::unsecured_location).location();
+#ifdef VULKANSC
+        platform_shim->redirect_path(home + "/.local/share/vulkansc/icd.d", unsecured_location);
+        platform_shim->redirect_path(home + "/.local/share/vulkansc/implicit_layer.d", unsecured_location);
+        platform_shim->redirect_path(home + "/.local/share/vulkansc/explicit_layer.d", unsecured_location);
+#else
         platform_shim->redirect_path(home + "/.local/share/vulkan/icd.d", unsecured_location);
         platform_shim->redirect_path(home + "/.local/share/vulkan/implicit_layer.d", unsecured_location);
         platform_shim->redirect_path(home + "/.local/share/vulkan/explicit_layer.d", unsecured_location);
+#endif  // VULKANSC
 #endif
     }
 #if COMMON_UNIX_PLATFORMS
+#ifdef VULKANSC
+    if (settings.secure_loader_settings) {
+        platform_shim->redirect_path("/etc/vulkansc/loader_settings.d", get_folder(ManifestLocation::settings_location).location());
+    } else {
+        platform_shim->redirect_path(get_env_var("HOME") + "/.local/share/vulkansc/loader_settings.d",
+                                     get_folder(ManifestLocation::settings_location).location());
+    }
+#else
     if (settings.secure_loader_settings) {
         platform_shim->redirect_path("/etc/vulkan/loader_settings.d", get_folder(ManifestLocation::settings_location).location());
     } else {
         platform_shim->redirect_path(get_env_var("HOME") + "/.local/share/vulkan/loader_settings.d",
                                      get_folder(ManifestLocation::settings_location).location());
     }
+#endif  // VULKANSC
 #endif
 
 #if defined(__APPLE__)
     // Necessary since bundles look in sub folders for manifests, not the test framework folder itself
     auto bundle_location = get_folder(ManifestLocation::macos_bundle).location();
+#ifdef VULKANSC
+    platform_shim->redirect_path(bundle_location / "vulkansc/icd.d", bundle_location);
+    platform_shim->redirect_path(bundle_location / "vulkansc/explicit_layer.d", bundle_location);
+    platform_shim->redirect_path(bundle_location / "vulkansc/implicit_layer.d", bundle_location);
+#else
     platform_shim->redirect_path(bundle_location / "vulkan/icd.d", bundle_location);
     platform_shim->redirect_path(bundle_location / "vulkan/explicit_layer.d", bundle_location);
     platform_shim->redirect_path(bundle_location / "vulkan/implicit_layer.d", bundle_location);
+#endif
 #endif
     // only set the settings file if there are elements in the app_specific_settings vector
     if (!settings.loader_settings.app_specific_settings.empty()) {
@@ -470,8 +502,13 @@ TestICD& FrameworkEnvironment::add_icd(TestICDDetails icd_details) noexcept {
         if (icd_details.library_path_type == LibraryPathType::default_search_paths) {
             platform_shim->redirect_dlopen_name(new_driver_name, new_driver_location);
         } else if (icd_details.library_path_type == LibraryPathType::relative) {
+#ifdef VULKANSC
+            platform_shim->redirect_dlopen_name(fs::path(SYSCONFDIR) / "vulkansc" / "icd.d" / "." / new_driver_name,
+                                                new_driver_location);
+#else
             platform_shim->redirect_dlopen_name(fs::path(SYSCONFDIR) / "vulkan" / "icd.d" / "." / new_driver_name,
                                                 new_driver_location);
+#endif  // VULKANSC
         }
 #endif
 #if defined(WIN32)
@@ -613,8 +650,13 @@ void FrameworkEnvironment::add_layer_impl(TestLayerDetails layer_details, Manife
                 platform_shim->redirect_dlopen_name(layer_binary_name, new_layer_location);
             }
             if (layer_details.library_path_type == LibraryPathType::relative) {
+#ifdef VULKANSC
+                platform_shim->redirect_dlopen_name(
+                    fs::path(SYSCONFDIR) / "vulkansc" / category_path_name(category) / "." / layer_binary_name, new_layer_location);
+#else
                 platform_shim->redirect_dlopen_name(
                     fs::path(SYSCONFDIR) / "vulkan" / category_path_name(category) / "." / layer_binary_name, new_layer_location);
+#endif  // VULKANSC
             }
 #endif
 #if defined(WIN32)

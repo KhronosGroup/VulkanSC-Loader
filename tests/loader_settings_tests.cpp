@@ -33,10 +33,17 @@ std::string get_settings_location_log_message([[maybe_unused]] FrameworkEnvironm
 #if defined(WIN32)
     return s + env.get_folder(ManifestLocation::settings_location).location().str() + "\\vk_loader_settings.json";
 #elif COMMON_UNIX_PLATFORMS
+#ifdef VULKANSC
+    if (use_secure)
+        return s + "/etc/vulkansc/loader_settings.d/vk_loader_settings.json";
+    else
+        return s + "/home/fake_home/.local/share/vulkansc/loader_settings.d/vk_loader_settings.json";
+#else
     if (use_secure)
         return s + "/etc/vulkan/loader_settings.d/vk_loader_settings.json";
     else
         return s + "/home/fake_home/.local/share/vulkan/loader_settings.d/vk_loader_settings.json";
+#endif  // VULKANSC
 #endif
 }
 
@@ -1333,7 +1340,11 @@ TEST(SettingsFile, PreInstanceFunctions) {
         layer.set_reported_extension_props(ext_props);
         count = 0;
         ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr));
+#ifdef VULKANSC
+        ASSERT_EQ(count, 1U);  // Vulkan SC only supports VK_EXT_debug_utils
+#else
         ASSERT_EQ(count, 4U);  // dont use the intercepted count - use default count
+#endif  // VULKANSC
 
         // check version
         uint32_t layer_version = VK_MAKE_API_VERSION(1, 2, 3, 4);

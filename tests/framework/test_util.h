@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -86,7 +88,11 @@
 
 #endif
 
+#ifdef VULKANSC
+#include <vulkan/vulkan_sc.h>
+#else
 #include <vulkan/vulkan.h>
+#endif  // VULKANSC
 #include <vulkan/vk_icd.h>
 #include <vulkan/vk_layer.h>
 
@@ -490,14 +496,24 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_ERROR_OUT_OF_DATE_KHR";
         case (VK_ERROR_INCOMPATIBLE_DISPLAY_KHR):
             return os << "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
+#ifndef VULKANSC
         case (VK_ERROR_VALIDATION_FAILED_EXT):
             return os << "VK_ERROR_VALIDATION_FAILED_EXT";
         case (VK_ERROR_INVALID_SHADER_NV):
             return os << "VK_ERROR_INVALID_SHADER_NV";
+#else
+        case (VK_ERROR_NO_PIPELINE_MATCH):
+            return os << "VK_ERROR_NO_PIPELINE_MATCH";
+        case (VK_ERROR_INVALID_PIPELINE_CACHE_DATA):
+            return os << "VK_ERROR_INVALID_PIPELINE_CACHE_DATA";
+        case (VK_ERROR_VALIDATION_FAILED):
+            return os << "VK_ERROR_VALIDATION_FAILED";
+#endif  // VULKANSC
         case (VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT):
             return os << "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
         case (VK_ERROR_NOT_PERMITTED_EXT):
             return os << "VK_ERROR_NOT_PERMITTED_EXT";
+#ifndef VULKANSC
         case (VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT):
             return os << "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
         case (VK_THREAD_IDLE_KHR):
@@ -510,8 +526,10 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_OPERATION_NOT_DEFERRED_KHR";
         case (VK_PIPELINE_COMPILE_REQUIRED_EXT):
             return os << "VK_PIPELINE_COMPILE_REQUIRED_EXT";
+#endif  // VULKANSC
         case (VK_RESULT_MAX_ENUM):
             return os << "VK_RESULT_MAX_ENUM";
+#ifndef VULKANSC
         case (VK_ERROR_COMPRESSION_EXHAUSTED_EXT):
             return os << "VK_ERROR_COMPRESSION_EXHAUSTED_EXT";
         case (VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR):
@@ -530,6 +548,10 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR";
         case (VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT):
             return os << "VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT";
+#else
+        default:
+            break;
+#endif  // VULKANSC
     }
     return os << static_cast<int32_t>(result);
 }
@@ -687,7 +709,11 @@ struct InstanceCreateInfo {
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, flags, 0)
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, app_version, 0)
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, engine_version, 0)
+#ifdef VULKANSC
+    BUILDER_VALUE(InstanceCreateInfo, uint32_t, api_version, VKSC_API_VERSION_1_0)
+#else
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, api_version, VK_API_VERSION_1_0)
+#endif  // VULKANSC
     BUILDER_VECTOR(InstanceCreateInfo, const char*, enabled_layers, layer)
     BUILDER_VECTOR(InstanceCreateInfo, const char*, enabled_extensions, extension)
     // tell the get() function to not provide `application_info`

@@ -588,6 +588,7 @@ TEST(LoaderHandleValidTests, BadPhysDevEnumDevLayerProps) {
                  "\\[VUID-vkEnumerateDeviceLayerProperties-physicalDevice-parameter\\]");
 }
 
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
@@ -607,6 +608,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps) {
                  "vkGetPhysicalDeviceSparseImageFormatProperties: Invalid physicalDevice "
                  "\\[VUID-vkGetPhysicalDeviceSparseImageFormatProperties-physicalDevice-parameter\\]");
 }
+#endif  // VULKANSC
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFeature2) {
     FrameworkEnvironment env{};
@@ -728,6 +730,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevDevMemProps2) {
                  "\\[VUID-vkGetPhysicalDeviceMemoryProperties2-physicalDevice-parameter\\]");
 }
 
+#ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps2) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
@@ -748,6 +751,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps2) {
                  "vkGetPhysicalDeviceSparseImageFormatProperties2: Invalid physicalDevice "
                  "\\[VUID-vkGetPhysicalDeviceSparseImageFormatProperties2-physicalDevice-parameter\\]");
 }
+#endif  // VULKANSC
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternFenceProps) {
     FrameworkEnvironment env{};
@@ -803,7 +807,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternSemaphoreProps) {
 
     auto bad_physical_dev = get_bad_handle<VkPhysicalDevice>();
 
-    VkPhysicalDeviceExternalSemaphoreInfoKHR info = {};
+    VkPhysicalDeviceExternalSemaphoreInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO;
     info.pNext = nullptr;
     VkExternalSemaphoreProperties props = {};
@@ -1217,6 +1221,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevMSPropsEXT) {
                  "\\[VUID-vkGetPhysicalDeviceMultisamplePropertiesEXT-physicalDevice-parameter\\]");
 }
 
+#ifndef VULKANSC  // VK_EXT_acquire_drm_display is not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevAcquireDrmDisplayEXT) {
     FrameworkEnvironment env{};
     auto instance = setup_BadPhysDev_env(env, {"VK_KHR_surface", "VK_EXT_acquire_drm_display"});
@@ -1250,6 +1255,7 @@ TEST(LoaderHandleValidTests, BadPhysDevReleaseDisplayEXT) {
     ASSERT_DEATH(pfn(bad_physical_dev, VK_NULL_HANDLE),
                  "vkReleaseDisplayEXT: Invalid physicalDevice \\[VUID-vkReleaseDisplayEXT-physicalDevice-parameter\\]");
 }
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_XLIB_XRANDR_EXT)
 TEST(LoaderHandleValidTests, BadPhysDevAcquireXlibDisplayEXT) {
@@ -1299,6 +1305,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfacePresentModes2EXT) {
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
 
+#ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevToolPropertiesEXT) {
     FrameworkEnvironment env{};
     auto instance = setup_BadPhysDev_env(env, {});
@@ -1311,6 +1318,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevToolPropertiesEXT) {
                  "vkGetPhysicalDeviceToolPropertiesEXT: Invalid physicalDevice "
                  "\\[VUID-vkGetPhysicalDeviceToolPropertiesEXT-physicalDevice-parameter\\]");
 }
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingAndroidSurface) {

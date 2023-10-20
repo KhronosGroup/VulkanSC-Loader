@@ -2,6 +2,7 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -576,7 +577,12 @@ VkInstanceCreateInfo* InstanceCreateInfo::get() noexcept {
     return &instance_info;
 }
 InstanceCreateInfo& InstanceCreateInfo::set_api_version(uint32_t major, uint32_t minor, uint32_t patch) {
+#ifdef VULKANSC
+    // Make sure to include Vulkan SC API variant in the requested API version
+    this->api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, major, minor, patch);
+#else
     this->api_version = VK_MAKE_API_VERSION(0, major, minor, patch);
+#endif  // VULKANSC
     return *this;
 }
 InstanceCreateInfo& InstanceCreateInfo::setup_WSI(const char* api_selection) {

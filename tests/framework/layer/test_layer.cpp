@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2022 The Khronos Group Inc.
  * Copyright (c) 2021-2022 Valve Corporation
  * Copyright (c) 2021-2022 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -27,7 +29,11 @@
 
 #include "test_layer.h"
 
+#ifdef VULKANSC
+#include "vksc_dispatch_table_helper.h"
+#else
 #include "vk_dispatch_table_helper.h"
+#endif  // VULKANSC
 
 // export the enumeration functions instance|device+layer|extension
 #if !defined(TEST_LAYER_EXPORT_ENUMERATE_FUNCTIONS)
@@ -233,7 +239,11 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateDeviceExtensionProperties(VkPhysi
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateInstanceVersion(uint32_t* pApiVersion) {
     if (pApiVersion != nullptr) {
+#ifdef VULKANSC
+        *pApiVersion = VKSC_API_VERSION_1_0;
+#else
         *pApiVersion = VK_API_VERSION_1_0;
+#endif  // VULKANSC
     }
     return VK_SUCCESS;
 }
@@ -369,7 +379,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateInstance(const VkInstanceCreateInfo*
 
 VKAPI_ATTR VkResult VKAPI_CALL test_override_vkCreateInstance(const VkInstanceCreateInfo*, const VkAllocationCallbacks*,
                                                               VkInstance*) {
-    return VK_ERROR_INVALID_SHADER_NV;
+    return VK_ERROR_FRAGMENTED_POOL;
 }
 
 VKAPI_ATTR void VKAPI_CALL test_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks* pAllocator) {
@@ -688,6 +698,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkDestroyDebugUtilsMessengerEXT(VkInstance insta
 }
 
 // Debug utils & debug marker ext stubs
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
 VKAPI_ATTR VkResult VKAPI_CALL test_vkDebugMarkerSetObjectTagEXT(VkDevice dev, const VkDebugMarkerObjectTagInfoEXT* pTagInfo) {
     for (const auto& d : layer.created_devices) {
         if (d.device_handle == dev) {
@@ -727,6 +738,7 @@ VKAPI_ATTR void VKAPI_CALL test_vkCmdDebugMarkerInsertEXT(VkCommandBuffer cmd_bu
     if (layer.created_devices[0].dispatch_table.CmdDebugMarkerInsertEXT)
         layer.created_devices[0].dispatch_table.CmdDebugMarkerInsertEXT(cmd_buf, marker_info);
 }
+#endif  // VULKANSC
 
 VKAPI_ATTR VkResult VKAPI_CALL test_vkSetDebugUtilsObjectNameEXT(VkDevice dev, const VkDebugUtilsObjectNameInfoEXT* pNameInfo) {
     for (const auto& d : layer.created_devices) {
@@ -796,6 +808,7 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL get_device_func_impl([[maybe_unused]] V
     if (string_eq(pName, "vkGetDeviceProcAddr")) return to_vkVoidFunction(get_device_func);
     if (string_eq(pName, "vkDestroyDevice")) return to_vkVoidFunction(test_vkDestroyDevice);
 
+#ifndef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
     if (IsDeviceExtensionAvailable(device, VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
         if (string_eq(pName, "vkDebugMarkerSetObjectTagEXT")) return to_vkVoidFunction(test_vkDebugMarkerSetObjectTagEXT);
         if (string_eq(pName, "vkDebugMarkerSetObjectNameEXT")) return to_vkVoidFunction(test_vkDebugMarkerSetObjectNameEXT);
@@ -803,6 +816,7 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL get_device_func_impl([[maybe_unused]] V
         if (string_eq(pName, "vkCmdDebugMarkerEndEXT")) return to_vkVoidFunction(test_vkCmdDebugMarkerEndEXT);
         if (string_eq(pName, "vkCmdDebugMarkerInsertEXT")) return to_vkVoidFunction(test_vkCmdDebugMarkerInsertEXT);
     }
+#endif  // VULKANSC
     if (IsInstanceExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
         if (string_eq(pName, "vkSetDebugUtilsObjectNameEXT")) return to_vkVoidFunction(test_vkSetDebugUtilsObjectNameEXT);
         if (string_eq(pName, "vkSetDebugUtilsObjectTagEXT")) return to_vkVoidFunction(test_vkSetDebugUtilsObjectTagEXT);

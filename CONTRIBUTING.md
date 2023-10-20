@@ -7,12 +7,18 @@ by Khronos and LunarG.
 
 * [KhronosGroup/Vulkan-Loader](https://github.com/KhronosGroup/Vulkan-Loader)
 
+The source code for the Vulkan SC Loader component is sponsored by Khronos.
+
+* [KhronosGroup/VulkanSC-Loader](https://github.com/KhronosGroup/VulkanSC-Loader)
+
 ### The Vulkan Ecosystem Needs Your Help
 
 There are a couple of methods to identify areas of need:
 
 * Examine the [issues list](https://github.com/KhronosGroup/Vulkan-Loader/issues)
   in this repository and look for issues that are of interest
+* Examine the [issues list](https://github.com/KhronosGroup/VulkanSC-Loader/issues)
+  for Vulkan SC specific issues that are of interest
 * If you have your own work in mind, please open an issue to describe
   it and assign it to yourself.
 
@@ -147,7 +153,7 @@ submitting your pull request or other contribution to GitHub.
 
 ### License and Copyrights
 
-All contributions made to the Vulkan-Loader repository are Khronos branded
+All contributions made to the VulkanSC-Loader repository are Khronos branded
 and as such, any new files need to have the Khronos license
 (Apache 2.0 style) and copyright included.
 Please see an existing file in this repository for an example.

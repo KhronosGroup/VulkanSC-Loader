@@ -2,6 +2,8 @@
  * Copyright (c) 2021-2023 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
+ * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * Copyright (c) 2023-2023 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to
@@ -252,7 +254,7 @@ TEST(ImplicitLayers, OverrideGetInstanceProcAddr) {
 
     {
         InstWrapper inst1{env.vulkan_functions};
-        inst1.CheckCreate(VK_ERROR_INVALID_SHADER_NV);
+        inst1.CheckCreate(VK_ERROR_FRAGMENTED_POOL);
     }
 
     {
@@ -988,8 +990,13 @@ TEST(ImplicitLayers, DuplicateLayers) {
 #if defined(WIN32)
     env.platform_shim->add_manifest(ManifestCategory::implicit_layer, env.get_folder(ManifestLocation::override_layer).location());
 #elif COMMON_UNIX_PLATFORMS
+#ifdef VULKANSC
+    env.platform_shim->redirect_path(fs::path(USER_LOCAL_SHARE_DIR "/vulkansc/implicit_layer.d"),
+                                     env.get_folder(ManifestLocation::override_layer).location());
+#else
     env.platform_shim->redirect_path(fs::path(USER_LOCAL_SHARE_DIR "/vulkan/implicit_layer.d"),
                                      env.get_folder(ManifestLocation::override_layer).location());
+#endif  // VULKANSC
 #endif
 
     auto layer_props = env.GetLayerProperties(2);
@@ -1035,11 +1042,16 @@ TEST(MetaLayers, InvalidComponentLayer) {
     auto layer_props = env.GetLayerProperties(1);
     EXPECT_TRUE(string_eq(layer_props.at(0).layerName, regular_layer_name));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_layer(meta_layer_name);
@@ -1070,11 +1082,16 @@ TEST(MetaLayers, ExplicitMetaLayer) {
         auto layer_props = env.GetLayerProperties(2);
         EXPECT_TRUE(check_permutation({regular_layer_name, meta_layer_name}, layer_props));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+        auto extensions = env.GetInstanceExtensions(1);
+        EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
         auto extensions = env.GetInstanceExtensions(4);
         EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
         EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
     }
     {  // don't enable the layer, shouldn't find any layers when calling vkEnumerateDeviceLayerProperties
         InstWrapper inst{env.vulkan_functions};
@@ -1114,11 +1131,16 @@ TEST(MetaLayers, MetaLayerNameInComponentLayers) {
     auto layer_props = env.GetLayerProperties(1);
     EXPECT_TRUE(string_eq(layer_props.at(0).layerName, regular_layer_name));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_layer(meta_layer_name);
@@ -1152,11 +1174,16 @@ TEST(MetaLayers, MetaLayerWhichAddsMetaLayer) {
     auto layer_props = env.GetLayerProperties(3);
     EXPECT_TRUE(check_permutation({regular_layer_name, meta_layer_name, meta_meta_layer_name}, layer_props));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_layer(meta_layer_name);
@@ -1280,6 +1307,7 @@ TEST(OverrideMetaLayer, OlderVersionThanInstance) {
         auto layer_props = env.GetLayerProperties(2);
         EXPECT_TRUE(check_permutation({regular_layer_name, lunarg_meta_layer_name}, layer_props));
     }
+#ifndef VULKANSC
     {  // 1.1 instance
         InstWrapper inst{env.vulkan_functions};
         inst.create_info.api_version = VK_API_VERSION_1_1;
@@ -1298,6 +1326,7 @@ TEST(OverrideMetaLayer, OlderVersionThanInstance) {
         ASSERT_TRUE(string_eq(layer_props[0].layerName, regular_layer_name));
         ASSERT_TRUE(string_eq(layer_props[1].layerName, lunarg_meta_layer_name));
     }
+#endif  // VULKANSC
 }
 
 TEST(OverrideMetaLayer, OlderMetaLayerWithNewerInstanceVersion) {
@@ -1900,7 +1929,11 @@ TEST(ExplicitLayers, OverridePreInstanceFunctions) {
     ASSERT_EQ(count, 2U);
     count = 0;
     ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr));
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    ASSERT_EQ(count, 1U);
+#else
     ASSERT_EQ(count, 4U);
+#endif  // VULKANSC
 
     uint32_t version = 0;
     ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceVersion(&version));
@@ -1953,7 +1986,11 @@ TEST(ExplicitLayers, LayerSettingsPreInstanceFunctions) {
     ASSERT_EQ(count, 1U);
     count = 0;
     ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr));
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    ASSERT_EQ(count, 1U);
+#else
     ASSERT_EQ(count, 4U);
+#endif  // VULKANSC
 
     uint32_t version = 0;
     ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceVersion(&version));
@@ -1997,7 +2034,11 @@ TEST(ExplicitLayers, ContainsPreInstanceFunctions) {
     ASSERT_EQ(count, 1U);
     count = 0;
     ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr));
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    ASSERT_EQ(count, 1U);
+#else
     ASSERT_EQ(count, 4U);
+#endif  // VULKANSC
 
     uint32_t version = 0;
     ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceVersion(&version));
@@ -2052,6 +2093,7 @@ TEST(LayerCreateInstance, GetPhysicalDeviceProperties2) {
     inst.CheckCreate();
 }
 
+#ifndef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
 TEST(LayerCreateInstance, GetPhysicalDeviceProperties2KHR) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA))
@@ -2084,6 +2126,7 @@ TEST(LayerCreateInstance, GetPhysicalDeviceProperties2KHR) {
     inst.create_info.add_layer(regular_layer_name).add_extension("VK_KHR_get_physical_device_properties2");
     inst.CheckCreate();
 }
+#endif  // VULKANSC
 
 TEST(ExplicitLayers, MultipleLayersInSingleManifest) {
     FrameworkEnvironment env;
@@ -2600,11 +2643,16 @@ TEST(LayerExtensions, ImplicitNoAdditionalInstanceExtension) {
     EnvVarWrapper wrap_enable_env_var{enable_env_var, "1"};
     CheckLogForLayerString(env, implicit_layer_name, true);
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     // Make sure the extensions that are implemented only in the test layers is not present.
     ASSERT_FALSE(contains(extensions, VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME));
@@ -2643,12 +2691,18 @@ TEST(LayerExtensions, ImplicitDirDispModeInstanceExtension) {
     EnvVarWrapper wrap_enable_env_var{enable_env_var, "1"};
     CheckLogForLayerString(env, implicit_layer_name, true);
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(2);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+    EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(5);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(4).extensionName, VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME));
+#endif  // VULKANSC
 
     // Make sure the extensions that are implemented only in the test layers is not present.
     ASSERT_FALSE(contains(extensions, VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME));
@@ -2687,12 +2741,18 @@ TEST(LayerExtensions, ImplicitDispSurfCountInstanceExtension) {
     EnvVarWrapper wrap_enable_env_var{enable_env_var, "1"};
     CheckLogForLayerString(env, implicit_layer_name, true);
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(2);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+    EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(5);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(4).extensionName, VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME));
+#endif  // VULKANSC
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_extension(VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME);
@@ -2730,6 +2790,12 @@ TEST(LayerExtensions, ImplicitBothInstanceExtensions) {
     EnvVarWrapper wrap_enable_env_var{enable_env_var, "1"};
     CheckLogForLayerString(env, implicit_layer_name, true);
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(3);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+    EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME));
+    EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(6);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
@@ -2737,6 +2803,7 @@ TEST(LayerExtensions, ImplicitBothInstanceExtensions) {
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(4).extensionName, VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(5).extensionName, VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME));
+#endif  // VULKANSC
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_extension(VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME)
@@ -2761,11 +2828,16 @@ TEST(LayerExtensions, ExplicitNoAdditionalInstanceExtension) {
     auto layers = env.GetLayerProperties(1);
     ASSERT_TRUE(string_eq(layers[0].layerName, explicit_layer_name));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     // Now query by layer name.
     ASSERT_NO_FATAL_FAILURE(env.GetInstanceExtensions(0, explicit_layer_name));
@@ -2794,11 +2866,16 @@ TEST(LayerExtensions, ExplicitDirDispModeInstanceExtension) {
     auto layers = env.GetLayerProperties(1);
     ASSERT_TRUE(string_eq(layers[0].layerName, explicit_layer_name));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     // Now query by layer name.
     auto layer_extensions = env.GetInstanceExtensions(1, explicit_layer_name);
@@ -2837,11 +2914,16 @@ TEST(LayerExtensions, ExplicitDispSurfCountInstanceExtension) {
     auto layers = env.GetLayerProperties(1);
     ASSERT_TRUE(string_eq(layers[0].layerName, explicit_layer_name));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     // Now query by layer name.
     auto layer_extensions = env.GetInstanceExtensions(1, explicit_layer_name);
@@ -2882,11 +2964,16 @@ TEST(LayerExtensions, ExplicitBothInstanceExtensions) {
     auto layers = env.GetLayerProperties(1);
     ASSERT_TRUE(string_eq(layers[0].layerName, explicit_layer_name));
 
+#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+    auto extensions = env.GetInstanceExtensions(1);
+    EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
+#else
     auto extensions = env.GetInstanceExtensions(4);
     EXPECT_TRUE(string_eq(extensions.at(0).extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(1).extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(2).extensionName, VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME));
     EXPECT_TRUE(string_eq(extensions.at(3).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
+#endif  // VULKANSC
 
     // Make sure the extensions still aren't present in this layer
     auto layer_extensions = env.GetInstanceExtensions(2, explicit_layer_name);
@@ -2924,6 +3011,7 @@ TEST(LayerExtensions, ExplicitBothInstanceExtensions) {
     ASSERT_EQ(365U, surf_caps.maxImageArrayLayers);
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0 and vkTrimCommandPool is not supported
 TEST(LayerExtensions, ImplicitNoAdditionalDeviceExtension) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
@@ -3018,6 +3106,7 @@ TEST(LayerExtensions, ImplicitMaintenanceDeviceExtension) {
     handle_assert_has_value(dev->vkGetDeviceProcAddr(dev.dev, "vkTrimCommandPoolKHR"));
     handle_assert_null(dev->vkGetDeviceProcAddr(dev.dev, "vkGetSwapchainStatusKHR"));
 }
+#endif  // VULKANSC
 
 TEST(LayerExtensions, ImplicitPresentImageDeviceExtension) {
     FrameworkEnvironment env;
@@ -3056,6 +3145,7 @@ TEST(LayerExtensions, ImplicitPresentImageDeviceExtension) {
     handle_assert_has_value(dev->vkGetDeviceProcAddr(dev.dev, "vkGetSwapchainStatusKHR"));
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0 and vkTrimCommandPool is not supported
 TEST(LayerExtensions, ImplicitBothDeviceExtensions) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
@@ -3093,6 +3183,7 @@ TEST(LayerExtensions, ImplicitBothDeviceExtensions) {
     handle_assert_has_value(dev->vkGetDeviceProcAddr(dev.dev, "vkTrimCommandPoolKHR"));
     handle_assert_has_value(dev->vkGetDeviceProcAddr(dev.dev, "vkGetSwapchainStatusKHR"));
 }
+#endif  // VULKANSC
 
 TEST(LayerExtensions, ExplicitNoAdditionalDeviceExtension) {
     FrameworkEnvironment env;
@@ -3124,6 +3215,7 @@ TEST(LayerExtensions, ExplicitNoAdditionalDeviceExtension) {
     handle_assert_null(dev->vkGetDeviceProcAddr(dev.dev, "vkSetDeviceMemoryPriorityEXT"));
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0 and vkTrimCommandPool is not supported
 TEST(LayerExtensions, ExplicitMaintenanceDeviceExtension) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
@@ -3157,6 +3249,7 @@ TEST(LayerExtensions, ExplicitMaintenanceDeviceExtension) {
     handle_assert_has_value(dev->vkGetDeviceProcAddr(dev.dev, "vkTrimCommandPoolKHR"));
     handle_assert_null(dev->vkGetDeviceProcAddr(dev.dev, "vkGetSwapchainStatusKHR"));
 }
+#endif  // VULKANSC
 
 TEST(LayerExtensions, ExplicitPresentImageDeviceExtension) {
     FrameworkEnvironment env;
@@ -3193,6 +3286,7 @@ TEST(LayerExtensions, ExplicitPresentImageDeviceExtension) {
     handle_assert_has_value(dev->vkGetDeviceProcAddr(dev.dev, "vkGetSwapchainStatusKHR"));
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0 and vkTrimCommandPool is not supported
 TEST(LayerExtensions, ExplicitBothDeviceExtensions) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
@@ -3238,6 +3332,7 @@ TEST(LayerExtensions, ExplicitBothDeviceExtensions) {
     ASSERT_EQ(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, gipa_pfnGetSwapchainStatusKHR(dev.dev, VK_NULL_HANDLE));
     ASSERT_EQ(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, gdpa_pfnGetSwapchainStatusKHR(dev.dev, VK_NULL_HANDLE));
 }
+#endif  // VULKANSC
 
 TEST(TestLayers, ExplicitlyEnableImplicitLayer) {
     FrameworkEnvironment env;
@@ -3371,6 +3466,7 @@ TEST(TestLayers, ImplicitLayerPre10APIVersion) {
     }
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0 and vkTrimCommandPool is not supported
 // Verify that VK_INSTANCE_LAYERS work.  To test this, make sure that an explicit layer does not affect an instance until
 // it is set with VK_INSTANCE_LAYERS
 TEST(TestLayers, InstEnvironEnableExplicitLayer) {
@@ -3432,6 +3528,7 @@ TEST(TestLayers, InstEnvironEnableExplicitLayer) {
 
     ASSERT_EQ(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, pfn_GetSwapchainStatusAfter(dev2.dev, VK_NULL_HANDLE));
 }
+#endif  // VULKANSC
 
 // Verify that VK_LOADER_LAYERS_ENABLE work.  To test this, make sure that an explicit layer does not affect an instance until
 // it is set with VK_LOADER_LAYERS_ENABLE
@@ -4378,6 +4475,7 @@ TEST(TestLayers, OverrideBlacklistedLayerWithEnableFilter) {
     }
 }
 
+#ifndef VULKANSC  // VK_KHR_maintenance1 is included in core Vulkan SC 1.0 and vkTrimCommandPool is not supported
 // Add a device layer, should not work
 TEST(TestLayers, DoNotUseDeviceLayer) {
     FrameworkEnvironment env;
@@ -4474,6 +4572,7 @@ TEST(TestLayers, InstanceAndDeviceLayer) {
 
     ASSERT_EQ(VK_ERROR_NATIVE_WINDOW_IN_USE_KHR, pfn_GetSwapchainStatusAfter(dev.dev, VK_NULL_HANDLE));
 }
+#endif  // VULKANSC
 
 // Make sure loader does not throw an error for a device layer  that is not present
 TEST(TestLayers, DeviceLayerNotPresent) {
