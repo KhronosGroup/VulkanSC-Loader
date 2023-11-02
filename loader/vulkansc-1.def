@@ -214,4 +214,6 @@ EXPORTS
    vkGetBufferDeviceAddress
    vkGetBufferOpaqueCaptureAddress
    vkGetDeviceMemoryOpaqueCaptureAddress
+   vkGetFaultData
+   vkGetCommandPoolMemoryConsumption
    vkResetQueryPool

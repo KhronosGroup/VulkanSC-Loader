@@ -2575,6 +2575,36 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkCmdExecuteCommands(VkCommandBuffer co
     disp->CmdExecuteCommands(commandBuffer, commandBuffersCount, pCommandBuffers);
 }
 
+#ifdef VULKANSC
+// ---- Vulkan SC core 1.0 trampolines
+
+LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkGetCommandPoolMemoryConsumption(VkDevice device, VkCommandPool commandPool,
+                                                                           VkCommandBuffer commandBuffer,
+                                                                           VkCommandPoolMemoryConsumption *pConsumption) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
+    if (NULL == disp) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkGetCommandPoolMemoryConsumption: Invalid device [VUID-vkGetCommandPoolMemoryConsumption-device-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+
+    disp->GetCommandPoolMemoryConsumption(device, commandPool, commandBuffer, pConsumption);
+}
+
+LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkGetFaultData(VkDevice device, VkFaultQueryBehavior faultQueryBehavior,
+                                                            VkBool32 *pUnrecordedFaults, uint32_t *pFaultCount,
+                                                            VkFaultData *pFaults) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
+    if (NULL == disp) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkGetFaultData: Invalid device [VUID-vkGetFaultData-device-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+
+    return disp->GetFaultData(device, faultQueryBehavior, pUnrecordedFaults, pFaultCount, pFaults);
+}
+#endif  // VULKANSC
+
 // ---- Vulkan core 1.1 trampolines
 
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumeratePhysicalDeviceGroups(
