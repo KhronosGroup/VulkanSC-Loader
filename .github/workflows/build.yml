@@ -30,6 +30,7 @@ on:
     pull_request:
         branches:
             - main
+            - sc_main
 
 permissions: read-all
 
