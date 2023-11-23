@@ -21,7 +21,7 @@
 add_library(loader_specific_options INTERFACE)
 target_link_libraries(loader_specific_options INTERFACE loader_common_options Vulkan::Headers)
 if(VULKANSC)
-target_include_directories(loader_specific_options INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated-vksc ${CMAKE_CURRENT_BINARY_DIR})
+    target_include_directories(loader_specific_options INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated-vksc ${CMAKE_CURRENT_BINARY_DIR})
 else()
     target_include_directories(loader_specific_options INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated ${CMAKE_CURRENT_BINARY_DIR})
 endif()

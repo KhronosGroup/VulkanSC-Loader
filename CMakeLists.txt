@@ -18,6 +18,9 @@
 # ~~~
 cmake_minimum_required(VERSION 3.17.2)
 
+# Add support for VULKANSC mode from the command line
+set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
+
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.13)
 else()
@@ -39,9 +42,6 @@ add_subdirectory(scripts)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-
-# Add support for VULKANSC mode from the command line
-set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
 
 # By default, loader & tests are built without sanitizers
 # Use these options to force a specific sanitizer on the loader and test executables
@@ -124,19 +124,21 @@ elseif(APPLE)
     if(NOT VULKANSC)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
     endif()
-elseif(UNIX AND NOT APPLE AND VULKANSC)
-    option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" OFF)
-    option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" OFF)
-    option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
-    option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
-    option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
-    option(BUILD_WSI_SCI_SUPPORT "Build SCI WSI support" OFF)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
-    option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
-    option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" ON)
-    option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" ON)
-    option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
-    option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
+    if(VULKANSC)
+        option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" OFF)
+        option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" OFF)
+        option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
+        option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
+        option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
+        option(BUILD_WSI_SCI_SUPPORT "Build SCI WSI support" OFF)
+    else()
+        option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
+        option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" ON)
+        option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" ON)
+        option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
+        option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
+    endif()
 
     find_package(PkgConfig REQUIRED QUIET) # Use PkgConfig to find Linux system libraries
 
