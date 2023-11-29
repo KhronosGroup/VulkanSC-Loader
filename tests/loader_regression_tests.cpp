@@ -4256,6 +4256,8 @@ TEST(InvalidManifest, Layer) {
     InstWrapper inst{env.vulkan_functions};
     inst.CheckCreate();
 }
+
+#ifndef VULKANSC  // VK_MSFT_layered_driver is not supported in Vulkan SC
 #if defined(WIN32)
 void add_dxgi_adapter(FrameworkEnvironment& env, const char* name, LUID luid, uint32_t vendor_id) {
     auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_6).set_discovery_type(ManifestDiscoveryType::null_dir));
@@ -4430,3 +4432,4 @@ TEST(EnumerateAdapterPhysicalDevices, SameAdapterLUID_same_order) {
     EXPECT_EQ(layered_driver_properties_msft.underlyingAPI, VK_LAYERED_DRIVER_UNDERLYING_API_NONE_MSFT);
 }
 #endif  // defined(WIN32)
+#endif  // VULKANSC

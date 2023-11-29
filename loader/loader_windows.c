@@ -793,6 +793,7 @@ out:
     return vk_result;
 }
 
+#ifndef VULKANSC
 VkResult enumerate_adapter_physical_devices(struct loader_instance *inst, struct loader_icd_term *icd_term, uint32_t icd_idx,
                                             LUID luid, uint32_t *icd_phys_devs_array_count,
                                             struct loader_icd_physical_devices *icd_phys_devs_array) {
@@ -921,6 +922,7 @@ void sort_physical_devices_with_same_luid(struct loader_instance *inst, uint32_t
         }
     }
 }
+#endif  // VULKANSC
 
 // This function allocates icd_phys_devs_array which must be freed by the caller if not null
 VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint32_t *icd_phys_devs_array_count,
@@ -978,6 +980,7 @@ VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint
         (*icd_phys_devs_array)[*icd_phys_devs_array_count].physical_devices = NULL;
 
         icd_term = inst->icd_terms;
+#ifndef VULKANSC
         for (uint32_t icd_idx = 0; NULL != icd_term; icd_term = icd_term->next, icd_idx++) {
             // This is the new behavior, which cannot be run unless the ICD provides EnumerateAdapterPhysicalDevices
             if (icd_term->scanned_icd->EnumerateAdapterPhysicalDevices == NULL) {
@@ -991,6 +994,7 @@ VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint
                 goto out;
             }
         }
+#endif  // VULKANSC
 
         adapter->lpVtbl->Release(adapter);
     }
@@ -1006,8 +1010,8 @@ out:
     }
 #else
     (void)inst;
-    (void)sorted_devices;
-    *sorted_devices_count = 0;
+    (void)icd_phys_devs_array_count;
+    (void)icd_phys_devs_array;
 #endif  // VULKANSC
     return res;
 }
