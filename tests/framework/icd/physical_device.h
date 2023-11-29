@@ -65,6 +65,11 @@ struct PhysicalDevice {
     BUILDER_VALUE(PhysicalDevice, VkDisplayModeKHR, display_mode, {})
     BUILDER_VALUE(PhysicalDevice, VkDisplayPlaneCapabilitiesKHR, display_plane_capabilities, {})
 
+#ifndef VULKANSC  // VK_MSFT_layered_driver is not supported in Vulkan SC
+    BUILDER_VALUE(PhysicalDevice, VkLayeredDriverUnderlyingApiMSFT, layered_driver_underlying_api,
+                  VK_LAYERED_DRIVER_UNDERLYING_API_NONE_MSFT)
+#endif  // VULKANSC
+
     PhysicalDevice& set_api_version(uint32_t version) {
         properties.apiVersion = version;
         return *this;

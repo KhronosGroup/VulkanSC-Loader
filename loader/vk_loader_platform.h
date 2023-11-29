@@ -187,15 +187,10 @@ typedef pthread_cond_t loader_platform_thread_cond;
 #define VK_ELAYERS_INFO_RELATIVE_DIR ""
 #define VK_ILAYERS_INFO_RELATIVE_DIR ""
 
-#if defined(_WIN64)
-#define HKR_VK_DRIVER_NAME API_NAME "DriverName"
-#else
-#define HKR_VK_DRIVER_NAME API_NAME "DriverNameWow"
-#endif
-#define VK_DRIVERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\" API_NAME "\\Drivers"
-#define VK_ELAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\" API_NAME "\\ExplicitLayers"
-#define VK_ILAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\" API_NAME "\\ImplicitLayers"
-#define VK_SETTINGS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\" API_NAME "\\LoaderSettings"
+#define VK_DRIVERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan\\Drivers"
+#define VK_ELAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers"
+#define VK_ILAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan\\ImplicitLayers"
+#define VK_SETTINGS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan\\LoaderSettings"
 
 #define PRINTF_SIZE_T_SPECIFIER "%Iu"
 
@@ -282,18 +277,27 @@ static inline char *loader_platform_executable_path(char *buffer, size_t size) {
     return buffer;
 }
 #elif defined(__APPLE__)
-#if defined(__APPLE_EMBEDDED__)
+#include <TargetConditionals.h>
+// TARGET_OS_IPHONE isn't just iOS it's also iOS/tvOS/watchOS. See TargetConditionals.h documentation.
+#if TARGET_OS_IPHONE
 static inline char *loader_platform_executable_path(char *buffer, size_t size) {
     (void)size;
     buffer[0] = '\0';
     return buffer;
 }
-#else
+#endif
+#if TARGET_OS_OSX
 #include <libproc.h>
 static inline char *loader_platform_executable_path(char *buffer, size_t size) {
+    // proc_pidpath takes a uint32_t for the buffer size
+    if (size > UINT32_MAX) {
+        return NULL;
+    }
     pid_t pid = getpid();
-    int ret = proc_pidpath(pid, buffer, size);
-    if (ret <= 0) return NULL;
+    int ret = proc_pidpath(pid, buffer, (uint32_t)size);
+    if (ret <= 0) {
+        return NULL;
+    }
     buffer[ret] = '\0';
     return buffer;
 }

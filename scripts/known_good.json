@@ -7,7 +7,7 @@
             "sub_dir": "Vulkan-Headers",
             "build_dir": "Vulkan-Headers/build",
             "install_dir": "Vulkan-Headers/build/install",
-            "commit": "v1.3.268"
+            "commit": "v1.3.271"
         },
         {
             "name": "Vulkan-Headers",
@@ -19,7 +19,7 @@
             "cmake_options": [
                 "-DVULKANSC=ON"
             ],
-            "commit": "3ce63383494102643fad0d9c134107d29243fed6"
+            "commit": "8808ce6c7fc9092e24489bfecc9d4a903f5a0c12"
         },
         {
             "name": "googletest",

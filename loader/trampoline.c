@@ -490,12 +490,51 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceVersion(uint32_t
     return res;
 }
 
+// Add the "instance-only" debug functions to the list of active debug functions
+// at the very end.  This way it doesn't get replaced by any new messengers
+void loader_add_instance_only_debug_funcs(struct loader_instance *ptr_instance) {
+    VkLayerDbgFunctionNode *cur_node = ptr_instance->current_dbg_function_head;
+    if (cur_node == NULL) {
+        ptr_instance->current_dbg_function_head = ptr_instance->instance_only_dbg_function_head;
+    } else {
+        while (cur_node != NULL) {
+            if (cur_node == ptr_instance->instance_only_dbg_function_head) {
+                // Already added
+                break;
+            }
+            // Last item
+            else if (cur_node->pNext == NULL) {
+                cur_node->pNext = ptr_instance->instance_only_dbg_function_head;
+            }
+            cur_node = cur_node->pNext;
+        }
+    }
+}
+
+// Remove the "instance-only" debug functions from the list of active debug functions.
+// It should be added after the last actual debug utils/debug report function.
+void loader_remove_instance_only_debug_funcs(struct loader_instance *ptr_instance) {
+    VkLayerDbgFunctionNode *cur_node = ptr_instance->current_dbg_function_head;
+
+    // Only thing in list is the instance only head
+    if (cur_node == ptr_instance->instance_only_dbg_function_head) {
+        ptr_instance->current_dbg_function_head = NULL;
+    }
+    while (cur_node != NULL) {
+        if (cur_node->pNext == ptr_instance->instance_only_dbg_function_head) {
+            cur_node->pNext = NULL;
+            break;
+        }
+        cur_node = cur_node->pNext;
+    }
+}
+
 LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo,
                                                               const VkAllocationCallbacks *pAllocator, VkInstance *pInstance) {
     struct loader_instance *ptr_instance = NULL;
     VkInstance created_instance = VK_NULL_HANDLE;
     VkResult res = VK_ERROR_INITIALIZATION_FAILED;
-    VkInstanceCreateInfo ici = *pCreateInfo;
+    VkInstanceCreateInfo ici = {0};
     struct loader_envvar_all_filters layer_filters = {0};
 
     LOADER_PLATFORM_THREAD_ONCE(&once_init, loader_initialize);
@@ -505,6 +544,8 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
                    "vkCreateInstance: \'pCreateInfo\' is NULL (VUID-vkCreateInstance-pCreateInfo-parameter)");
         goto out;
     }
+    ici = *pCreateInfo;
+
     if (pInstance == NULL) {
         loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
                    "vkCreateInstance \'pInstance\' not valid (VUID-vkCreateInstance-pInstance-parameter)");
@@ -560,6 +601,15 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
     }
     if (ptr_instance->settings.settings_active) {
         log_settings(ptr_instance, &ptr_instance->settings);
+    }
+
+    // Providing an apiVersion less than VK_API_VERSION_1_0 but greater than zero prevents the validation layers from starting
+    if (pCreateInfo->pApplicationInfo && pCreateInfo->pApplicationInfo->apiVersion < VK_API_VERSION_1_0) {
+        loader_log(ptr_instance, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT, 0,
+                   "VkInstanceCreateInfo::pApplicationInfo::apiVersion has value of %u which is not permitted. If apiVersion is "
+                   "not 0, then it must be "
+                   "greater than or equal to the value of VK_API_VERSION_1_0 [VUID-VkApplicationInfo-apiVersion]",
+                   pCreateInfo->pApplicationInfo->apiVersion);
     }
 
 #ifndef VULKANSC
@@ -764,8 +814,7 @@ out:
             loader_instance_heap_free(ptr_instance, ptr_instance);
         } else {
             // success path, swap out created debug callbacks out so they aren't used until instance destruction
-            ptr_instance->InstanceCreationDeletionDebugFunctionHead = ptr_instance->DbgFunctionHead;
-            ptr_instance->DbgFunctionHead = NULL;
+            loader_remove_instance_only_debug_funcs(ptr_instance);
         }
         // Only unlock when ptr_instance isn't NULL, as if it is, the above code didn't make it to when loader_lock was locked.
         loader_platform_thread_unlock_mutex(&loader_lock);
@@ -799,8 +848,7 @@ LOADER_EXPORT VKAPI_ATTR void VKAPI_CALL vkDestroyInstance(VkInstance instance, 
     destroy_debug_callbacks_chain(ptr_instance, pAllocator);
 
     // Swap in the debug callbacks created during instance creation
-    ptr_instance->DbgFunctionHead = ptr_instance->InstanceCreationDeletionDebugFunctionHead;
-    ptr_instance->InstanceCreationDeletionDebugFunctionHead = NULL;
+    loader_add_instance_only_debug_funcs(ptr_instance);
 
     disp = loader_get_instance_layer_dispatch(instance);
     disp->DestroyInstance(ptr_instance->instance, pAllocator);
@@ -1964,7 +2012,7 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkAllocateCommandBuffers(VkDevice d
     if (res == VK_SUCCESS) {
         for (uint32_t i = 0; i < pAllocateInfo->commandBufferCount; i++) {
             if (pCommandBuffers[i]) {
-                loader_init_dispatch(pCommandBuffers[i], disp);
+                loader_set_dispatch(pCommandBuffers[i], disp);
             }
         }
     }

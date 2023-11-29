@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ~~~
+include(CheckIncludeFile)
 
 add_library(loader_specific_options INTERFACE)
 target_link_libraries(loader_specific_options INTERFACE loader_common_options Vulkan::Headers)
@@ -112,6 +113,14 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
     target_compile_definitions(loader_specific_options INTERFACE LOADER_ENABLE_LINUX_SORT)
 endif()
 
+if ("${CMAKE_OSX_ARCHITECTURES}" MATCHES ";")
+    set(APPLE_UNIVERSAL_BINARY ON)
+
+    # When building a universal binary we cannot enable USE_GAS
+    # Since USE_GAS assumes only 1 architecture (arm64, x64, etc).
+    set(USE_GAS OFF)
+endif()
+
 set(OPT_LOADER_SRCS dev_ext_trampoline.c phys_dev_ext.c)
 
 # Check for assembler support
@@ -119,7 +128,10 @@ set(ASM_FAILURE_MSG "The build will fall back on building with C code\n")
 set(ASM_FAILURE_MSG "${ASM_FAILURE_MSG}Note that this may be unsafe, as the C code requires tail-call optimizations to remove")
 set(ASM_FAILURE_MSG "${ASM_FAILURE_MSG} the stack frame for certain calls. If the compiler does not do this, then unknown device")
 set(ASM_FAILURE_MSG "${ASM_FAILURE_MSG} extensions will suffer from a corrupted stack.")
-if(WIN32)
+
+if (APPLE_UNIVERSAL_BINARY)
+    set(USE_ASSEMBLY_FALLBACK ON)
+elseif(WIN32)
     option(USE_MASM "Use MASM" ON)
     if(USE_MASM AND MINGW)
         find_program(JWASM_FOUND NAMES jwasm uasm)
@@ -206,19 +218,25 @@ end
         message(WARNING "Could not find working MASM assembler\n${ASM_FAILURE_MSG}")
     endif()
 elseif(UNIX) # i.e.: Linux & Apple
+
     option(USE_GAS "Use GAS" ON)
     if(USE_GAS)
+        if (APPLE_UNIVERSAL_BINARY)
+            message(FATAL_ERROR "USE_GAS cannot be used when compiling a universal binary!")
+        endif()
+
         enable_language(ASM)
 
         set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS}")
         set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-        if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
+        if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64|arm64")
             try_compile(ASSEMBLER_WORKS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/asm_test_aarch64.S)
             if(ASSEMBLER_WORKS)
                 set(OPT_LOADER_SRCS ${OPT_LOADER_SRCS} unknown_ext_chain_gas_aarch64.S)
             endif()
-        elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "amd64" OR ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86" OR ${CMAKE_SYSTEM_PROCESSOR} MATCHES "^i.86$")
+        # Covers x86_64, amd64, x86, i386, i686, I386, I686
+        elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd64|86")
             check_include_file("cet.h" HAVE_CET_H)
             if(HAVE_CET_H)
                 target_compile_definitions(loader_specific_options INTERFACE HAVE_CET_H)
@@ -235,7 +253,7 @@ elseif(UNIX) # i.e.: Linux & Apple
     # Instead, check the size of void* and if its 4, set ASM_OFFSET_SYSTEM_PROCESSOR to x86
     # Note - there is no 32 bit arm assembly code, so this only applies to x86 currently.
     if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-        set(ASM_OFFSET_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}) # x86_64 or aarch64
+        set(ASM_OFFSET_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}) # x86_64 or aarch64/arm64
     else()
         set(ASM_OFFSET_SYSTEM_PROCESSOR "x86")
     endif()
@@ -351,9 +369,12 @@ else()
         add_library(vulkan SHARED ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS})
     endif()
     add_dependencies(vulkan loader_asm_gen_files)
-    set_target_properties(vulkan
-                          PROPERTIES SOVERSION "1"
-                          VERSION ${VULKAN_LOADER_VERSION})
+
+    set_target_properties(vulkan PROPERTIES
+        SOVERSION "1"
+        VERSION ${VULKAN_LOADER_VERSION}
+    )
+
     # On QNX libdl and pthread is part of libc and there is no separate library.
     if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "QNX"))
         target_link_libraries(vulkan PRIVATE ${CMAKE_DL_LIBS} m Threads::Threads)
@@ -370,6 +391,10 @@ else()
     if (LOADER_ENABLE_THREAD_SANITIZER)
         target_compile_options(vulkan PUBLIC -fsanitize=thread)
         target_link_options(vulkan PUBLIC -fsanitize=thread)
+    endif()
+    if (LOADER_ENABLE_UNDEFINED_BEHAVIOR_SANITIZER)
+        target_compile_options(vulkan PUBLIC -fsanitize=undefined)
+        target_link_options(vulkan PUBLIC -fsanitize=undefined)
     endif()
 
     if(APPLE)
@@ -397,6 +422,13 @@ else()
             target_compile_definitions(vulkan-framework PRIVATE MODIFY_UNKNOWN_FUNCTION_DECLS)
         endif()
 
+        # Workaround linker warning: https://github.com/KhronosGroup/Vulkan-Loader/issues/1332
+        set(APPLE_VULKAN_LOADER_VERSION "${VULKAN_LOADER_VERSION_MAJOR}.${VULKAN_LOADER_VERSION_MINOR}.0")
+
+        message(STATUS "APPLE_VULKAN_LOADER_VERSION = ${APPLE_VULKAN_LOADER_VERSION}")
+
+        set_target_properties(vulkan PROPERTIES VERSION ${APPLE_VULKAN_LOADER_VERSION})
+
         # The FRAMEWORK_VERSION needs to be "A" here so that Xcode code-signing works when a user adds their framework to an Xcode
         # project and does "Sign on Copy". It would have been nicer to use "1" to denote Vulkan 1. Although Apple docs say that a
         # framework version does not have to be "A", this part of the Apple toolchain expects it.
@@ -406,8 +438,8 @@ else()
             OUTPUT_NAME vulkan
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
-            VERSION "${VULKAN_LOADER_VERSION}" # "current generated version"
-            SOVERSION "1.0.0"                  # "compatibility version"
+            VERSION "${APPLE_VULKAN_LOADER_VERSION}"
+            SOVERSION "1.0.0"
             MACOSX_FRAMEWORK_IDENTIFIER com.lunarg.vulkanFramework
             PUBLIC_HEADER "${FRAMEWORK_HEADERS}"
         )
@@ -435,8 +467,8 @@ target_link_libraries(vulkan PRIVATE Vulkan::Headers)
 add_library(Vulkan::Loader ALIAS vulkan)
 
 if (APPLE AND BUILD_STATIC_LOADER)
-    # When exporting a static library all linked libraries - private or not - need to be exported.
-    message(NOTICE "vulkan.pc and VulkanLoaderConfig.cmake not generated for STATIC Apple builds!")
+    # TLDR: This feature only exists at the request of Google for Chromium. No other project should use this!
+    message(NOTICE "Apple STATIC lib: it will be built but not installed, and vulkan.pc and VulkanLoaderConfig.cmake won't be generated!")
     return()
 endif()
 

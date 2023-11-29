@@ -548,9 +548,10 @@ TEST(MultipleICDConfig, version_5_and_version_6) {
 #endif  // defined(WIN32)
 #endif  // VULKANSC
 
+#ifndef VULKANSC
 // shim function pointers for 1.3
 // Should use autogen for this - it generates 'shim' functions for validation layers, maybe that could be used here.
-void test_vkCmdBeginRendering(VkCommandBuffer, const VkRenderPassBeginInfo*, VkSubpassContents) {}
+void test_vkCmdBeginRendering(VkCommandBuffer, const VkRenderingInfo*) {}
 void test_vkCmdBindVertexBuffers2(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer*, const VkDeviceSize*, const VkDeviceSize*,
                                   const VkDeviceSize*) {}
 void test_vkCmdBlitImage2(VkCommandBuffer, const VkBlitImageInfo2*) {}
@@ -579,7 +580,6 @@ void test_vkCmdSetStencilTestEnable(VkCommandBuffer, VkBool32) {}
 void test_vkCmdSetViewportWithCount(VkCommandBuffer, uint32_t, const VkViewport*) {}
 void test_vkCmdWaitEvents2(VkCommandBuffer, uint32_t, const VkEvent*, const VkDependencyInfo*) {}
 void test_vkCmdWriteTimestamp2(VkCommandBuffer, VkPipelineStageFlags2, VkQueryPool, uint32_t) {}
-#ifndef VULKANSC  // VK_EXT_private_data is not supported in Vulkan SC
 VkResult test_vkCreatePrivateDataSlot(VkDevice, const VkPrivateDataSlotCreateInfo*, const VkAllocationCallbacks*,
                                       VkPrivateDataSlot*) {
     return VK_SUCCESS;

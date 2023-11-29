@@ -24,7 +24,7 @@ set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passe
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.13)
 else()
-    project(VULKAN_LOADER VERSION 1.3.268)
+    project(VULKAN_LOADER VERSION 1.3.271)
 endif()
 
 # This variable enables downstream users to customize the target API
@@ -121,24 +121,27 @@ if(WIN32)
 elseif(ANDROID)
     message(FATAL_ERROR "Android build not supported!")
 elseif(APPLE)
-    if(NOT VULKANSC)
-        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_MACOS_MVK VK_USE_PLATFORM_METAL_EXT)
+    if (NOT VULKANSC)
+        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_METAL_EXT)
+        if (IOS)
+            target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_IOS_MVK)
+        endif()
+        if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+            target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_MACOS_MVK)
+        endif()
     endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
     if(VULKANSC)
         option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" OFF)
         option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" OFF)
         option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
-        option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
-        option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
-        option(BUILD_WSI_SCI_SUPPORT "Build SCI WSI support" OFF)
     else()
         option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
         option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" ON)
         option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" ON)
-        option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
-        option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
     endif()
+    option(BUILD_WSI_DIRECTFB_SUPPORT "Build DirectFB WSI support" OFF)
+    option(BUILD_WSI_SCI_SUPPORT "Build SCI WSI support" OFF)
 
     find_package(PkgConfig REQUIRED QUIET) # Use PkgConfig to find Linux system libraries
 
@@ -160,19 +163,31 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_DIRECTFB_EXT)
         target_link_libraries(platform_wsi INTERFACE PkgConfig::DirectFB)
     endif()
-    if(BUILD_WSI_SCREEN_QNX_SUPPORT)
-        # Part of OS, no additional include directories are required
-        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCREEN_QNX)
-    endif()
     if(BUILD_WSI_SCI_SUPPORT)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCI)
     endif()
+elseif(CMAKE_SYSTEM_NAME MATCHES "QNX")
+    if(VULKANSC)
+        option(BUILD_WSI_SCREEN_QNX_SUPPORT "Build QNX Screen WSI support" OFF)
+        option(BUILD_WSI_SCI_SUPPORT "Build SCI WSI support" OFF)
+
+        if(BUILD_WSI_SCREEN_QNX_SUPPORT)
+            # Part of OS, no additional include directories are required
+            target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCREEN_QNX)
+        endif()
+        if(BUILD_WSI_SCI_SUPPORT)
+            target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCI)
+        endif()
+    else()
+        message(FATAL_ERROR "See BUILD.md for QNX build")
+    endif()
+elseif(CMAKE_SYSTEM_NAME MATCHES "Fuchsia")
+    message(FATAL_ERROR "Fuchsia uses Chromium build. See BUILD.gn")
 else()
     message(FATAL_ERROR "Unsupported Platform!")
 endif()
 
 add_library(loader_common_options INTERFACE)
-target_compile_definitions(loader_common_options INTERFACE API_NAME="Vulkan")
 target_link_libraries(loader_common_options INTERFACE platform_wsi)
 
 # Enable beta Vulkan extensions
@@ -184,12 +199,6 @@ set(LOADER_STANDARD_C_PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED YES C_EXTENSI
 set(LOADER_STANDARD_CXX_PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS OFF)
 
 set(TESTS_STANDARD_CXX_PROPERTIES ${LOADER_STANDARD_CXX_PROPERTIES} MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-
-# Build for iOS and tvOS
-option(APPLE_EMBEDDED "Apple non desktop devices" OFF)
-if (APPLE_EMBEDDED)
-    add_definitions(-D__APPLE_EMBEDDED__)
-endif()
 
 # Force the use of the multithreaded, static version of the C runtime.
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -214,13 +223,6 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     target_compile_options(loader_common_options INTERFACE -Wno-missing-field-initializers)
-
-    # need to prepend /clang: to compiler arguments when using clang-cl
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND "${CMAKE_CXX_SIMULATE_ID}" MATCHES "MSVC")
-        target_compile_options(loader_common_options INTERFACE /clang:-fno-strict-aliasing /clang:-fno-builtin-memcmp)
-    else()
-        target_compile_options(loader_common_options INTERFACE -fno-strict-aliasing -fno-builtin-memcmp)
-    endif()
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(loader_common_options INTERFACE -Wno-stringop-truncation -Wno-stringop-overflow)
@@ -255,21 +257,22 @@ endif()
 # Add git branch and tag info in debug mode
 target_compile_definitions(loader_common_options INTERFACE $<$<CONFIG:DEBUG>:DEBUG;GIT_BRANCH_NAME="${GIT_BRANCH_NAME}";GIT_TAG_INFO="${GIT_TAG_INFO}">)
 
-# Check for the existance of the secure_getenv or __secure_getenv commands
-include(CheckFunctionExists)
-include(CheckIncludeFile)
+if (NOT (WIN32 OR APPLE))
+    # Check for the existance of the secure_getenv or __secure_getenv commands
+    include(CheckFunctionExists)
 
-check_function_exists(secure_getenv HAVE_SECURE_GETENV)
-check_function_exists(__secure_getenv HAVE___SECURE_GETENV)
+    check_function_exists(secure_getenv HAVE_SECURE_GETENV)
+    check_function_exists(__secure_getenv HAVE___SECURE_GETENV)
 
-if (HAVE_SECURE_GETENV)
-    target_compile_definitions(loader_common_options INTERFACE HAVE_SECURE_GETENV)
-endif()
-if (HAVE___SECURE_GETENV)
-    target_compile_definitions(loader_common_options INTERFACE HAVE___SECURE_GETENV)
-endif()
-if(NOT MSVC AND NOT (HAVE_SECURE_GETENV OR HAVE___SECURE_GETENV))
-    message(WARNING "Using non-secure environmental lookups. This loader will not properly disable environent variables when run with elevated permissions.")
+    if (HAVE_SECURE_GETENV)
+        target_compile_definitions(loader_common_options INTERFACE HAVE_SECURE_GETENV)
+    endif()
+    if (HAVE___SECURE_GETENV)
+        target_compile_definitions(loader_common_options INTERFACE HAVE___SECURE_GETENV)
+    endif()
+    if (NOT (HAVE_SECURE_GETENV OR HAVE___SECURE_GETENV))
+        message(WARNING "Using non-secure environmental lookups. This loader will not properly disable environent variables when run with elevated permissions.")
+    endif()
 endif()
 
 option(LOADER_CODEGEN "Enable vulkan loader code generation")

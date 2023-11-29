@@ -1001,10 +1001,15 @@ VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceProperties2(VkPhysicalDevice 
         VkBaseInStructure* pNext = reinterpret_cast<VkBaseInStructure*>(pProperties->pNext);
         while (pNext) {
             if (pNext->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT) {
-                VkPhysicalDevicePCIBusInfoPropertiesEXT* bus_info =
-                    reinterpret_cast<VkPhysicalDevicePCIBusInfoPropertiesEXT*>(pNext);
+                auto* bus_info = reinterpret_cast<VkPhysicalDevicePCIBusInfoPropertiesEXT*>(pNext);
                 bus_info->pciBus = phys_dev.pci_bus;
             }
+#ifndef VULKANSC  // VK_MSFT_layered_driver is not supported in Vulkan SC
+            if (pNext->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LAYERED_DRIVER_PROPERTIES_MSFT) {
+                auto* layered_driver_props = reinterpret_cast<VkPhysicalDeviceLayeredDriverPropertiesMSFT*>(pNext);
+                layered_driver_props->underlyingAPI = phys_dev.layered_driver_underlying_api;
+            }
+#endif  // VULKANSC
             pNext = reinterpret_cast<VkBaseInStructure*>(const_cast<VkBaseInStructure*>(pNext->pNext));
         }
     }
@@ -1125,7 +1130,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vk_icdEnumerateAdapterPhysicalDevices(VkInst
                                                                           VkPhysicalDevice* pPhysicalDevices) {
     if (adapterLUID.LowPart != icd.adapterLUID.LowPart || adapterLUID.HighPart != icd.adapterLUID.HighPart) {
         *pPhysicalDeviceCount = 0;
-        return VK_SUCCESS;
+        return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
     icd.called_enumerate_adapter_physical_devices = true;
     VkResult res = test_vkEnumeratePhysicalDevices(instance, pPhysicalDeviceCount, pPhysicalDevices);
@@ -1352,16 +1357,21 @@ PFN_vkVoidFunction get_physical_device_func([[maybe_unused]] VkInstance instance
         return to_vkVoidFunction(test_vkGetPhysicalDeviceQueueFamilyProperties);
     if (string_eq(pName, "vkCreateDevice")) return to_vkVoidFunction(test_vkCreateDevice);
 
-    if (string_eq(pName, "vkGetPhysicalDeviceFeatures")) return to_vkVoidFunction(test_vkGetPhysicalDeviceFeatures);
-    if (string_eq(pName, "vkGetPhysicalDeviceProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceProperties);
-    if (string_eq(pName, "vkGetPhysicalDeviceMemoryProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceMemoryProperties);
+    if (string_eq(pName, "vkGetPhysicalDeviceFeatures"))
+        return icd.can_query_GetPhysicalDeviceFuncs ? to_vkVoidFunction(test_vkGetPhysicalDeviceFeatures) : nullptr;
+    if (string_eq(pName, "vkGetPhysicalDeviceProperties"))
+        return icd.can_query_GetPhysicalDeviceFuncs ? to_vkVoidFunction(test_vkGetPhysicalDeviceProperties) : nullptr;
+    if (string_eq(pName, "vkGetPhysicalDeviceMemoryProperties"))
+        return icd.can_query_GetPhysicalDeviceFuncs ? to_vkVoidFunction(test_vkGetPhysicalDeviceMemoryProperties) : nullptr;
 #ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
     if (string_eq(pName, "vkGetPhysicalDeviceSparseImageFormatProperties"))
-        return to_vkVoidFunction(test_vkGetPhysicalDeviceSparseImageFormatProperties);
+        return icd.can_query_GetPhysicalDeviceFuncs ? to_vkVoidFunction(test_vkGetPhysicalDeviceSparseImageFormatProperties)
+                                                    : nullptr;
 #endif  // VULKANSC
-    if (string_eq(pName, "vkGetPhysicalDeviceFormatProperties")) return to_vkVoidFunction(test_vkGetPhysicalDeviceFormatProperties);
+    if (string_eq(pName, "vkGetPhysicalDeviceFormatProperties"))
+        return icd.can_query_GetPhysicalDeviceFuncs ? to_vkVoidFunction(test_vkGetPhysicalDeviceFormatProperties) : nullptr;
     if (string_eq(pName, "vkGetPhysicalDeviceImageFormatProperties"))
-        return to_vkVoidFunction(test_vkGetPhysicalDeviceImageFormatProperties);
+        return icd.can_query_GetPhysicalDeviceFuncs ? to_vkVoidFunction(test_vkGetPhysicalDeviceImageFormatProperties) : nullptr;
 
 #ifndef VULKANSC  // GPDP2 is included in core Vulkan SC 1.0
     if (IsInstanceExtensionEnabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {

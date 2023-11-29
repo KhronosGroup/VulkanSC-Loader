@@ -76,7 +76,6 @@ config("vulkan_loader_config") {
     "loader",
   ]
   defines = [
-    "API_NAME=\"Vulkan\"",
     "LOADER_USE_UNSAFE_FILE_SEARCH=1",
   ]
 
@@ -221,16 +220,10 @@ if (!is_android) {
 }
 
 if (is_fuchsia) {
-  config("fuchsia_config") {
-    include_dirs = [ "fuchsia" ]
-  }
-
   source_set("dlopen_fuchsia") {
-    public_configs = [ ":fuchsia_config" ]
-
     sources = [
-      "fuchsia/dlopen_fuchsia.c",
-      "fuchsia/dlopen_fuchsia.h",
+      "loader/dlopen_fuchsia.c",
+      "loader/dlopen_fuchsia.h",
     ]
 
     deps = [

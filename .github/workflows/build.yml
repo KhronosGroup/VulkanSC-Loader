@@ -26,11 +26,11 @@ concurrency:
   cancel-in-progress: true
 
 on:
-    push:
-    pull_request:
-        branches:
-            - main
-            - sc_main
+  push:
+  pull_request:
+    branches:
+    - main
+    - sc_main
 
 permissions: read-all
 
@@ -51,8 +51,8 @@ jobs:
                       cxx: g++
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -84,21 +84,19 @@ jobs:
               working-directory: ./build
               run: ctest --output-on-failure
 
-            - name: Verify generated source files
-              run: python scripts/generate_source.py --verify external/${{matrix.config}}/Vulkan-Headers/registry
-
-            - name: Verify code formatting with clang-format
-              run: ./scripts/check_code_format.sh
-
-            - name: Verify commit message formatting
-              run: ./scripts/check_commit_message_format.sh
+    codegen:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - run: scripts/update_deps.py --dir ext --no-build
+        - run: scripts/generate_source.py --verify ext/Vulkan-Headers/registry/
 
     linux-no-asm:
         runs-on: ubuntu-22.04
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -137,8 +135,8 @@ jobs:
                       cxx: g++
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -179,8 +177,8 @@ jobs:
     linux-32-no-asm:
         runs-on: ubuntu-20.04
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -220,8 +218,8 @@ jobs:
                 config: [ Debug, Release ]
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
 
@@ -245,8 +243,8 @@ jobs:
                 arch: [ Win32, x64 ]
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
 
@@ -277,8 +275,8 @@ jobs:
                 config: debug
 
       steps:
-          - uses: actions/checkout@v3
-          - uses: actions/setup-python@v3
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v4
             with:
               python-version: '3.7'
           - uses: ilammy/msvc-dev-cmd@v1
@@ -303,8 +301,8 @@ jobs:
             config: [ Release ]
 
       steps:
-          - uses: actions/checkout@v3
-          - uses: actions/setup-python@v3
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v4
             with:
               python-version: '3.7'
           - uses: ilammy/msvc-dev-cmd@v1
@@ -330,7 +328,7 @@ jobs:
         strategy:
             matrix:
                 config: [ Debug, Release ]
-                os: [ macos-11, macos-latest ]
+                os: [ macos-11, macos-12 ]
                 static_build: [ BUILD_STATIC_LOADER=ON, BUILD_STATIC_LOADER=OFF ]
                 exclude:
                   - os: macos-latest
@@ -340,60 +338,95 @@ jobs:
                     static_build: BUILD_STATIC_LOADER=ON
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
             - name: Generate build files
               run: cmake -S. -B build -D CMAKE_BUILD_TYPE=${{matrix.config}} -D ${{matrix.static_build}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D LOADER_ENABLE_ADDRESS_SANITIZER=ON -G "Ninja"
               env:
-                # Specify the minimum version of macOS on which the target binaries are to be deployed.
-                # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
-                MACOSX_DEPLOYMENT_TARGET: 10.12
+                LDFLAGS: -Wl,-fatal_warnings
 
-            - name: Build the loader
-              run: cmake --build build
+            - run: cmake --build build
 
-            - name: Install the loader
-              run: cmake --install build --prefix build/install
+            - run: cmake --install build --prefix build/install
 
             - name: Run regression tests
               working-directory: ./build
               run: ctest --output-on-failure
 
-    mac-no-asm:
-        runs-on: macos-latest
+    apple-cross-compile:
+      name: ${{ matrix.CMAKE_SYSTEM_NAME }}
+      runs-on: macos-11
+      strategy:
+          matrix:
+            CMAKE_SYSTEM_NAME: [ iOS, tvOS ]
+      steps:
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v4
+            with:
+              python-version: '3.7'
+          - uses: lukka/get-cmake@latest
+          - name: Generate build files
+            run: |
+              cmake -S . -B build \
+              -D CMAKE_SYSTEM_NAME=${{ matrix.CMAKE_SYSTEM_NAME }} \
+              "-D CMAKE_OSX_ARCHITECTURES=arm64;x86_64" \
+              -D CMAKE_BUILD_TYPE=Debug \
+              -D UPDATE_DEPS=ON \
+              -D ENABLE_WERROR=ON
+            env:
+              LDFLAGS: -Wl,-fatal_warnings
+              CMAKE_GENERATOR: Ninja
+          - run: cmake --build build
+          - run: cmake --install build --prefix /tmp
+          - name: Verify Universal Binary
+            run: |
+              vtool -show-build /tmp/lib/libvulkan.dylib | grep 'architecture x86_64'
+              vtool -show-build /tmp/lib/libvulkan.dylib | grep 'architecture arm64'
 
+    # Building a universal binary disables assembly automatically
+    # Furthermore the Vulkan SDK ships universal binaries
+    mac-univeral:
+        name: "Universal Binary Testing (STATIC ${{ matrix.static }})"
+        runs-on: macos-latest
         strategy:
             matrix:
-                static_build: [ BUILD_STATIC_LOADER=ON, BUILD_STATIC_LOADER=OFF ]
-
+                static: [ 'ON', 'OFF' ]
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
             - name: Generate build files
-              run: cmake -S. -B build -D CMAKE_BUILD_TYPE=Release -D ${{matrix.static_build}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D USE_GAS=OFF -G "Ninja"
+              run: |
+                cmake -S. -B build \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D BUILD_STATIC_LOADER=${{matrix.static}} \
+                "-D CMAKE_OSX_ARCHITECTURES=arm64;x86_64" \
+                -D BUILD_TESTS=ON \
+                -D UPDATE_DEPS=ON \
+                -D ENABLE_WERROR=ON \
+                -G Ninja
               env:
-                # Specify the minimum version of macOS on which the target binaries are to be deployed.
-                # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
-                MACOSX_DEPLOYMENT_TARGET: 10.12
-
-            - name: Build the loader
-              run: cmake --build build
-
-            - name: Run regression tests
+                LDFLAGS: -Wl,-fatal_warnings
+            - run: cmake --build build
+            - run: ctest --output-on-failure -E UnknownFunction
               working-directory: ./build
-              run: ctest --output-on-failure -E UnknownFunction
+            - run: cmake --install build --prefix /tmp
+            - name: Verify Universal Binary
+              if: ${{ matrix.static == 'OFF' }}
+              run: |
+                vtool -show-build /tmp/lib/libvulkan.dylib | grep 'architecture x86_64'
+                vtool -show-build /tmp/lib/libvulkan.dylib | grep 'architecture arm64'
 
 
     chromium:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - run: scripts/gn/gn.py
 
     mingw:
@@ -402,7 +435,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Setup ccache
           uses: hendrikmuhs/ccache-action@v1.2
           with:
@@ -439,7 +472,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Setup ccache
           uses: hendrikmuhs/ccache-action@v1.2
           with:
@@ -471,7 +504,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Setup ccache
           uses: hendrikmuhs/ccache-action@v1.2
           with:

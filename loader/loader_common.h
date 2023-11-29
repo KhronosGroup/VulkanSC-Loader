@@ -315,13 +315,9 @@ struct loader_instance {
     struct loader_extension_list ext_list;  // icds and loaders extensions
     struct loader_instance_extension_enables enabled_known_extensions;
 
-    // Stores debug callbacks - used in the log
-    VkLayerDbgFunctionNode *DbgFunctionHead;
-
-    // Stores the debug callbacks set during instance creation
-    // These are kept separate because they aren't to be used outside of instance creation and destruction
-    // So they are swapped out at the end of instance creation and swapped in at instance destruction
-    VkLayerDbgFunctionNode *InstanceCreationDeletionDebugFunctionHead;
+    // Stores debug callbacks - used in the log.
+    VkLayerDbgFunctionNode *current_dbg_function_head;        // Current head
+    VkLayerDbgFunctionNode *instance_only_dbg_function_head;  // Only used for instance create/destroy
 
     VkAllocationCallbacks alloc_callbacks;
 
@@ -476,11 +472,14 @@ enum loader_data_files_type {
     LOADER_DATA_FILE_NUM_TYPES  // Not a real field, used for possible loop terminator
 };
 
-struct loader_phys_dev_per_icd {
+struct loader_icd_physical_devices {
     uint32_t device_count;
     VkPhysicalDevice *physical_devices;
     uint32_t icd_index;
     struct loader_icd_term *icd_term;
+#if defined(WIN32)
+    LUID windows_adapter_luid;
+#endif
 };
 
 #ifndef VULKANSC
