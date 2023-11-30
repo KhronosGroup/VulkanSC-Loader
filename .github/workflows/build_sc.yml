@@ -24,12 +24,12 @@ concurrency:
   cancel-in-progress: true
 
 on:
-    push:
-        branches-ignore:
-            - main
-    pull_request:
-        branches:
-            - sc_main
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+    - sc_main
 
 permissions: read-all
 
@@ -50,8 +50,8 @@ jobs:
                       cxx: g++
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -77,21 +77,19 @@ jobs:
               working-directory: ./build
               run: ctest --output-on-failure
 
-            - name: Verify generated source files
-              run: python scripts/generate_source.py --verify external/${{matrix.config}}/Vulkan-Headers/registry --api vulkansc
-
-            - name: Verify code formatting with clang-format
-              run: ./scripts/check_code_format.sh
-
-            - name: Verify commit message formatting
-              run: ./scripts/check_commit_message_format.sh
+    codegen:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - run: scripts/update_deps.py --dir ext --no-build
+        - run: scripts/generate_source.py --verify ext/Vulkan-Headers/registry/ --api vulkansc
 
     linux-no-asm:
         runs-on: ubuntu-22.04
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -130,8 +128,8 @@ jobs:
                       cxx: g++
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -169,8 +167,8 @@ jobs:
     linux-32-no-asm:
         runs-on: ubuntu-20.04
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
             - uses: lukka/get-cmake@latest
@@ -210,8 +208,8 @@ jobs:
                 config: [ Debug, Release ]
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
 
@@ -235,8 +233,8 @@ jobs:
                 arch: [ Win32, x64 ]
 
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
               with:
                 python-version: '3.7'
 
@@ -267,8 +265,8 @@ jobs:
                 config: debug
 
       steps:
-          - uses: actions/checkout@v3
-          - uses: actions/setup-python@v3
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v4
             with:
               python-version: '3.7'
           - uses: ilammy/msvc-dev-cmd@v1
@@ -293,8 +291,8 @@ jobs:
             config: [ Release ]
 
       steps:
-          - uses: actions/checkout@v3
-          - uses: actions/setup-python@v3
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v4
             with:
               python-version: '3.7'
           - uses: ilammy/msvc-dev-cmd@v1
@@ -314,79 +312,13 @@ jobs:
             working-directory: ./build
             run: ctest --output-on-failure -C ${{matrix.config}}
 
-    mac:
-        runs-on: ${{matrix.os}}
-
-        strategy:
-            matrix:
-                config: [ Debug, Release ]
-                os: [ macos-11, macos-latest ]
-                static_build: [ BUILD_STATIC_LOADER=ON, BUILD_STATIC_LOADER=OFF ]
-                exclude:
-                  - os: macos-latest
-                    static_build: BUILD_STATIC_LOADER=ON
-                  - config: Debug
-                    os: macos-11
-                    static_build: BUILD_STATIC_LOADER=ON
-
-        steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
-              with:
-                python-version: '3.7'
-            - uses: lukka/get-cmake@latest
-            - name: Generate build files
-              run: cmake -S. -B build -D CMAKE_BUILD_TYPE=${{matrix.config}} -D ${{matrix.static_build}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D LOADER_ENABLE_ADDRESS_SANITIZER=ON -G "Ninja" -D VULKANSC=ON
-              env:
-                # Specify the minimum version of macOS on which the target binaries are to be deployed.
-                # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
-                MACOSX_DEPLOYMENT_TARGET: 10.12
-
-            - name: Build the loader
-              run: cmake --build build
-
-            - name: Install the loader
-              run: cmake --install build --prefix build/install
-
-            - name: Run regression tests
-              working-directory: ./build
-              run: ctest --output-on-failure
-
-    mac-no-asm:
-        runs-on: macos-latest
-
-        strategy:
-            matrix:
-                static_build: [ BUILD_STATIC_LOADER=ON, BUILD_STATIC_LOADER=OFF ]
-
-        steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-python@v3
-              with:
-                python-version: '3.7'
-            - uses: lukka/get-cmake@latest
-            - name: Generate build files
-              run: cmake -S. -B build -D CMAKE_BUILD_TYPE=Release -D ${{matrix.static_build}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D USE_GAS=OFF -G "Ninja" -D VULKANSC=ON
-              env:
-                # Specify the minimum version of macOS on which the target binaries are to be deployed.
-                # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
-                MACOSX_DEPLOYMENT_TARGET: 10.12
-
-            - name: Build the loader
-              run: cmake --build build
-
-            - name: Run regression tests
-              working-directory: ./build
-              run: ctest --output-on-failure -E UnknownFunction
-
-
     mingw:
       runs-on: windows-2022
       defaults:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Setup ccache
           uses: hendrikmuhs/ccache-action@v1.2
           with:
@@ -404,7 +336,7 @@ jobs:
         - name: UASM Check
           run: uasm -?
         - name: Configure
-          run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release
+          run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D VULKANSC=ON
           env:
             LDFLAGS: -fuse-ld=lld # MINGW linking is very slow. Use llvm linker instead.
             CMAKE_C_COMPILER_LAUNCHER: ccache
@@ -423,7 +355,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Setup ccache
           uses: hendrikmuhs/ccache-action@v1.2
           with:
@@ -436,7 +368,7 @@ jobs:
           run: gcc --version # If this fails MINGW is not setup correctly
         - name: Configure
           # Make sure this doesn't fail even without -D USE_MASM=OFF and without uasm
-          run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release
+          run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D VULKANSC=ON
           env:
             LDFLAGS: -fuse-ld=lld # MINGW linking is very slow. Use llvm linker instead.
             CMAKE_C_COMPILER_LAUNCHER: ccache
@@ -455,7 +387,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
         - name: Setup ccache
           uses: hendrikmuhs/ccache-action@v1.2
           with:
@@ -467,7 +399,7 @@ jobs:
         - name: GCC Version
           run: gcc --version # If this fails MINGW is not setup correctly
         - name: Configure
-          run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D ENABLE_WERROR=ON -D USE_MASM=OFF
+          run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D ENABLE_WERROR=ON -D USE_MASM=OFF -D VULKANSC=ON
           env:
             LDFLAGS: -fuse-ld=lld # MINGW linking is very slow. Use llvm linker instead.
             CMAKE_C_COMPILER_LAUNCHER: ccache
