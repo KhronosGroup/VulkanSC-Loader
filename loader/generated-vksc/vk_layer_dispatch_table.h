@@ -24,6 +24,7 @@
  * Author: Mark Young <marky@lunarg.com>
  */
 
+// clang-format off
 #pragma once
 
 #if !defined(PFN_GetPhysicalDeviceProcAddr)
@@ -437,4 +438,4 @@ typedef struct VkLayerDispatchTable_ {
 #endif // VK_USE_PLATFORM_SCREEN_QNX
 } VkLayerDispatchTable;
 
-
+// clang-format on

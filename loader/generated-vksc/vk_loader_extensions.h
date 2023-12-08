@@ -24,6 +24,7 @@
  * Author: Mark Young <marky@lunarg.com>
  */
 
+// clang-format off
 #pragma once
 
 // Structures defined externally, but used here
@@ -314,6 +315,6 @@ struct loader_device_terminator_dispatch {
     PFN_vkCmdBeginDebugUtilsLabelEXT CmdBeginDebugUtilsLabelEXT;
     PFN_vkCmdEndDebugUtilsLabelEXT CmdEndDebugUtilsLabelEXT;
     PFN_vkCmdInsertDebugUtilsLabelEXT CmdInsertDebugUtilsLabelEXT;
-}; 
+};
 
-
+// clang-format on

@@ -24,7 +24,7 @@ set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passe
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.13)
 else()
-    project(VULKAN_LOADER VERSION 1.3.271)
+    project(VULKAN_LOADER VERSION 1.3.272)
 endif()
 
 # This variable enables downstream users to customize the target API
@@ -50,19 +50,10 @@ if (UNIX)
     option(LOADER_ENABLE_THREAD_SANITIZER "Linux & macOS only: Advanced thread checking" OFF)
 endif()
 
-if(APPLE)
-    option(BUILD_STATIC_LOADER "Build a loader that can be statically linked" OFF)
-endif()
-
 if(WIN32)
     # Optional: Allow specify the exact version used in the loader dll
     # Format is major.minor.patch.build
     set(BUILD_DLL_VERSIONINFO "" CACHE STRING "Set the version to be used in the loader.rc file. Default value is the currently generated header version")
-endif()
-
-if(BUILD_STATIC_LOADER)
-    message(WARNING "The BUILD_STATIC_LOADER option has been set. Note that this will only work on MacOS and is not supported "
-        "or tested as part of the loader. Use it at your own risk.")
 endif()
 
 find_package(VulkanHeaders CONFIG QUIET)

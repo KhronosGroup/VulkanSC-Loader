@@ -24,6 +24,7 @@
  * Author: Mark Young <marky@lunarg.com>
  */
 
+// clang-format off
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -3695,4 +3696,4 @@ const char *const LOADER_INSTANCE_EXTENSIONS[] = {
                                                   VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
                                                   VK_EXT_APPLICATION_PARAMETERS_EXTENSION_NAME,
                                                   NULL };
-
+// clang-format on
