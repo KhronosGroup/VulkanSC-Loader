@@ -433,12 +433,20 @@ static inline char *loader_strncpy(char *dest, size_t dest_sz, const char *src, 
 static inline const char *LoaderPnpDriverRegistry() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
+#ifdef VULKANSC
+    return is_wow ? "VulkanSCDriverNameWow" : "VulkanSCDriverName";
+#else
     return is_wow ? "VulkanDriverNameWow" : "VulkanDriverName";
+#endif
 }
 static inline const wchar_t *LoaderPnpDriverRegistryWide() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
+#ifdef VULKANSC
+    return is_wow ? L"VulkanSCDriverNameWow" : L"VulkanSCDriverName";
+#else
     return is_wow ? L"VulkanDriverNameWow" : L"VulkanDriverName";
+#endif
 }
 
 // Get the key for the plug 'n play explicit layer registry
