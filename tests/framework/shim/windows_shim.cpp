@@ -82,11 +82,11 @@ NTSTATUS APIENTRY ShimQueryAdapterInfo(const LoaderQueryAdapterInfo *query_info)
     auto *reg_info = reinterpret_cast<LoaderQueryRegistryInfo *>(query_info->private_data);
 
     std::vector<std::wstring> *paths = nullptr;
-    if (reg_info->value_name[6] == L'D') {  // looking for drivers
+    if (wcsstr(reg_info->value_name, L"DriverName") != nullptr) {  // looking for drivers
         paths = &adapter.driver_paths;
-    } else if (reg_info->value_name[6] == L'I') {  // looking for implicit layers
+    } else if (wcsstr(reg_info->value_name, L"ImplicitLayers") != nullptr) {  // looking for implicit layers
         paths = &adapter.implicit_layer_paths;
-    } else if (reg_info->value_name[6] == L'E') {  // looking for explicit layers
+    } else if (wcsstr(reg_info->value_name, L"ExplicitLayers") != nullptr) {  // looking for explicit layers
         paths = &adapter.explicit_layer_paths;
     }
 
