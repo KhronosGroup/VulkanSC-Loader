@@ -29,6 +29,10 @@
 
 #include "test_environment.h"
 
+#define LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
+#include "loader/vk_loader_platform.h"
+#undef LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
+
 // Test case origin
 // LX = lunar exchange
 // LVLGH = loader and validation github
@@ -3898,7 +3902,7 @@ TEST(DuplicateRegistryEntries, Drivers) {
     inst.CheckCreate();
     ASSERT_TRUE(env.debug_log.find(
         std::string("Skipping adding of json file \"") + null_path.str() +
-        "\" from registry \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\Drivers\" to the list due to duplication"));
+        "\" from registry \"HKEY_LOCAL_MACHINE\\" VK_DRIVERS_INFO_REGISTRY_LOC "\" to the list due to duplication"));
 }
 #endif
 

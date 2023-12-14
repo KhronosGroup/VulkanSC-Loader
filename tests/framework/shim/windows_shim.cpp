@@ -35,6 +35,10 @@
 
 #include "detours.h"
 
+#define LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
+#include "loader/vk_loader_platform.h"
+#undef LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
+
 static PlatformShim platform_shim;
 
 extern "C" {
@@ -300,17 +304,17 @@ const std::string *get_path_of_created_key(HKEY hKey) {
     return nullptr;
 }
 std::vector<RegistryEntry> *get_registry_vector(std::string const &path) {
-    if (path == "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\Drivers") return &platform_shim.hkey_local_machine_drivers;
-    if (path == "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers")
+    if (path == "HKEY_LOCAL_MACHINE\\" VK_DRIVERS_INFO_REGISTRY_LOC) return &platform_shim.hkey_local_machine_drivers;
+    if (path == "HKEY_LOCAL_MACHINE\\" VK_ELAYERS_INFO_REGISTRY_LOC)
         return &platform_shim.hkey_local_machine_explicit_layers;
-    if (path == "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\ImplicitLayers")
+    if (path == "HKEY_LOCAL_MACHINE\\" VK_ILAYERS_INFO_REGISTRY_LOC)
         return &platform_shim.hkey_local_machine_implicit_layers;
-    if (path == "HKEY_CURRENT_USER\\SOFTWARE\\Khronos\\Vulkan\\ExplicitLayers")
+    if (path == "HKEY_CURRENT_USER\\" VK_ELAYERS_INFO_REGISTRY_LOC)
         return &platform_shim.hkey_current_user_explicit_layers;
-    if (path == "HKEY_CURRENT_USER\\SOFTWARE\\Khronos\\Vulkan\\ImplicitLayers")
+    if (path == "HKEY_CURRENT_USER\\" VK_ILAYERS_INFO_REGISTRY_LOC)
         return &platform_shim.hkey_current_user_implicit_layers;
-    if (path == "HKEY_LOCAL_MACHINE\\SOFTWARE\\Khronos\\Vulkan\\LoaderSettings") return &platform_shim.hkey_local_machine_settings;
-    if (path == "HKEY_CURRENT_USER\\SOFTWARE\\Khronos\\Vulkan\\LoaderSettings") return &platform_shim.hkey_current_user_settings;
+    if (path == "HKEY_LOCAL_MACHINE\\" VK_SETTINGS_INFO_REGISTRY_LOC) return &platform_shim.hkey_local_machine_settings;
+    if (path == "HKEY_CURRENT_USER\\" VK_SETTINGS_INFO_REGISTRY_LOC) return &platform_shim.hkey_current_user_settings;
     return nullptr;
 }
 LSTATUS __stdcall ShimRegQueryValueExA(HKEY, LPCSTR, LPDWORD, LPDWORD, LPBYTE, LPDWORD) {
