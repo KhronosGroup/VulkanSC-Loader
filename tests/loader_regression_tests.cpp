@@ -29,10 +29,6 @@
 
 #include "test_environment.h"
 
-#define LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
-#include "loader/vk_loader_platform.h"
-#undef LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
-
 // Test case origin
 // LX = lunar exchange
 // LVLGH = loader and validation github

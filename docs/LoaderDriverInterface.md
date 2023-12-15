@@ -304,10 +304,24 @@ HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\Vu
 HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{SoftwareComponent GUID}\000X\VulkanDriverName
 ```
 
+Or, for VulkanSC:
+
+```
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanSCDriverName
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{SoftwareComponent GUID}\000X\VulkanSCDriverName
+```
+
 In addition, on 64-bit systems there may be another set of registry values,
 listed below.
 These values record the locations of 32-bit layers on 64-bit operating systems,
 in the same way as the Windows-on-Windows functionality.
+
+```
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanDriverNameWow
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{SoftwareComponent GUID}\000X\VulkanDriverNameWow
+```
+
+And for VulkanSC:
 
 ```
 HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanDriverNameWow

@@ -50,14 +50,6 @@
 #define COMMON_UNIX_PLATFORMS 0
 #endif
 
-#ifdef VULKANSC
-#define API_VARIANT "SC"
-#define API_VARIANT_W L"SC"
-#else
-#define API_VARIANT ""
-#define API_VARIANT_W L""
-#endif
-
 #if COMMON_UNIX_PLATFORMS
 #include <unistd.h>
 // Note: The following file is for dynamic loading:
@@ -199,10 +191,18 @@ typedef pthread_cond_t loader_platform_thread_cond;
 #define VK_ELAYERS_INFO_RELATIVE_DIR ""
 #define VK_ILAYERS_INFO_RELATIVE_DIR ""
 
-#define VK_DRIVERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" API_VARIANT "\\Drivers"
-#define VK_ELAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" API_VARIANT "\\ExplicitLayers"
-#define VK_ILAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" API_VARIANT "\\ImplicitLayers"
-#define VK_SETTINGS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" API_VARIANT "\\LoaderSettings"
+#ifdef VULKANSC
+#define VK_VARIANT_REG_STR "SC"
+#define VK_VARIANT_REG_STR_W L"SC"
+#else
+#define VK_VARIANT_REG_STR ""
+#define VK_VARIANT_REG_STR_W L""
+#endif
+
+#define VK_DRIVERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" VK_VARIANT_REG_STR "\\Drivers"
+#define VK_ELAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" VK_VARIANT_REG_STR "\\ExplicitLayers"
+#define VK_ILAYERS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" VK_VARIANT_REG_STR "\\ImplicitLayers"
+#define VK_SETTINGS_INFO_REGISTRY_LOC "SOFTWARE\\Khronos\\Vulkan" VK_VARIANT_REG_STR "\\LoaderSettings"
 
 #define PRINTF_SIZE_T_SPECIFIER "%Iu"
 
@@ -256,8 +256,6 @@ static inline void loader_platform_thread_once_fn(pthread_once_t *ctl, void (*fu
 #define LOADER_PLATFORM_THREAD_ONCE(ctl, func)
 
 #endif
-
-#if !defined(LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS)
 
 #if COMMON_UNIX_PLATFORMS
 
@@ -443,12 +441,12 @@ static inline char *loader_strncpy(char *dest, size_t dest_sz, const char *src, 
 static inline const char *LoaderPnpDriverRegistry() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
-    return is_wow ? "Vulkan" API_VARIANT "DriverNameWow" : "Vulkan" API_VARIANT "DriverName";
+    return is_wow ? "Vulkan" VK_VARIANT_REG_STR "DriverNameWow" : "Vulkan" VK_VARIANT_REG_STR "DriverName";
 }
 static inline const wchar_t *LoaderPnpDriverRegistryWide() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
-    return is_wow ? L"Vulkan" API_VARIANT_W L"DriverNameWow" : L"Vulkan" API_VARIANT_W L"DriverName";
+    return is_wow ? L"Vulkan" VK_VARIANT_REG_STR_W L"DriverNameWow" : L"Vulkan" VK_VARIANT_REG_STR_W L"DriverName";
 }
 
 // Get the key for the plug 'n play explicit layer registry
@@ -456,12 +454,12 @@ static inline const wchar_t *LoaderPnpDriverRegistryWide() {
 static inline const char *LoaderPnpELayerRegistry() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
-    return is_wow ? "Vulkan" API_VARIANT "ExplicitLayersWow" : "Vulkan" API_VARIANT "ExplicitLayers";
+    return is_wow ? "Vulkan" VK_VARIANT_REG_STR "ExplicitLayersWow" : "Vulkan" VK_VARIANT_REG_STR "ExplicitLayers";
 }
 static inline const wchar_t *LoaderPnpELayerRegistryWide() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
-    return is_wow ? L"Vulkan" API_VARIANT_W L"ExplicitLayersWow" : L"Vulkan" API_VARIANT_W L"ExplicitLayers";
+    return is_wow ? L"Vulkan" VK_VARIANT_REG_STR_W L"ExplicitLayersWow" : L"Vulkan" VK_VARIANT_REG_STR_W L"ExplicitLayers";
 }
 
 // Get the key for the plug 'n play implicit layer registry
@@ -469,12 +467,12 @@ static inline const wchar_t *LoaderPnpELayerRegistryWide() {
 static inline const char *LoaderPnpILayerRegistry() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
-    return is_wow ? "Vulkan" API_VARIANT "ImplicitLayersWow" : "Vulkan" API_VARIANT "ImplicitLayers";
+    return is_wow ? "Vulkan" VK_VARIANT_REG_STR "ImplicitLayersWow" : "Vulkan" VK_VARIANT_REG_STR "ImplicitLayers";
 }
 static inline const wchar_t *LoaderPnpILayerRegistryWide() {
     BOOL is_wow;
     IsWow64Process(GetCurrentProcess(), &is_wow);
-    return is_wow ? L"Vulkan" API_VARIANT_W L"ImplicitLayersWow" : L"Vulkan" API_VARIANT_W L"ImplicitLayers";
+    return is_wow ? L"Vulkan" VK_VARIANT_REG_STR_W L"ImplicitLayersWow" : L"Vulkan" VK_VARIANT_REG_STR_W L"ImplicitLayers";
 }
 
 // File IO
@@ -625,5 +623,3 @@ static inline char *loader_strncpy(char *dest, size_t dest_sz, const char *src, 
 // files with "WIN32" in it, as a quick way to find files that must be changed.
 
 #endif  // defined(_WIN32)
-
-#endif // !defined(LOADER_PLATFORM_SKIP_FUNCTION_DEFS)

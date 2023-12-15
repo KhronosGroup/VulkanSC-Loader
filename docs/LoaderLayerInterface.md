@@ -171,6 +171,15 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\Vulkan\ImplicitLayers
 HKEY_CURRENT_USER\SOFTWARE\Khronos\Vulkan\ImplicitLayers
 ```
 
+Or, for VulkanSC:
+
+```
+HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\VulkanSC\ExplicitLayers
+HKEY_CURRENT_USER\SOFTWARE\Khronos\VulkanSC\ExplicitLayers
+HKEY_LOCAL_MACHINE\SOFTWARE\Khronos\VulkanSC\ImplicitLayers
+HKEY_CURRENT_USER\SOFTWARE\Khronos\VulkanSC\ImplicitLayers
+```
+
 Except when running a 32-bit application on 64-bit Windows, when the loader
 will instead scan the 32-bit registry location:
 
@@ -179,6 +188,15 @@ HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Khronos\Vulkan\ExplicitLayers
 HKEY_CURRENT_USER\SOFTWARE\WOW6432Node\Khronos\Vulkan\ExplicitLayers
 HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Khronos\Vulkan\ImplicitLayers
 HKEY_CURRENT_USER\SOFTWARE\WOW6432Node\Khronos\Vulkan\ImplicitLayers
+```
+
+For VulkanSC:
+
+```
+HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Khronos\VulkanSC\ExplicitLayers
+HKEY_CURRENT_USER\SOFTWARE\WOW6432Node\Khronos\VulkanSC\ExplicitLayers
+HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Khronos\VulkanSC\ImplicitLayers
+HKEY_CURRENT_USER\SOFTWARE\WOW6432Node\Khronos\VulkanSC\ImplicitLayers
 ```
 
 For each value in these keys which has DWORD data set to 0, the loader opens
@@ -208,6 +226,15 @@ HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GU
 HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GUID}\000X\VulkanImplicitLayers
 ```
 
+And, for VulkanSC:
+
+```
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanSCExplicitLayers
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanSCImplicitLayers
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GUID}\000X\VulkanSCExplicitLayers
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GUID}\000X\VulkanSCImplicitLayers
+```
+
 In addition, on 64-bit systems there may be another set of registry values,
 listed below.
 These values record the locations of 32-bit layers on 64-bit operating systems,
@@ -220,6 +247,15 @@ HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GU
 HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GUID}\000X\VulkanImplicitLayersWow
 ```
 
+For VulkanSC:
+
+```
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanSCExplicitLayersWow
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Adapter GUID}\000X\VulkanSCImplicitLayersWow
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GUID}\000X\VulkanSCExplicitLayersWow
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Class\{Software Component GUID}\000X\VulkanSCImplicitLayersWow
+```
+
 If any of the above values exist and is of type `REG_SZ`, the loader will open
 the JSON manifest file specified by the key value.
 Each value must be an absolute path to a JSON manifest file.
@@ -227,7 +263,7 @@ A key value may also be of type `REG_MULTI_SZ`, in which case the value will be
 interpreted as a list of paths to JSON manifest files.
 
 In general, applications should install layers into the
-`SOFTWARE\Khronos\Vulkan` paths.
+`SOFTWARE\Khronos\Vulkan` and `SOFTWARE\Khronos\VulkanSC` paths.
 The PnP registry locations are intended specifically for layers that are
 distributed as part of a driver installation.
 An application installer should not modify the device-specific registries,

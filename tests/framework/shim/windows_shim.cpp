@@ -35,10 +35,6 @@
 
 #include "detours.h"
 
-#define LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
-#include "loader/vk_loader_platform.h"
-#undef LOADER_PLATFORM_SKIP_FUNCTION_DEFINITIONS
-
 static PlatformShim platform_shim;
 
 extern "C" {
