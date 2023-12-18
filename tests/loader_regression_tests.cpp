@@ -227,7 +227,7 @@ TEST(EnumerateInstanceExtensionProperties, UsageChecks) {
         std::array<VkExtensionProperties, 6> extensions;
         ASSERT_EQ(VK_SUCCESS,
                   env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extensions.data()));
-#ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
+#ifdef VULKANSC                          // Only VK_EXT_debug_utils is added by the Vulkan SC loader
         ASSERT_EQ(extension_count, 3U);  // default extensions + our two extensions
         EXPECT_TRUE(string_eq(extensions.at(0).extensionName, first_ext.extensionName.c_str()));
         EXPECT_TRUE(string_eq(extensions.at(1).extensionName, second_ext.extensionName.c_str()));
@@ -243,7 +243,7 @@ TEST(EnumerateInstanceExtensionProperties, UsageChecks) {
         EXPECT_TRUE(string_eq(extensions.at(5).extensionName, VK_LUNARG_DIRECT_DRIVER_LOADING_EXTENSION_NAME));
 #endif  // VULKANSC
     }
-    {  // Two Pass
+    {            // Two Pass
 #ifdef VULKANSC  // Only VK_EXT_debug_utils is added by the Vulkan SC loader
         auto extensions = env.GetInstanceExtensions(3);
         // loader always adds the debug utils extension
@@ -729,8 +729,7 @@ TEST(EnumeratePhysicalDevices, OneCall) {
 
 TEST(EnumeratePhysicalDevices, TwoCall) {
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-                       .set_min_icd_interface_version(5);
+    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).set_min_icd_interface_version(5);
 
     const uint32_t real_device_count = 2;
     for (uint32_t i = 0; i < real_device_count; i++) {
@@ -754,8 +753,7 @@ TEST(EnumeratePhysicalDevices, TwoCall) {
 
 TEST(EnumeratePhysicalDevices, MatchOneAndTwoCallNumbers) {
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-                       .set_min_icd_interface_version(5);
+    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).set_min_icd_interface_version(5);
 
     const uint32_t real_device_count = 3;
     for (uint32_t i = 0; i < real_device_count; i++) {
@@ -789,8 +787,7 @@ TEST(EnumeratePhysicalDevices, MatchOneAndTwoCallNumbers) {
 
 TEST(EnumeratePhysicalDevices, TwoCallIncomplete) {
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-                       .set_min_icd_interface_version(5);
+    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).set_min_icd_interface_version(5);
 
     const uint32_t real_device_count = 2;
     for (uint32_t i = 0; i < real_device_count; i++) {
