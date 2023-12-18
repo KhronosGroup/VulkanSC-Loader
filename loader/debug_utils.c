@@ -590,7 +590,7 @@ void check_for_enabled_debug_extensions(struct loader_instance *ptr_instance, co
 #ifndef VULKANSC
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DEBUG_REPORT_EXTENSION_NAME) == 0) {
             ptr_instance->enabled_known_extensions.ext_debug_report = 1;
-        } else
+        }
 #endif  // VULKANSC
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0) {
             ptr_instance->enabled_known_extensions.ext_debug_utils = 1;
