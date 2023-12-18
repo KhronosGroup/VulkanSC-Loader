@@ -800,8 +800,8 @@ PFN_vkVoidFunction layer_intercept_instance_proc(wrapped_inst_obj *inst, const c
     if (inst->display_surf_counter_enabled && !strcmp(name, "GetPhysicalDeviceSurfaceCapabilities2EXT"))
         return (PFN_vkVoidFunction)wrap_vkGetPhysicalDeviceSurfaceCapabilities2EXT;
 
-    // instance_proc needs to be able to query device commands even if the extension isn't enabled (because it isn't known at this
-    // time)
+        // instance_proc needs to be able to query device commands even if the extension isn't enabled (because it isn't known at
+        // this time)
 #ifndef VULKANSC  // vkTrimCommandPool is not supported in Vulkan SC
     if (!strcmp(name, "TrimCommandPoolKHR")) return (PFN_vkVoidFunction)wrap_vkTrimCommandPoolKHR;
 #endif  // VULKANSC
