@@ -88,11 +88,7 @@
 
 #endif
 
-#ifdef VULKANSC
-#include <vulkan/vulkan_sc.h>
-#else
 #include <vulkan/vulkan.h>
-#endif  // VULKANSC
 #include <vulkan/vk_icd.h>
 #include <vulkan/vk_layer.h>
 

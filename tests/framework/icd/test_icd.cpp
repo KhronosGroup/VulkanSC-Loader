@@ -309,7 +309,7 @@ test_vkEnumeratePhysicalDeviceGroups([[maybe_unused]] VkInstance instance, uint3
         for (size_t device_group = 0; device_group < group_count; device_group++) {
             if (nullptr != pPhysicalDeviceGroupProperties[device_group].pNext) {
                 VkBaseInStructure* base = reinterpret_cast<VkBaseInStructure*>(pPhysicalDeviceGroupProperties[device_group].pNext);
-                if (base->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT) {
+                if (base->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT) {
                     FakePnextSharedWithICD* fake = reinterpret_cast<FakePnextSharedWithICD*>(base);
                     fake->value = 0xDECAFBAD;
                 }

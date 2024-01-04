@@ -379,7 +379,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateInstance(const VkInstanceCreateInfo*
 
 VKAPI_ATTR VkResult VKAPI_CALL test_override_vkCreateInstance(const VkInstanceCreateInfo*, const VkAllocationCallbacks*,
                                                               VkInstance*) {
-    return VK_ERROR_FRAGMENTED_POOL;
+    return VK_ERROR_INVALID_SHADER_NV;
 }
 
 VKAPI_ATTR void VKAPI_CALL test_vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks* pAllocator) {

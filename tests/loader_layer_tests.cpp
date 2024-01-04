@@ -254,7 +254,7 @@ TEST(ImplicitLayers, OverrideGetInstanceProcAddr) {
 
     {
         InstWrapper inst1{env.vulkan_functions};
-        inst1.CheckCreate(VK_ERROR_FRAGMENTED_POOL);
+        inst1.CheckCreate(VK_ERROR_INVALID_SHADER_NV);
     }
 
     {

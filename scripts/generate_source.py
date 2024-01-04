@@ -44,25 +44,14 @@ def main(argv):
     group.add_argument('-v', '--verify', action='store_true', help='verify repo files match generator output')
     args = parser.parse_args(argv)
 
-    vksc_filenames =['vk_layer_dispatch_table.h',
-                     'vk_loader_extensions.h',
-                     'vk_loader_extensions.c']
-
-    vk_filenames   =['vk_layer_dispatch_table.h',
-                     'vk_loader_extensions.h',
-                     'vk_loader_extensions.c',
-                     'vk_object_types.h']
-
-    gen_filenames = vk_filenames
-
-    if args.api == 'vulkansc' :
-        gen_filenames = vksc_filenames
-
     gen_cmds = [[common_codegen.repo_relative('scripts/loader_genvk.py'),
                  '-api', args.api,
                  '-registry', os.path.abspath(os.path.join(args.registry,  'vk.xml')),
                  '-quiet',
-                 filename] for filename in gen_filenames]
+                 filename] for filename in ['vk_layer_dispatch_table.h',
+                                            'vk_loader_extensions.h',
+                                            'vk_loader_extensions.c',
+                                            'vk_object_types.h']]
 
     repo_dir = common_codegen.repo_relative('loader/generated')
     if args.api == 'vulkansc':

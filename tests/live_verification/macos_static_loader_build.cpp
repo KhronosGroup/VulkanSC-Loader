@@ -30,11 +30,7 @@
 #include <vector>
 #include <atomic>
 
-#ifdef VULKANSC
-#include "vulkan/vulkan_sc.h"
-#else
 #include "vulkan/vulkan.h"
-#endif  // VULKANSC
 
 static std::atomic_bool is_running;
 

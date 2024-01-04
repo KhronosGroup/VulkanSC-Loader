@@ -31,11 +31,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef VULKANSC
-#include <vulkan/vulkan_sc.h>
-#else
 #include "vulkan/vulkan_core.h"
-#endif  // VULKANSC
 
 struct loader_instance;
 

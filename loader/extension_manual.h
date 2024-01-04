@@ -23,11 +23,7 @@
 
 #pragma once
 
-#ifdef VULKANSC
-#include <vulkan/vulkan_sc.h>
-#else
 #include <vulkan/vulkan.h>
-#endif  // VULKANSC
 
 // ---- Manually added trampoline/terminator functions
 

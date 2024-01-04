@@ -25,11 +25,7 @@
 #pragma once
 
 #include <stdbool.h>
-#ifdef VULKANSC
-#include <vulkan/vulkan_sc.h>
-#else
 #include <vulkan/vulkan.h>
-#endif
 
 // Linked list node for tree of debug callbacks
 #ifndef VULKANSC
