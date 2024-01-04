@@ -27,11 +27,7 @@
 
 #include <stdint.h>
 
-#ifdef VULKANSC
-#include <vulkan/vulkan_sc.h>
-#else
 #include <vulkan/vulkan_core.h>
-#endif  // VULKANSC
 
 /* cJSON Types: */
 #define cJSON_False 0

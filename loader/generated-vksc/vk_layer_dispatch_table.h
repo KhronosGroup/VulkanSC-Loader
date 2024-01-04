@@ -36,7 +36,7 @@ typedef struct VkLayerInstanceDispatchTable_ {
     // Manually add in GetPhysicalDeviceProcAddr entry
     PFN_GetPhysicalDeviceProcAddr GetPhysicalDeviceProcAddr;
 
-    // ---- Core SC 1_0 commands
+    // ---- Core Vulkan SC 1.0 commands
     PFN_vkCreateInstance CreateInstance;
     PFN_vkDestroyInstance DestroyInstance;
     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
@@ -142,7 +142,7 @@ typedef struct VkLayerInstanceDispatchTable_ {
 typedef struct VkLayerDispatchTable_ {
     uint64_t magic; // Should be DEVICE_DISP_TABLE_MAGIC_NUMBER
 
-    // ---- Core SC 1_0 commands
+    // ---- Core Vulkan SC 1.0 commands
     PFN_vkGetDeviceProcAddr GetDeviceProcAddr;
     PFN_vkDestroyDevice DestroyDevice;
     PFN_vkGetDeviceQueue GetDeviceQueue;

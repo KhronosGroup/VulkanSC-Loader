@@ -2675,7 +2675,7 @@ TEST(EnumeratePhysicalDeviceGroups, FakePNext) {
     std::array<VkPhysicalDeviceGroupProperties, max_phys_dev_groups> physical_device_groups{};
     for (uint32_t group = 0; group < max_phys_dev_groups; ++group) {
         physical_device_groups[group].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
-        fake_structs[group].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT;
+        fake_structs[group].sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT;
         physical_device_groups[group].pNext = &fake_structs[group];
     }
     ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDeviceGroups(inst, &group_count, physical_device_groups.data()));

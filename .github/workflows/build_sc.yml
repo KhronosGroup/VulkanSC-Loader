@@ -60,6 +60,8 @@ jobs:
             - run: sudo apt update
             - name: Install Dependencies
               run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
+            - name: Install Python dependencies
+              run: python3 -m pip install pyparsing
 
             - name: Generate build files
               run: cmake -S. -B build -D CMAKE_BUILD_TYPE=${{matrix.config}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D LOADER_ENABLE_ADDRESS_SANITIZER=ON -D ENABLE_WERROR=ON -D VULKANSC=ON
@@ -98,6 +100,8 @@ jobs:
             - run: sudo apt update
             - name: Install Dependencies
               run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
+            - name: Install Python dependencies
+              run: python3 -m pip install pyparsing
 
             - name: Generate build files
               run: cmake -S. -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D USE_GAS=OFF -D VULKANSC=ON
@@ -145,6 +149,8 @@ jobs:
             - name: Install Dependencies
               run: |-
                 sudo apt install --yes --no-install-recommends gcc-multilib g++-multilib libc6:i386 libc6-dev-i386 libgcc-s1:i386 libwayland-dev:i386 libxrandr-dev:i386
+            - name: Install Python dependencies
+              run: python3 -m pip install pyparsing
 
             - name: Generate build files
               run: cmake -S. -B build -D CMAKE_BUILD_TYPE=${{matrix.config}} -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D SYSCONFDIR=/etc/not_vulkan -D VULKANSC=ON
@@ -184,6 +190,8 @@ jobs:
             - name: Install Dependencies
               run: |-
                 sudo apt install --yes --no-install-recommends gcc-multilib g++-multilib libc6:i386 libc6-dev-i386 libgcc-s1:i386 libwayland-dev:i386 libxrandr-dev:i386
+            - name: Install Python dependencies
+              run: python3 -m pip install pyparsing
 
             - name: Generate build files
               run: cmake -S. -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D UPDATE_DEPS=ON -D ENABLE_WERROR=ON -D USE_GAS=OFF -D VULKANSC=ON
@@ -213,6 +221,9 @@ jobs:
               with:
                 python-version: '3.7'
 
+            - name: Install Python dependencies
+              run: python -m pip install pyparsing
+
             - name: Generate build files
               run: cmake -S. -B build -DBUILD_TESTS=ON -DUPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=${{matrix.config}} -A ${{ matrix.arch }} -D ENABLE_WERROR=ON -D VULKANSC=ON
 
@@ -237,6 +248,9 @@ jobs:
             - uses: actions/setup-python@v5
               with:
                 python-version: '3.7'
+
+            - name: Install Python dependencies
+              run: python -m pip install pyparsing
 
             - name: Generate build files
               run: cmake -S. -B build -DBUILD_TESTS=ON -DUPDATE_DEPS=ON -D USE_MASM=OFF -D CMAKE_BUILD_TYPE=Release -A ${{ matrix.arch }} -D ENABLE_WERROR=ON -D VULKANSC=ON
@@ -273,6 +287,9 @@ jobs:
             with:
               arch: ${{ matrix.arch }}
 
+          - name: Install Python dependencies
+            run: python -m pip install pyparsing
+
           - name: Configure
             run: cmake -S. -B build -DUPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=${{matrix.config}} -G "Ninja" -D ENABLE_WERROR=ON -D LOADER_USE_UNSAFE_FILE_SEARCH=ON -D VULKANSC=ON
 
@@ -298,6 +315,9 @@ jobs:
           - uses: ilammy/msvc-dev-cmd@v1
             with:
               arch: ${{ matrix.arch }}
+
+          - name: Install Python dependencies
+            run: python -m pip install pyparsing
 
           - name: Configure
             run: cmake -S. -B build -D UPDATE_DEPS=ON -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=${{matrix.config}} -T "ClangCL" -D ENABLE_WERROR=ON -D VULKANSC=ON
@@ -335,6 +355,8 @@ jobs:
             printf '%s\n' 'C:/msys64/mingw64/bin' >> $GITHUB_PATH
         - name: UASM Check
           run: uasm -?
+        - name: Install Python dependencies
+          run: python -m pip install pyparsing
         - name: Configure
           run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D VULKANSC=ON
           env:
@@ -366,6 +388,8 @@ jobs:
         - uses: lukka/get-cmake@latest
         - name: GCC Version
           run: gcc --version # If this fails MINGW is not setup correctly
+        - name: Install Python dependencies
+          run: python -m pip install pyparsing
         - name: Configure
           # Make sure this doesn't fail even without -D USE_MASM=OFF and without uasm
           run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D VULKANSC=ON
@@ -398,6 +422,8 @@ jobs:
         - uses: lukka/get-cmake@latest
         - name: GCC Version
           run: gcc --version # If this fails MINGW is not setup correctly
+        - name: Install Python dependencies
+          run: python -m pip install pyparsing
         - name: Configure
           run: cmake -S. -B build -D UPDATE_DEPS=ON -D CMAKE_BUILD_TYPE=Release -D ENABLE_WERROR=ON -D USE_MASM=OFF -D VULKANSC=ON
           env:

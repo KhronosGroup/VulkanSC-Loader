@@ -34,9 +34,7 @@
 #endif
 
 #include "vulkan/vk_layer.h"
-#ifndef VULKANSC
 #include "vk_object_types.h"
-#endif  // VULKANSC
 
 #include "allocation.h"
 #include "debug_utils.h"

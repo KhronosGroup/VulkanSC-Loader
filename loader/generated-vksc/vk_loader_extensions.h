@@ -192,7 +192,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalSemaphoreProperti
 // ICD function pointer dispatch table
 struct loader_icd_term_dispatch {
 
-    // ---- Core SC 1_0 commands
+    // ---- Core Vulkan SC 1.0 commands
     PFN_vkCreateInstance CreateInstance;
     PFN_vkDestroyInstance DestroyInstance;
     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
