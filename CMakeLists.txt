@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.17.2)
 set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
 
 if(VULKANSC)
-    project(VULKAN_LOADER VERSION 1.0.13)
+    project(VULKAN_LOADER VERSION 1.0.14)
 else()
     project(VULKAN_LOADER VERSION 1.3.272)
 endif()
