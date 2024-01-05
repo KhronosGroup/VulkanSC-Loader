@@ -20,7 +20,7 @@
                 "-DVULKANSC=ON",
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "e98757b36fc2afb8c7b56803e4a31029695af947"
+            "commit": "vksc1.0.14"
         },
         {
             "name": "googletest",
