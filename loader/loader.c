@@ -5366,7 +5366,11 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
         loader_destroy_generic_list(ptr_instance, (struct loader_generic_list *)&icd_exts);
 
         // Get the driver version from vkEnumerateInstanceVersion
+#ifdef VULKANSC
+        uint32_t icd_version = VKSC_API_VERSION_1_0;
+#else
         uint32_t icd_version = VK_API_VERSION_1_0;
+#endif  // VULKANSC
         VkResult icd_result = VK_SUCCESS;
         if (icd_term->scanned_icd->api_version >= VK_API_VERSION_1_1) {
             PFN_vkEnumerateInstanceVersion icd_enumerate_instance_version =
@@ -5374,7 +5378,11 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
             if (icd_enumerate_instance_version != NULL) {
                 icd_result = icd_enumerate_instance_version(&icd_version);
                 if (icd_result != VK_SUCCESS) {
+#ifdef VULKANSC
+                    icd_version = VKSC_API_VERSION_1_0;
+#else
                     icd_version = VK_API_VERSION_1_0;
+#endif  // VULKANSC
                     loader_log(ptr_instance, VULKAN_LOADER_DEBUG_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
                                "terminator_CreateInstance: ICD \"%s\" vkEnumerateInstanceVersion returned error. The ICD will be "
                                "treated as a 1.0 ICD",
