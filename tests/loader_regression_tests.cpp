@@ -1375,8 +1375,8 @@ TEST(TryLoadWrongBinaries, WrongICD) {
 #if _WIN32 || _WIN64
     ASSERT_TRUE(log.find("Failed to open dynamic library"));
 #endif
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__)
-#if defined(__x86_64__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__) || defined(__QNX__)
+#if defined(__x86_64__) || __ppc64__ || __aarch64__
     ASSERT_TRUE(log.find("wrong ELF class: ELFCLASS32"));
 #else
     ASSERT_TRUE(log.find("wrong ELF class: ELFCLASS64"));
@@ -2788,7 +2788,7 @@ TEST(CreateInstance, InstanceNullExtensionPtr) {
 }
 
 #ifndef VULKANSC  // Device sorting is not supported in Vulkan SC
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__) || defined(__QNX__)
 // NOTE: Sort order only affects Linux
 TEST(SortedPhysicalDevices, DevicesSortEnabled10NoAppExt) {
     FrameworkEnvironment env{};
