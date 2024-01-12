@@ -342,7 +342,11 @@ void free_string_list(const struct loader_instance *inst, struct loader_string_l
 // Given string of three part form "maj.min.pat" convert to a vulkan version number.
 // Also can understand four part form "variant.major.minor.patch" if provided.
 uint32_t loader_parse_version_string(char *vers_str) {
-    uint32_t variant = 0, major = 0, minor = 0, patch = 0;
+    // If variant is unspecified in the version string, assume the same variant
+    // as the loader.
+    uint32_t variant = EXPECTED_VARIANT;
+
+    uint32_t major = 0, minor = 0, patch = 0;
     char *vers_tok;
     char *context = NULL;
     if (!vers_str) {
