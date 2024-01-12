@@ -74,6 +74,12 @@
 // Generated file containing all the extension data
 #include "vk_loader_extensions.c"
 
+#ifdef VULKANSC
+#define EXPECTED_VARIANT VKSC_API_VARIANT
+#else
+#define EXPECTED_VARIANT 0
+#endif  // VULKANSC
+
 struct loader_struct loader = {0};
 
 struct activated_layer_info {
@@ -2321,10 +2327,10 @@ VkResult loader_read_layer_json(const struct loader_instance *inst, struct loade
 
     props.info.specVersion = loader_parse_version_string(api_version);
 
-    // Make sure the layer's manifest doesn't contain a non zero variant value
-    if (VK_API_VERSION_VARIANT(props.info.specVersion) != 0) {
+    // Make sure the layer's manifest doesn't contain an invalid variant value
+    if (VK_API_VERSION_VARIANT(props.info.specVersion) != EXPECTED_VARIANT) {
         loader_log(inst, VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_LAYER_BIT, 0,
-                   "Layer \"%s\" has an \'api_version\' field which contains a non-zero variant value of %d. "
+                   "Layer \"%s\" has an \'api_version\' field which contains an invalid variant value of %d. "
                    " Skipping Layer.",
                    props.info.layerName, VK_API_VERSION_VARIANT(props.info.specVersion));
         result = VK_ERROR_INITIALIZATION_FAILED;
@@ -3501,9 +3507,9 @@ VkResult loader_parse_icd_manifest(const struct loader_instance *inst, char *fil
     }
     icd->version = loader_parse_version_string(version_str);
 
-    if (VK_API_VERSION_VARIANT(icd->version) != 0) {
+    if (VK_API_VERSION_VARIANT(icd->version) != EXPECTED_VARIANT) {
         loader_log(inst, VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
-                   "loader_parse_icd_manifest: Driver's ICD JSON %s \'api_version\' field contains a non-zero variant value of %d. "
+                   "loader_parse_icd_manifest: Driver's ICD JSON %s \'api_version\' field contains an invalid variant value of %d. "
                    " Skipping ICD JSON.",
                    file_str, VK_API_VERSION_VARIANT(icd->version));
         res = VK_ERROR_INCOMPATIBLE_DRIVER;

@@ -804,7 +804,7 @@ TEST(DriverManifest, NonVulkanVariant) {
     inst.CheckCreate(VK_ERROR_INCOMPATIBLE_DRIVER);
     ASSERT_TRUE(log.find("loader_parse_icd_manifest: Driver's ICD JSON "));
     // log prints the path to the file, don't look for it since it is hard to determine inside the test what the path should be.
-    ASSERT_TRUE(log.find("\'api_version\' field contains a non-zero variant value of 1.  Skipping ICD JSON."));
+    ASSERT_TRUE(log.find("\'api_version\' field contains an invalid variant value of 1.  Skipping ICD JSON."));
 }
 
 TEST(LayerManifest, ImplicitNonVulkanVariant) {
@@ -825,7 +825,7 @@ TEST(LayerManifest, ImplicitNonVulkanVariant) {
     FillDebugUtilsCreateDetails(inst.create_info, log);
     inst.CheckCreate();
     ASSERT_TRUE(log.find(std::string("Layer \"") + implicit_layer_name +
-                         "\" has an \'api_version\' field which contains a non-zero variant value of 1.  Skipping Layer."));
+                         "\" has an \'api_version\' field which contains an invalid variant value of 1.  Skipping Layer."));
 }
 
 TEST(LayerManifest, ExplicitNonVulkanVariant) {
@@ -845,7 +845,7 @@ TEST(LayerManifest, ExplicitNonVulkanVariant) {
     FillDebugUtilsCreateDetails(inst.create_info, log);
     inst.CheckCreate(VK_ERROR_LAYER_NOT_PRESENT);
     ASSERT_TRUE(log.find(std::string("Layer \"") + explicit_layer_name +
-                         "\" has an \'api_version\' field which contains a non-zero variant value of 1.  Skipping Layer."));
+                         "\" has an \'api_version\' field which contains an invalid variant value of 1.  Skipping Layer."));
 }
 #endif  // VULKANSC
 
