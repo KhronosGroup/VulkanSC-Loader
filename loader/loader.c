@@ -1822,6 +1822,12 @@ VkResult loader_scanned_icd_add(const struct loader_instance *inst, struct loade
 #endif
     new_scanned_icd->interface_version = interface_vers;
 
+#ifdef VULKANSC
+    // Add Vulkan SC API variant to the ICD API version manually, as we don't expect the JSON manifest
+    // to contain the API variant (we do not use the <variant>.<major>.<minor>.<patch> format).
+    new_scanned_icd->api_version |= VK_MAKE_API_VERSION(VKSC_API_VARIANT, 0, 0, 0);
+#endif  // VULKANSC
+
     res = loader_copy_to_new_str(inst, filename, &new_scanned_icd->lib_name);
     if (VK_ERROR_OUT_OF_HOST_MEMORY == res) {
         loader_log(inst, VULKAN_LOADER_ERROR_BIT, 0, "loader_scanned_icd_add: Out of memory can't add ICD %s", filename);
