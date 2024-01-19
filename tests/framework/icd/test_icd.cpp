@@ -192,6 +192,13 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateInstance(const VkInstanceCreateInfo*
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
+#ifdef VULKANSC
+    if (pCreateInfo->pApplicationInfo->apiVersion != 0 &&
+        VK_API_VERSION_VARIANT(pCreateInfo->pApplicationInfo->apiVersion) != VKSC_API_VARIANT) {
+        return VK_ERROR_INCOMPATIBLE_DRIVER;
+    }
+#endif
+
     if (icd.icd_api_version < VK_API_VERSION_1_1) {
 #ifdef VULKANSC
         if (pCreateInfo->pApplicationInfo->apiVersion > VKSC_API_VERSION_1_0) {

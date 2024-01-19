@@ -706,7 +706,11 @@ struct InstanceCreateInfo {
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, app_version, 0)
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, engine_version, 0)
 #ifdef VULKANSC
-    BUILDER_VALUE(InstanceCreateInfo, uint32_t, api_version, VKSC_API_VERSION_1_0)
+    uint32_t api_version = VKSC_API_VERSION_1_0;
+    InstanceCreateInfo& set_api_version(uint32_t const& api_version) {
+        this->api_version = api_version | VK_MAKE_API_VERSION(VKSC_API_VARIANT, 0, 0, 0);
+        return *this;
+    }
 #else
     BUILDER_VALUE(InstanceCreateInfo, uint32_t, api_version, VK_API_VERSION_1_0)
 #endif  // VULKANSC
