@@ -16,6 +16,7 @@ Instructions for building this repository on Linux, Windows, and MacOS.
     - [Repository Dependencies](#repository-dependencies)
       - [Vulkan-Headers](#vulkan-headers)
       - [Test Dependencies](#test-dependencies)
+    - [Warnings as errors off by default!](#warnings-as-errors-off-by-default)
     - [Build and Install Directory Locations](#build-and-install-directory-locations)
     - [Building Dependent Repositories with Known-Good Revisions](#building-dependent-repositories-with-known-good-revisions)
       - [Automatically](#automatically)
@@ -131,6 +132,16 @@ To build the tests, pass both `-D UPDATE_DEPS=ON` and `-D BUILD_TESTS=ON` option
 cmake ... -D UPDATE_DEPS=ON -D BUILD_TESTS=ON ...
 ```
 This will ensure googletest and detours is downloaded and the appropriate version is used.
+
+### Warnings as errors off by default!
+
+By default `BUILD_WERROR` is `OFF`. The idiom for open source projects is to NOT enable warnings as errors.
+
+System/language package managers have to build on multiple different platforms and compilers.
+
+By defaulting to `ON` we cause issues for package managers since there is no standard way to disable warnings.
+
+Add `-D BUILD_WERROR=ON` to your workflow
 
 ### Build and Install Directory Locations
 

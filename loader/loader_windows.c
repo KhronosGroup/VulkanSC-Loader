@@ -46,7 +46,7 @@
 #include <winternl.h>
 #include <strsafe.h>
 #if defined(__MINGW32__)
-#undef strcpy  // fix error with redfined strcpy when building with MinGW-w64
+#undef strcpy  // fix error with redefined strcpy when building with MinGW-w64
 #endif
 #include <dxgi1_6.h>
 #include "adapters.h"
@@ -77,9 +77,11 @@ void windows_initialization(void) {
         loader_log(NULL, VULKAN_LOADER_INFO_BIT, 0, "Using Vulkan Loader %s", dll_location);
     }
 
+    SetDllDirectory("");  // Remove current directory from default DLL search order
     // This is needed to ensure that newer APIs are available right away
     // and not after the first call that has been statically linked
     LoadLibrary("gdi32.dll");
+    SetDllDirectory(NULL);  // Restores the default search order
 
     wchar_t systemPath[MAX_PATH] = L"";
     GetSystemDirectoryW(systemPath, MAX_PATH);
@@ -688,7 +690,7 @@ VkResult windows_read_manifest_from_d3d_adapters(const struct loader_instance *i
                 goto out;
             }
 
-            // If this is a string and not a multi-string, we don't want to go throught the loop more than once
+            // If this is a string and not a multi-string, we don't want to go through the loop more than once
             if (full_info->value_type == REG_SZ) {
                 break;
             }
@@ -861,12 +863,17 @@ VkResult enumerate_adapter_physical_devices(struct loader_instance *inst, struct
         next_icd_phys_devs->icd_term = icd_term;
         next_icd_phys_devs->windows_adapter_luid = luid;
         (*icd_phys_devs_array_count)++;
+    } else {
+        // Avoid memory leak in case of the already_enumerated hitting true
+        // at the last enumerate_adapter_physical_devices call in the outer loop
+        loader_instance_heap_free(inst, next_icd_phys_devs->physical_devices);
+        next_icd_phys_devs->physical_devices = NULL;
     }
 
     return VK_SUCCESS;
 }
 
-// Whenever there are multiple drivers for the same hardware and one of the drivers is an implementation layered ontop of another
+// Whenever there are multiple drivers for the same hardware and one of the drivers is an implementation layered on top of another
 // API (such as the Dozen driver which converts vulkan to Dx12), we want to make sure the layered driver appears after the 'native'
 // driver. This function iterates over all physical devices and make sure any with matching LUID's are sorted such that drivers with
 // a underlyingAPI of VK_LAYERED_DRIVER_UNDERLYING_API_D3D12_MSFT are ordered after drivers without it.
