@@ -1,5 +1,6 @@
 # Copyright (c) 2021-2023 Valve Corporation
 # Copyright (c) 2021-2023 LunarG, Inc.
+# Copyright (c) 2023-2024 RasterGrid Kft.
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +30,6 @@ on:
   push:
   pull_request:
     branches:
-    - main
     - sc_main
 
 permissions: read-all
@@ -232,12 +232,6 @@ jobs:
           - run: cmake --build build/
           - run: ctest --output-on-failure --test-dir build/
           - run: cmake --install build --prefix build/install
-
-    chromium:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - run: scripts/gn/gn.py
 
     mingw:
       runs-on: windows-2022
