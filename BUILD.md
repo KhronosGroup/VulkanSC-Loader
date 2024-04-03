@@ -52,7 +52,6 @@ Instructions for building this repository on Linux, Windows, and MacOS.
   - [Building on Fuchsia](#building-on-fuchsia)
     - [SDK Symbols](#sdk-symbols)
   - [Building on QNX](#building-on-qnx)
-  - [Building Vulkan SC Loader](#building-vulkan-sc-loader)
   - [Cross Compilation](#cross-compilation)
     - [Unknown function handling which requires explicit assembly implementations](#unknown-function-handling-which-requires-explicit-assembly-implementations)
       - [Platforms which fully support unknown function handling](#platforms-which-fully-support-unknown-function-handling)
@@ -231,9 +230,6 @@ cmake -S . -B build -D LOADER_CODEGEN=ON
 cmake --build . --target loader_codegen
 ```
 
-To generate source code for Vulkan SC the `--api vulkansc` option must be
-passed to the `generate_source.py` command.
-
 ### Build Options
 
 When generating build files through CMake, several options can be specified to
@@ -242,7 +238,7 @@ The following is a table of all on/off options currently supported by this repos
 
 | Option                          | Platform      | Default | Description                                                                                                                                                                       |
 | ------------------------------- | ------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VULKANSC                        | All           | `OFF`   | Controls whether the loader is built for Vulkan (`OFF`, the default), or for Vulkan SC (`ON`). |
+| VULKANSC                        | All           | `ON`    | Controls whether the loader is built for Vulkan (`OFF`), or for Vulkan SC (`ON`, the default). |
 | BUILD_TESTS                     | All           | `OFF`   | Controls whether or not the loader tests are built.                                                                                                                               |
 | BUILD_WSI_XCB_SUPPORT           | Linux         | `ON`    | Build the loader with the XCB entry points enabled. Without this, the XCB headers should not be needed, but the extension `VK_KHR_xcb_surface` won't be available.                |
 | BUILD_WSI_XLIB_SUPPORT          | Linux         | `ON`    | Build the loader with the Xlib entry points enabled. Without this, the X11 headers should not be needed, but the extension `VK_KHR_xlib_surface` won't be available.              |
@@ -625,13 +621,6 @@ the shell/batch script provided with QNX installation.
 
 Then change working directory to the "scripts/qnx" in this project and type "make".
 It will build the ICD loader for all CPU targets supported by QNX.
-
-## Building Vulkan SC Loader
-
-Commands for building the Vulkan SC version of the tools are similar to the instructions in the sections above with a few minor differences:
-
-1) When running `update_deps.py` and/or `generate_source.py`, the option `--api vulkansc` should be specified.
-2) When running `cmake` configuration, the option `-DVULKANSC=ON` should be passed in.
 
 ## Cross Compilation
 
