@@ -19,7 +19,7 @@
 cmake_minimum_required(VERSION 3.17.2)
 
 # Add support for VULKANSC mode from the command line
-set(VULKANSC OFF CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
+set(VULKANSC ON CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
 
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.14 LANGUAGES C)

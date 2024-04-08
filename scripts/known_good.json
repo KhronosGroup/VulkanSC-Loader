@@ -17,10 +17,9 @@
             "build_dir": "Vulkan-Headers/build",
             "install_dir": "Vulkan-Headers/build/install",
             "cmake_options": [
-                "-DVULKANSC=ON",
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "be40e89611cbbd4a48e4a566ddac468da5eb1cef"
+            "commit": "fb874b731b9097af396411c0d19362419f798200"
         },
         {
             "name": "googletest",
