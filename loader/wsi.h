@@ -160,6 +160,7 @@ terminator_CreateStreamDescriptorSurfaceGGP(VkInstance instance, const VkStreamD
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateMetalSurfaceEXT(VkInstance instance, const VkMetalSurfaceCreateInfoEXT *pCreateInfo,
                                                                 const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface);
 #endif
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateScreenSurfaceQNX(VkInstance instance,
                                                                  const VkScreenSurfaceCreateInfoQNX *pCreateInfo,
@@ -168,6 +169,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL terminator_GetPhysicalDeviceScreenPresentationSup
                                                                                         uint32_t queueFamilyIndex,
                                                                                         struct _screen_window *window);
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+#endif  // VULKANSC
 #if defined(VK_USE_PLATFORM_VI_NN)
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateViSurfaceNN(VkInstance instance, const VkViSurfaceCreateInfoNN *pCreateInfo,
                                                             const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface);

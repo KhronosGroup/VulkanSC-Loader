@@ -118,12 +118,14 @@ void wsi_create_instance(struct loader_instance *loader_inst, const VkInstanceCr
             continue;
         }
 #endif
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_QNX_SCREEN_SURFACE_EXTENSION_NAME) == 0) {
             loader_inst->wsi_screen_surface_enabled = true;
             continue;
         }
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+#endif  // VULKANSC
 #if defined(VK_USE_PLATFORM_VI_NN)
         if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_NN_VI_SURFACE_EXTENSION_NAME) == 0) {
             loader_inst->wsi_vi_surface_enabled = true;
@@ -1623,6 +1625,7 @@ out:
 
 #endif  // VK_USE_PLATFORM_METAL_EXT
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
 
 // This is the trampoline entrypoint for CreateScreenSurfaceQNX
@@ -1743,6 +1746,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL terminator_GetPhysicalDeviceScreenPresentationSup
     return icd_term->dispatch.GetPhysicalDeviceScreenPresentationSupportQNX(phys_dev_term->phys_dev, queueFamilyIndex, window);
 }
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_VI_NN)
 
@@ -2992,6 +2996,7 @@ bool wsi_swapchain_instance_gpa(struct loader_instance *loader_inst, const char 
     }
 #endif  // VK_USE_PLATFORM_METAL_EXT
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
 
     // Functions for the VK_QNX_screen_surface extension:
@@ -3004,6 +3009,7 @@ bool wsi_swapchain_instance_gpa(struct loader_instance *loader_inst, const char 
         return true;
     }
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_VI_NN)
 
