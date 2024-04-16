@@ -1378,6 +1378,7 @@ TEST(DirectDriverLoading, DriverDoesNotExportNegotiateFunction) {
 }
 #endif  // VULKANSC
 
+#ifndef VULKANSC  // Currently not applicable to Vulkan SC
 TEST(DriverManifest, VersionMismatchWithEnumerateInstanceVersion) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2, VK_API_VERSION_1_1))
@@ -1393,6 +1394,7 @@ TEST(DriverManifest, VersionMismatchWithEnumerateInstanceVersion) {
                                    "\" contained a 1.1 or greater API version, but "
                                    "vkEnumerateInstanceVersion returned 1.0, treating as a 1.0 ICD"));
 }
+#endif  // VULKANSC
 
 TEST(DriverManifest, EnumerateInstanceVersionNotSupported) {
     FrameworkEnvironment env{};
