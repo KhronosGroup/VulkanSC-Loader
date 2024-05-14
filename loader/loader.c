@@ -5420,15 +5420,17 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
         }
 #endif  // VULKANSC
 
+#ifndef VULKANSC
+        // NOTE: The code below only applies to Vulkan as it is intended to handle the case
+        // when a Vulkan 1.0 ICD is used with the loader which supports newer versions.
+        // Vulkan 1.0 implementations were required to return VK_ERROR_INCOMPATIBLE_DRIVER
+        // if apiVersion was larger than 1.0, which is handled here by always passing down
+        // API version 1.0 to a Vulkan 1.0 ICD. This does not apply to Vulkan SC as Vulkan
+        // SC 1.0 is based on Vulkan 1.2 and does not need this compatibility workaround.
         // Create an instance, substituting the version to 1.0 if necessary
         VkApplicationInfo icd_app_info;
-#ifdef VULKANSC
-        const uint32_t api_variant = VKSC_API_VARIANT;
-        const uint32_t api_version_1_0 = VKSC_API_VERSION_1_0;
-#else
         const uint32_t api_variant = 0;
         const uint32_t api_version_1_0 = VK_API_VERSION_1_0;
-#endif  // VULKANSC
         uint32_t icd_version_nopatch =
             VK_MAKE_API_VERSION(api_variant, VK_API_VERSION_MAJOR(icd_version), VK_API_VERSION_MINOR(icd_version), 0);
         uint32_t requested_version = (pCreateInfo == NULL || pCreateInfo->pApplicationInfo == NULL)
@@ -5443,6 +5445,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
             icd_app_info.apiVersion = icd_version;
             icd_create_info.pApplicationInfo = &icd_app_info;
         }
+#endif  // VULKANSC
         icd_result =
             ptr_instance->icd_tramp_list.scanned_list[i].CreateInstance(&icd_create_info, pAllocator, &(icd_term->instance));
         if (VK_ERROR_OUT_OF_HOST_MEMORY == icd_result) {
