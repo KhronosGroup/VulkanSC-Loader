@@ -134,12 +134,23 @@ TEST(CreateInstance, ApiVersionBelow1_0) {
     DebugUtilsLogger debug_log{VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT};
     InstWrapper inst{env.vulkan_functions};
     FillDebugUtilsCreateDetails(inst.create_info, debug_log);
+#ifdef VULKANSC
+    inst.create_info.api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 0, 0, 1);
+#else
     inst.create_info.api_version = 1;
+#endif
     inst.CheckCreate();
+#ifdef VULKANSC
+    ASSERT_TRUE(debug_log.find(
+        "VkInstanceCreateInfo::pApplicationInfo::apiVersion has value of 536870913 which is not permitted. If apiVersion is "
+        "not 0, then it must be "
+        "greater than or equal to the value of VKSC_API_VERSION_1_0 [VUID-VkApplicationInfo-apiVersion]"));
+#else
     ASSERT_TRUE(
         debug_log.find("VkInstanceCreateInfo::pApplicationInfo::apiVersion has value of 1 which is not permitted. If apiVersion is "
                        "not 0, then it must be "
                        "greater than or equal to the value of VK_API_VERSION_1_0 [VUID-VkApplicationInfo-apiVersion]"));
+#endif
 }
 
 TEST(CreateInstance, ConsecutiveCreate) {

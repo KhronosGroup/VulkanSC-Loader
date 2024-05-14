@@ -604,11 +604,21 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
     }
 
     // Providing an apiVersion less than VK_API_VERSION_1_0 but greater than zero prevents the validation layers from starting
-    if (pCreateInfo->pApplicationInfo && pCreateInfo->pApplicationInfo->apiVersion < VK_API_VERSION_1_0) {
+    if (pCreateInfo->pApplicationInfo && pCreateInfo->pApplicationInfo->apiVersion != 0u &&
+#ifdef VULKANSC
+        VK_API_VERSION_VARIANT(pCreateInfo->pApplicationInfo->apiVersion) == VKSC_API_VARIANT &&
+        pCreateInfo->pApplicationInfo->apiVersion < VKSC_API_VERSION_1_0) {
+#else
+        pCreateInfo->pApplicationInfo->apiVersion < VK_API_VERSION_1_0) {
+#endif
         loader_log(ptr_instance, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT, 0,
                    "VkInstanceCreateInfo::pApplicationInfo::apiVersion has value of %u which is not permitted. If apiVersion is "
                    "not 0, then it must be "
+#ifdef VULKANSC
+                   "greater than or equal to the value of VKSC_API_VERSION_1_0 [VUID-VkApplicationInfo-apiVersion]",
+#else
                    "greater than or equal to the value of VK_API_VERSION_1_0 [VUID-VkApplicationInfo-apiVersion]",
+#endif
                    pCreateInfo->pApplicationInfo->apiVersion);
     }
 
