@@ -5282,6 +5282,10 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
     }
 #endif  // VULKANSC
 
+#ifdef VULKANSC
+    VkResult forced_icd_result = VK_SUCCESS;
+#endif  // VULKANSC
+
     for (uint32_t i = 0; i < ptr_instance->icd_tramp_list.count; i++) {
         icd_term = loader_icd_add(ptr_instance, &ptr_instance->icd_tramp_list.scanned_list[i]);
         if (NULL == icd_term) {
@@ -5466,6 +5470,22 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
             ptr_instance->icd_terms = icd_term->next;
             icd_term->next = NULL;
             loader_icd_destroy(ptr_instance, icd_term, pAllocator);
+#ifdef VULKANSC
+            // VK_EXT_application_parameters requires us to retain the VK_ERROR_INITIALIZATION_FAILED
+            // error code in case the ICD did match the application parameters vendor ID but did not
+            // recognize the parameter key. We cannot know for sure whether this error code was indeed
+            // returned because of this particular case, but forcing the return of this error code
+            // here should at least make sure that the current language of the
+            // VK_EXT_application_parameters extension is respected.
+            // This will only work as expected in single ICD scenarios or when all other ICDs fail to
+            // load. When at least one ICD does create the instance successfully, the loader's result
+            // will remain VK_SUCCESS.
+            // A more robust solution would require clarifying the language of the
+            // VK_EXT_application_parameters for multi-ICD cases.
+            if (VK_ERROR_INITIALIZATION_FAILED == icd_result) {
+                forced_icd_result = icd_result;
+            }
+#endif  // VULKANSC
             continue;
         }
 
@@ -5533,6 +5553,11 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
         loader_log(ptr_instance, VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
                    "terminator_CreateInstance: Found no drivers!");
         res = VK_ERROR_INCOMPATIBLE_DRIVER;
+#ifdef VULKANSC
+        if (VK_SUCCESS != forced_icd_result) {
+            res = forced_icd_result;
+        }
+#endif  // VULKANSC
     }
 
 out:
