@@ -188,22 +188,29 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkEnumerateInstanceVersion(uint32_t* pApiVer
 VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateInstance(const VkInstanceCreateInfo* pCreateInfo,
                                                      [[maybe_unused]] const VkAllocationCallbacks* pAllocator,
                                                      VkInstance* pInstance) {
-    if (pCreateInfo == nullptr || pCreateInfo->pApplicationInfo == nullptr) {
+    if (pCreateInfo == nullptr) {
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
 #ifdef VULKANSC
-    if (pCreateInfo->pApplicationInfo->apiVersion != 0 &&
-        VK_API_VERSION_VARIANT(pCreateInfo->pApplicationInfo->apiVersion) != VKSC_API_VARIANT) {
+    uint32_t default_api_version = VKSC_API_VERSION_1_0;
+#else
+    uint32_t default_api_version = VK_API_VERSION_1_0;
+#endif
+    uint32_t api_version =
+        (pCreateInfo->pApplicationInfo == nullptr) ? default_api_version : pCreateInfo->pApplicationInfo->apiVersion;
+
+#ifdef VULKANSC
+    if (api_version != 0 && VK_API_VERSION_VARIANT(api_version) != VKSC_API_VARIANT) {
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 #endif
 
     if (icd.icd_api_version < VK_API_VERSION_1_1) {
 #ifdef VULKANSC
-        if (pCreateInfo->pApplicationInfo->apiVersion > VKSC_API_VERSION_1_0) {
+        if (api_version > VKSC_API_VERSION_1_0) {
 #else
-        if (pCreateInfo->pApplicationInfo->apiVersion > VK_API_VERSION_1_0) {
+        if (api_version > VK_API_VERSION_1_0) {
 #endif
             return VK_ERROR_INCOMPATIBLE_DRIVER;
         }

@@ -5276,6 +5276,10 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
     }
 #endif  // VULKANSC
 
+#ifdef VULKANSC
+    VkResult forced_icd_result = VK_SUCCESS;
+#endif  // VULKANSC
+
     for (uint32_t i = 0; i < ptr_instance->icd_tramp_list.count; i++) {
         icd_term = loader_icd_add(ptr_instance, &ptr_instance->icd_tramp_list.scanned_list[i]);
         if (NULL == icd_term) {
@@ -5420,15 +5424,17 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
         }
 #endif  // VULKANSC
 
+#ifndef VULKANSC
+        // NOTE: The code below only applies to Vulkan as it is intended to handle the case
+        // when a Vulkan 1.0 ICD is used with the loader which supports newer versions.
+        // Vulkan 1.0 implementations were required to return VK_ERROR_INCOMPATIBLE_DRIVER
+        // if apiVersion was larger than 1.0, which is handled here by always passing down
+        // API version 1.0 to a Vulkan 1.0 ICD. This does not apply to Vulkan SC as Vulkan
+        // SC 1.0 is based on Vulkan 1.2 and does not need this compatibility workaround.
         // Create an instance, substituting the version to 1.0 if necessary
         VkApplicationInfo icd_app_info;
-#ifdef VULKANSC
-        const uint32_t api_variant = VKSC_API_VARIANT;
-        const uint32_t api_version_1_0 = VKSC_API_VERSION_1_0;
-#else
         const uint32_t api_variant = 0;
         const uint32_t api_version_1_0 = VK_API_VERSION_1_0;
-#endif  // VULKANSC
         uint32_t icd_version_nopatch =
             VK_MAKE_API_VERSION(api_variant, VK_API_VERSION_MAJOR(icd_version), VK_API_VERSION_MINOR(icd_version), 0);
         uint32_t requested_version = (pCreateInfo == NULL || pCreateInfo->pApplicationInfo == NULL)
@@ -5443,6 +5449,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
             icd_app_info.apiVersion = icd_version;
             icd_create_info.pApplicationInfo = &icd_app_info;
         }
+#endif  // VULKANSC
         icd_result =
             ptr_instance->icd_tramp_list.scanned_list[i].CreateInstance(&icd_create_info, pAllocator, &(icd_term->instance));
         if (VK_ERROR_OUT_OF_HOST_MEMORY == icd_result) {
@@ -5457,6 +5464,22 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
             ptr_instance->icd_terms = icd_term->next;
             icd_term->next = NULL;
             loader_icd_destroy(ptr_instance, icd_term, pAllocator);
+#ifdef VULKANSC
+            // VK_EXT_application_parameters requires us to retain the VK_ERROR_INITIALIZATION_FAILED
+            // error code in case the ICD did match the application parameters vendor ID but did not
+            // recognize the parameter key. We cannot know for sure whether this error code was indeed
+            // returned because of this particular case, but forcing the return of this error code
+            // here should at least make sure that the current language of the
+            // VK_EXT_application_parameters extension is respected.
+            // This will only work as expected in single ICD scenarios or when all other ICDs fail to
+            // load. When at least one ICD does create the instance successfully, the loader's result
+            // will remain VK_SUCCESS.
+            // A more robust solution would require clarifying the language of the
+            // VK_EXT_application_parameters for multi-ICD cases.
+            if (VK_ERROR_INITIALIZATION_FAILED == icd_result) {
+                forced_icd_result = icd_result;
+            }
+#endif  // VULKANSC
             continue;
         }
 
@@ -5524,6 +5547,11 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
         loader_log(ptr_instance, VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
                    "terminator_CreateInstance: Found no drivers!");
         res = VK_ERROR_INCOMPATIBLE_DRIVER;
+#ifdef VULKANSC
+        if (VK_SUCCESS != forced_icd_result) {
+            res = forced_icd_result;
+        }
+#endif  // VULKANSC
     }
 
 out:
