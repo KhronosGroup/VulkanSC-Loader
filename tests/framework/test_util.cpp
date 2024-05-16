@@ -578,8 +578,11 @@ VkInstanceCreateInfo* InstanceCreateInfo::get() noexcept {
 }
 InstanceCreateInfo& InstanceCreateInfo::set_api_version(uint32_t major, uint32_t minor, uint32_t patch) {
 #ifdef VULKANSC
-    // Make sure to include Vulkan SC API variant in the requested API version
-    this->api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, major, minor, patch);
+    if (major == 1 && minor <= 2) {
+        this->api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, patch);
+    } else {
+        this->api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, major, minor, patch);
+    }
 #else
     this->api_version = VK_MAKE_API_VERSION(0, major, minor, patch);
 #endif  // VULKANSC

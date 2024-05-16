@@ -708,7 +708,11 @@ struct InstanceCreateInfo {
 #ifdef VULKANSC
     uint32_t api_version = VKSC_API_VERSION_1_0;
     InstanceCreateInfo& set_api_version(uint32_t const& api_version) {
-        this->api_version = api_version | VK_MAKE_API_VERSION(VKSC_API_VARIANT, 0, 0, 0);
+        if (VK_API_VERSION_MAJOR(api_version) == 1 && VK_API_VERSION_MINOR(api_version) <= 2) {
+            this->api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, VK_API_VERSION_PATCH(api_version));
+        } else {
+            this->api_version = api_version | VK_MAKE_API_VERSION(VKSC_API_VARIANT, 0, 0, 0);
+        }
         return *this;
     }
 #else
