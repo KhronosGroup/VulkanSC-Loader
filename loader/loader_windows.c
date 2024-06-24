@@ -796,21 +796,19 @@ out:
 }
 
 #ifndef VULKANSC
-VkResult enumerate_adapter_physical_devices(struct loader_instance *inst, struct loader_icd_term *icd_term, uint32_t icd_idx,
-                                            LUID luid, uint32_t *icd_phys_devs_array_count,
+VkResult enumerate_adapter_physical_devices(struct loader_instance *inst, struct loader_icd_term *icd_term, LUID luid,
+                                            uint32_t *icd_phys_devs_array_count,
                                             struct loader_icd_physical_devices *icd_phys_devs_array) {
     uint32_t count = 0;
     VkResult res = icd_term->scanned_icd->EnumerateAdapterPhysicalDevices(icd_term->instance, luid, &count, NULL);
     if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
         return res;
-    } else if (res == VK_ERROR_INCOMPATIBLE_DRIVER) {
+    } else if (res == VK_ERROR_INCOMPATIBLE_DRIVER || res == VK_ERROR_INITIALIZATION_FAILED || 0 == count) {
         return VK_SUCCESS;  // This driver doesn't support the adapter
     } else if (res != VK_SUCCESS) {
         loader_log(inst, VULKAN_LOADER_WARN_BIT, 0,
-                   "Failed to convert DXGI adapter into Vulkan physical device with unexpected error code");
-        return res;
-    } else if (0 == count) {
-        return VK_SUCCESS;  // This driver doesn't support the adapter
+                   "Failed to convert DXGI adapter into Vulkan physical device with unexpected error code: %d", res);
+        return VK_SUCCESS;
     }
 
     // Take a pointer to the last element of icd_phys_devs_array to simplify usage
@@ -859,7 +857,6 @@ VkResult enumerate_adapter_physical_devices(struct loader_instance *inst, struct
     }
     if (!already_enumerated) {
         next_icd_phys_devs->device_count = count;
-        next_icd_phys_devs->icd_index = icd_idx;
         next_icd_phys_devs->icd_term = icd_term;
         next_icd_phys_devs->windows_adapter_luid = luid;
         (*icd_phys_devs_array_count)++;
@@ -988,18 +985,20 @@ VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint
 
         icd_term = inst->icd_terms;
 #ifndef VULKANSC
-        for (uint32_t icd_idx = 0; NULL != icd_term; icd_term = icd_term->next, icd_idx++) {
+        while (NULL != icd_term) {
             // This is the new behavior, which cannot be run unless the ICD provides EnumerateAdapterPhysicalDevices
             if (icd_term->scanned_icd->EnumerateAdapterPhysicalDevices == NULL) {
+                icd_term = icd_term->next;
                 continue;
             }
 
-            res = enumerate_adapter_physical_devices(inst, icd_term, icd_idx, description.AdapterLuid, icd_phys_devs_array_count,
+            res = enumerate_adapter_physical_devices(inst, icd_term, description.AdapterLuid, icd_phys_devs_array_count,
                                                      *icd_phys_devs_array);
             if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
                 adapter->lpVtbl->Release(adapter);
                 goto out;
             }
+            icd_term = icd_term->next;
         }
 #endif  // VULKANSC
 
@@ -1120,10 +1119,8 @@ char *windows_get_app_package_manifest_path(const struct loader_instance *inst) 
     }
 
     UINT32 numPackages = 0, bufferLength = 0;
-    /* This literal string identifies the Microsoft-published OpenCL and OpenGL Compatibility Pack
-     * (so named at the time this is being added), which contains OpenGLOn12 and OpenCLOn12 mapping
-     * layers, and will contain VulkanOn12 (aka Dozen) going forward.
-     */
+    // This literal string identifies the Microsoft-published OpenCL, OpenGL, and Vulkan Compatibility Pack, which contains
+    // OpenGLOn12, OpenCLOn12, and VulkanOn12 (aka Dozen) mappinglayers
     PCWSTR familyName = L"Microsoft.D3DMappingLayers_8wekyb3d8bbwe";
     if (ERROR_INSUFFICIENT_BUFFER != fpGetPackagesByPackageFamily(familyName, &numPackages, NULL, &bufferLength, NULL) ||
         numPackages == 0 || bufferLength == 0) {

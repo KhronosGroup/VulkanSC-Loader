@@ -131,6 +131,10 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(
     const VkAllocationCallbacks*                pAllocator,
     VkDevice*                                   pDevice);
 VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateInstanceExtensionProperties(
+    const char*                                 pLayerName,
+    uint32_t*                                   pPropertyCount,
+    VkExtensionProperties*                      pProperties);
+VKAPI_ATTR VkResult VKAPI_CALL terminator_pre_instance_EnumerateInstanceExtensionProperties(
     const VkEnumerateInstanceExtensionPropertiesChain* chain,
     const char*                                 pLayerName,
     uint32_t*                                   pPropertyCount,
@@ -141,6 +145,9 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateDeviceExtensionProperties(
     uint32_t*                                   pPropertyCount,
     VkExtensionProperties*                      pProperties);
 VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateInstanceLayerProperties(
+    uint32_t*                                   pPropertyCount,
+    VkLayerProperties*                          pProperties);
+VKAPI_ATTR VkResult VKAPI_CALL terminator_pre_instance_EnumerateInstanceLayerProperties(
     const VkEnumerateInstanceLayerPropertiesChain* chain,
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties);
@@ -149,6 +156,8 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateDeviceLayerProperties(
     uint32_t*                                   pPropertyCount,
     VkLayerProperties*                          pProperties);
 VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateInstanceVersion(
+    uint32_t*                                   pApiVersion);
+VKAPI_ATTR VkResult VKAPI_CALL terminator_pre_instance_EnumerateInstanceVersion(
     const VkEnumerateInstanceVersionChain* chain,
     uint32_t*                                   pApiVersion);
 VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumeratePhysicalDeviceGroups(
@@ -258,6 +267,9 @@ struct loader_icd_term_dispatch {
     // ---- VK_KHR_object_refresh extension commands
     PFN_vkGetPhysicalDeviceRefreshableObjectTypesKHR GetPhysicalDeviceRefreshableObjectTypesKHR;
 
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+
     // ---- VK_EXT_direct_mode_display extension commands
     PFN_vkReleaseDisplayEXT ReleaseDisplayEXT;
 
@@ -272,11 +284,16 @@ struct loader_icd_term_dispatch {
     // ---- VK_EXT_sample_locations extension commands
     PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT GetPhysicalDeviceMultisamplePropertiesEXT;
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT GetPhysicalDeviceCalibrateableTimeDomainsEXT;
-
     // ---- VK_EXT_headless_surface extension commands
     PFN_vkCreateHeadlessSurfaceEXT CreateHeadlessSurfaceEXT;
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    PFN_vkAcquireWinrtDisplayNV AcquireWinrtDisplayNV;
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    PFN_vkGetWinrtDisplayNV GetWinrtDisplayNV;
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)

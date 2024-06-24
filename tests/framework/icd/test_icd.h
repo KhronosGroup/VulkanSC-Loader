@@ -77,7 +77,7 @@ inline std::ostream& operator<<(std::ostream& os, const InterfaceVersionCheck& r
 // clang-format on
 
 struct TestICD {
-    fs::path manifest_file_path;
+    std::filesystem::path manifest_file_path;
 
     BUILDER_VALUE(TestICD, bool, exposes_vk_icdNegotiateLoaderICDInterfaceVersion, true)
     BUILDER_VALUE(TestICD, bool, exposes_vkEnumerateInstanceExtensionProperties, true)
@@ -110,7 +110,7 @@ struct TestICD {
     BUILDER_VALUE(TestICD, uint32_t, icd_api_version, VK_API_VERSION_1_0)
     BUILDER_VECTOR(TestICD, LayerDefinition, instance_layers, instance_layer)
     BUILDER_VECTOR(TestICD, Extension, instance_extensions, instance_extension)
-    BUILDER_VECTOR(TestICD, Extension, enabled_instance_extensions, enabled_instance_extension)
+    std::vector<Extension> enabled_instance_extensions;
 
     BUILDER_VECTOR_MOVE_ONLY(TestICD, PhysicalDevice, physical_devices, physical_device);
 
@@ -120,6 +120,7 @@ struct TestICD {
     std::vector<DispatchableHandle<VkDevice>> device_handles;
     std::vector<uint64_t> surface_handles;
     std::vector<uint64_t> messenger_handles;
+    std::vector<uint64_t> callback_handles;
     std::vector<uint64_t> swapchain_handles;
 
     BUILDER_VALUE(TestICD, bool, can_query_vkEnumerateInstanceVersion, true);
@@ -142,6 +143,9 @@ struct TestICD {
     std::vector<DispatchableHandle<VkCommandBuffer>> allocated_command_buffers;
 
     VkInstanceCreateFlags passed_in_instance_create_flags{};
+
+    BUILDER_VALUE(TestICD, VkResult, enum_physical_devices_return_code, VK_SUCCESS);
+    BUILDER_VALUE(TestICD, VkResult, enum_adapter_physical_devices_return_code, VK_SUCCESS);
 
     PhysicalDevice& GetPhysDevice(VkPhysicalDevice physicalDevice) {
         for (auto& phys_dev : physical_devices) {

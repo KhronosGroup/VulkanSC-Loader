@@ -309,7 +309,7 @@ TEST(ICDInterfaceVersion2PlusEnumerateAdapterPhysicalDevices, VerifyGroupResults
 
 TEST(ICDInterfaceVersion7, SingleDriver) {
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_7_WITH_ADDITIONAL_EXPORTS)).add_physical_device({});
+    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_7)).add_physical_device({});
     InstWrapper inst{env.vulkan_functions};
     inst.CheckCreate();
     DeviceWrapper dev{inst};
@@ -319,7 +319,7 @@ TEST(ICDInterfaceVersion7, SingleDriver) {
 
 TEST(ICDInterfaceVersion7, SingleDriverWithoutExportedFunctions) {
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_7)).add_physical_device({});
+    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_7_WIHTOUT_EXPORTS)).add_physical_device({});
     InstWrapper inst{env.vulkan_functions};
     inst.CheckCreate();
     DeviceWrapper dev{inst};
@@ -1390,7 +1390,8 @@ TEST(DriverManifest, VersionMismatchWithEnumerateInstanceVersion) {
     FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
     inst.CheckCreate();
 
-    ASSERT_TRUE(env.debug_log.find(std::string("terminator_CreateInstance: Manifest ICD for \"") + env.get_test_icd_path().str() +
+    ASSERT_TRUE(env.debug_log.find(std::string("terminator_CreateInstance: Manifest ICD for \"") +
+                                   env.get_test_icd_path().string() +
                                    "\" contained a 1.1 or greater API version, but "
                                    "vkEnumerateInstanceVersion returned 1.0, treating as a 1.0 ICD"));
 }
@@ -1408,7 +1409,8 @@ TEST(DriverManifest, EnumerateInstanceVersionNotSupported) {
     FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
     inst.CheckCreate();
 
-    ASSERT_TRUE(env.debug_log.find(std::string("terminator_CreateInstance: Manifest ICD for \"") + env.get_test_icd_path().str() +
+    ASSERT_TRUE(env.debug_log.find(std::string("terminator_CreateInstance: Manifest ICD for \"") +
+                                   env.get_test_icd_path().string() +
                                    "\" contained a 1.1 or greater API version, but does "
                                    "not support vkEnumerateInstanceVersion, treating as a 1.0 ICD"));
 }

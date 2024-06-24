@@ -7,7 +7,7 @@
             "sub_dir": "Vulkan-Headers",
             "build_dir": "Vulkan-Headers/build",
             "install_dir": "Vulkan-Headers/build/install",
-            "commit": "v1.3.278"
+            "commit": "v1.3.286"
         },
         {
             "name": "Vulkan-Headers",
@@ -19,7 +19,7 @@
             "cmake_options": [
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "fb874b731b9097af396411c0d19362419f798200"
+            "commit": "vksc1.0.15"
         },
         {
             "name": "googletest",
@@ -40,7 +40,7 @@
             "build_dir": "detours",
             "install_dir": "detours",
             "build_step": "skip",
-            "commit": "v4.0.1",
+            "commit": "4b8c659f549b0ab21cf649377c7a84eb708f5e68",
             "optional": [
                 "tests"
             ],

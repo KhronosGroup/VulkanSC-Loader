@@ -40,7 +40,7 @@
 VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
     struct loader_device *found_dev;
     // The device going in is a trampoline device
-    struct loader_icd_term *icd_term = loader_get_icd_and_device(dev, &found_dev, NULL);
+    struct loader_icd_term *icd_term = loader_get_icd_and_device(dev, &found_dev);
 
     if (icd_term)
         loader_log(icd_term->this_instance, VULKAN_LOADER_ERROR_BIT, 0,
@@ -127,6 +127,9 @@ VKAPI_ATTR bool VKAPI_CALL loader_icd_init_entries(struct loader_instance* inst,
     // ---- VK_KHR_object_refresh extension commands
     LOOKUP_GIPA(GetPhysicalDeviceRefreshableObjectTypesKHR);
 
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    LOOKUP_GIPA(GetPhysicalDeviceCalibrateableTimeDomainsKHR);
+
     // ---- VK_EXT_direct_mode_display extension commands
     LOOKUP_GIPA(ReleaseDisplayEXT);
 
@@ -141,11 +144,16 @@ VKAPI_ATTR bool VKAPI_CALL loader_icd_init_entries(struct loader_instance* inst,
     // ---- VK_EXT_sample_locations extension commands
     LOOKUP_GIPA(GetPhysicalDeviceMultisamplePropertiesEXT);
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    LOOKUP_GIPA(GetPhysicalDeviceCalibrateableTimeDomainsEXT);
-
     // ---- VK_EXT_headless_surface extension commands
     LOOKUP_GIPA(CreateHeadlessSurfaceEXT);
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    LOOKUP_GIPA(AcquireWinrtDisplayNV);
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    LOOKUP_GIPA(GetWinrtDisplayNV);
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
@@ -377,6 +385,12 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
     table->CmdBlitImage2KHR = (PFN_vkCmdBlitImage2KHR)gdpa(dev, "vkCmdBlitImage2KHR");
     table->CmdResolveImage2KHR = (PFN_vkCmdResolveImage2KHR)gdpa(dev, "vkCmdResolveImage2KHR");
 
+    // ---- VK_KHR_line_rasterization extension commands
+    table->CmdSetLineStippleKHR = (PFN_vkCmdSetLineStippleKHR)gdpa(dev, "vkCmdSetLineStippleKHR");
+
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    table->GetCalibratedTimestampsKHR = (PFN_vkGetCalibratedTimestampsKHR)gdpa(dev, "vkGetCalibratedTimestampsKHR");
+
     // ---- VK_EXT_display_control extension commands
     table->DisplayPowerControlEXT = (PFN_vkDisplayPowerControlEXT)gdpa(dev, "vkDisplayPowerControlEXT");
     table->RegisterDeviceEventEXT = (PFN_vkRegisterDeviceEventEXT)gdpa(dev, "vkRegisterDeviceEventEXT");
@@ -409,9 +423,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
 
     // ---- VK_EXT_external_memory_host extension commands
     table->GetMemoryHostPointerPropertiesEXT = (PFN_vkGetMemoryHostPointerPropertiesEXT)gdpa(dev, "vkGetMemoryHostPointerPropertiesEXT");
-
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    table->GetCalibratedTimestampsEXT = (PFN_vkGetCalibratedTimestampsEXT)gdpa(dev, "vkGetCalibratedTimestampsEXT");
 
     // ---- VK_EXT_line_rasterization extension commands
     table->CmdSetLineStippleEXT = (PFN_vkCmdSetLineStippleEXT)gdpa(dev, "vkCmdSetLineStippleEXT");
@@ -550,6 +561,9 @@ VKAPI_ATTR void VKAPI_CALL loader_init_instance_extension_dispatch_table(VkLayer
     // ---- VK_KHR_object_refresh extension commands
     table->GetPhysicalDeviceRefreshableObjectTypesKHR = (PFN_vkGetPhysicalDeviceRefreshableObjectTypesKHR)gpa(inst, "vkGetPhysicalDeviceRefreshableObjectTypesKHR");
 
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    table->GetPhysicalDeviceCalibrateableTimeDomainsKHR = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)gpa(inst, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR");
+
     // ---- VK_EXT_direct_mode_display extension commands
     table->ReleaseDisplayEXT = (PFN_vkReleaseDisplayEXT)gpa(inst, "vkReleaseDisplayEXT");
 
@@ -564,11 +578,16 @@ VKAPI_ATTR void VKAPI_CALL loader_init_instance_extension_dispatch_table(VkLayer
     // ---- VK_EXT_sample_locations extension commands
     table->GetPhysicalDeviceMultisamplePropertiesEXT = (PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT)gpa(inst, "vkGetPhysicalDeviceMultisamplePropertiesEXT");
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    table->GetPhysicalDeviceCalibrateableTimeDomainsEXT = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)gpa(inst, "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT");
-
     // ---- VK_EXT_headless_surface extension commands
     table->CreateHeadlessSurfaceEXT = (PFN_vkCreateHeadlessSurfaceEXT)gpa(inst, "vkCreateHeadlessSurfaceEXT");
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    table->AcquireWinrtDisplayNV = (PFN_vkAcquireWinrtDisplayNV)gpa(inst, "vkAcquireWinrtDisplayNV");
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    table->GetWinrtDisplayNV = (PFN_vkGetWinrtDisplayNV)gpa(inst, "vkGetWinrtDisplayNV");
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
@@ -1245,6 +1264,12 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "CmdBlitImage2KHR")) return (void *)table->CmdBlitImage2KHR;
     if (!strcmp(name, "CmdResolveImage2KHR")) return (void *)table->CmdResolveImage2KHR;
 
+    // ---- VK_KHR_line_rasterization extension commands
+    if (!strcmp(name, "CmdSetLineStippleKHR")) return (void *)table->CmdSetLineStippleKHR;
+
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    if (!strcmp(name, "GetCalibratedTimestampsKHR")) return (void *)table->GetCalibratedTimestampsKHR;
+
     // ---- VK_EXT_display_control extension commands
     if (!strcmp(name, "DisplayPowerControlEXT")) return (void *)table->DisplayPowerControlEXT;
     if (!strcmp(name, "RegisterDeviceEventEXT")) return (void *)table->RegisterDeviceEventEXT;
@@ -1277,9 +1302,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
 
     // ---- VK_EXT_external_memory_host extension commands
     if (!strcmp(name, "GetMemoryHostPointerPropertiesEXT")) return (void *)table->GetMemoryHostPointerPropertiesEXT;
-
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    if (!strcmp(name, "GetCalibratedTimestampsEXT")) return (void *)table->GetCalibratedTimestampsEXT;
 
     // ---- VK_EXT_line_rasterization extension commands
     if (!strcmp(name, "CmdSetLineStippleEXT")) return (void *)table->CmdSetLineStippleEXT;
@@ -1423,6 +1445,9 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_instance_dispatch_table(const VkLayerI
     // ---- VK_KHR_object_refresh extension commands
     if (!strcmp(name, "GetPhysicalDeviceRefreshableObjectTypesKHR")) return (void *)table->GetPhysicalDeviceRefreshableObjectTypesKHR;
 
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    if (!strcmp(name, "GetPhysicalDeviceCalibrateableTimeDomainsKHR")) return (void *)table->GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+
     // ---- VK_EXT_direct_mode_display extension commands
     if (!strcmp(name, "ReleaseDisplayEXT")) return (void *)table->ReleaseDisplayEXT;
 
@@ -1437,11 +1462,16 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_instance_dispatch_table(const VkLayerI
     // ---- VK_EXT_sample_locations extension commands
     if (!strcmp(name, "GetPhysicalDeviceMultisamplePropertiesEXT")) return (void *)table->GetPhysicalDeviceMultisamplePropertiesEXT;
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    if (!strcmp(name, "GetPhysicalDeviceCalibrateableTimeDomainsEXT")) return (void *)table->GetPhysicalDeviceCalibrateableTimeDomainsEXT;
-
     // ---- VK_EXT_headless_surface extension commands
     if (!strcmp(name, "CreateHeadlessSurfaceEXT")) return (void *)table->CreateHeadlessSurfaceEXT;
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    if (!strcmp(name, "AcquireWinrtDisplayNV")) return (void *)table->AcquireWinrtDisplayNV;
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    if (!strcmp(name, "GetWinrtDisplayNV")) return (void *)table->GetWinrtDisplayNV;
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
@@ -1954,6 +1984,72 @@ VKAPI_ATTR void VKAPI_CALL CmdResolveImage2KHR(
 }
 
 
+// ---- VK_KHR_line_rasterization extension trampoline/terminators
+
+VKAPI_ATTR void VKAPI_CALL CmdSetLineStippleKHR(
+    VkCommandBuffer                             commandBuffer,
+    uint32_t                                    lineStippleFactor,
+    uint16_t                                    lineStipplePattern) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
+    if (NULL == disp) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkCmdSetLineStippleKHR: Invalid commandBuffer "
+                   "[VUID-vkCmdSetLineStippleKHR-commandBuffer-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    disp->CmdSetLineStippleKHR(commandBuffer, lineStippleFactor, lineStipplePattern);
+}
+
+
+// ---- VK_KHR_calibrated_timestamps extension trampoline/terminators
+
+VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceCalibrateableTimeDomainsKHR(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t*                                   pTimeDomainCount,
+    VkTimeDomainKHR*                            pTimeDomains) {
+    const VkLayerInstanceDispatchTable *disp;
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
+    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR: Invalid physicalDevice "
+                   "[VUID-vkGetPhysicalDeviceCalibrateableTimeDomainsKHR-physicalDevice-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    disp = loader_get_instance_layer_dispatch(physicalDevice);
+    return disp->GetPhysicalDeviceCalibrateableTimeDomainsKHR(unwrapped_phys_dev, pTimeDomainCount, pTimeDomains);
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceCalibrateableTimeDomainsKHR(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t*                                   pTimeDomainCount,
+    VkTimeDomainKHR*                            pTimeDomains) {
+    struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
+    struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+    if (NULL == icd_term->dispatch.GetPhysicalDeviceCalibrateableTimeDomainsKHR) {
+        loader_log(icd_term->this_instance, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT, 0,
+                   "ICD associated with VkPhysicalDevice does not support GetPhysicalDeviceCalibrateableTimeDomainsKHR");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    return icd_term->dispatch.GetPhysicalDeviceCalibrateableTimeDomainsKHR(phys_dev_term->phys_dev, pTimeDomainCount, pTimeDomains);
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL GetCalibratedTimestampsKHR(
+    VkDevice                                    device,
+    uint32_t                                    timestampCount,
+    const VkCalibratedTimestampInfoKHR*         pTimestampInfos,
+    uint64_t*                                   pTimestamps,
+    uint64_t*                                   pMaxDeviation) {
+    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
+    if (NULL == disp) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkGetCalibratedTimestampsKHR: Invalid device "
+                   "[VUID-vkGetCalibratedTimestampsKHR-device-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    return disp->GetCalibratedTimestampsKHR(device, timestampCount, pTimestampInfos, pTimestamps, pMaxDeviation);
+}
+
+
 // ---- VK_EXT_display_control extension trampoline/terminators
 
 VKAPI_ATTR VkResult VKAPI_CALL DisplayPowerControlEXT(
@@ -2112,9 +2208,8 @@ VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectNameEXT(
 VKAPI_ATTR VkResult VKAPI_CALL terminator_SetDebugUtilsObjectNameEXT(
     VkDevice                                    device,
     const VkDebugUtilsObjectNameInfoEXT*        pNameInfo) {
-    uint32_t icd_index = 0;
     struct loader_device *dev;
-    struct loader_icd_term *icd_term = loader_get_icd_and_device(device, &dev, &icd_index);
+    struct loader_icd_term *icd_term = loader_get_icd_and_device(device, &dev);
     if (NULL == icd_term || NULL == dev) {
         loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0, "SetDebugUtilsObjectNameEXT: Invalid device handle");
         abort(); /* Intentionally fail so user can correct issue. */
@@ -2129,8 +2224,9 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_SetDebugUtilsObjectNameEXT(
     } else if (pNameInfo->objectType == VK_OBJECT_TYPE_SURFACE_KHR) {
         if (NULL != dev && NULL != dev->loader_dispatch.core_dispatch.CreateSwapchainKHR) {
             VkIcdSurface *icd_surface = (VkIcdSurface *)(uintptr_t)pNameInfo->objectHandle;
-            if (NULL != icd_surface->real_icd_surfaces) {
-                local_name_info.objectHandle = (uint64_t)icd_surface->real_icd_surfaces[icd_index];
+            if (NULL != icd_term->surface_list.list && icd_term->surface_list.capacity > icd_surface->surface_index * sizeof(VkSurfaceKHR)
+                && icd_term->surface_list.list[icd_surface->surface_index]) {
+                local_name_info.objectHandle = (uint64_t)icd_term->surface_list.list[icd_surface->surface_index];
             }
         }
     // If this is an instance we have to replace it with the proper one for the next call.
@@ -2175,9 +2271,8 @@ VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectTagEXT(
 VKAPI_ATTR VkResult VKAPI_CALL terminator_SetDebugUtilsObjectTagEXT(
     VkDevice                                    device,
     const VkDebugUtilsObjectTagInfoEXT*         pTagInfo) {
-    uint32_t icd_index = 0;
     struct loader_device *dev;
-    struct loader_icd_term *icd_term = loader_get_icd_and_device(device, &dev, &icd_index);
+    struct loader_icd_term *icd_term = loader_get_icd_and_device(device, &dev);
     if (NULL == icd_term || NULL == dev) {
         loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0, "SetDebugUtilsObjectTagEXT: Invalid device handle");
         abort(); /* Intentionally fail so user can correct issue. */
@@ -2192,8 +2287,9 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_SetDebugUtilsObjectTagEXT(
     } else if (pTagInfo->objectType == VK_OBJECT_TYPE_SURFACE_KHR) {
         if (NULL != dev && NULL != dev->loader_dispatch.core_dispatch.CreateSwapchainKHR) {
             VkIcdSurface *icd_surface = (VkIcdSurface *)(uintptr_t)pTagInfo->objectHandle;
-            if (NULL != icd_surface->real_icd_surfaces) {
-                local_tag_info.objectHandle = (uint64_t)icd_surface->real_icd_surfaces[icd_index];
+            if (NULL != icd_term->surface_list.list && icd_term->surface_list.capacity > icd_surface->surface_index * sizeof(VkSurfaceKHR)
+                && icd_term->surface_list.list[icd_surface->surface_index]) {
+                local_tag_info.objectHandle = (uint64_t)icd_term->surface_list.list[icd_surface->surface_index];
             }
         }
     // If this is an instance we have to replace it with the proper one for the next call.
@@ -2453,55 +2549,6 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryHostPointerPropertiesEXT(
 }
 
 
-// ---- VK_EXT_calibrated_timestamps extension trampoline/terminators
-
-VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceCalibrateableTimeDomainsEXT(
-    VkPhysicalDevice                            physicalDevice,
-    uint32_t*                                   pTimeDomainCount,
-    VkTimeDomainKHR*                            pTimeDomains) {
-    const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceCalibrateableTimeDomainsEXT-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
-    disp = loader_get_instance_layer_dispatch(physicalDevice);
-    return disp->GetPhysicalDeviceCalibrateableTimeDomainsEXT(unwrapped_phys_dev, pTimeDomainCount, pTimeDomains);
-}
-
-VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceCalibrateableTimeDomainsEXT(
-    VkPhysicalDevice                            physicalDevice,
-    uint32_t*                                   pTimeDomainCount,
-    VkTimeDomainKHR*                            pTimeDomains) {
-    struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
-    struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
-    if (NULL == icd_term->dispatch.GetPhysicalDeviceCalibrateableTimeDomainsEXT) {
-        loader_log(icd_term->this_instance, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT, 0,
-                   "ICD associated with VkPhysicalDevice does not support GetPhysicalDeviceCalibrateableTimeDomainsEXT");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
-    return icd_term->dispatch.GetPhysicalDeviceCalibrateableTimeDomainsEXT(phys_dev_term->phys_dev, pTimeDomainCount, pTimeDomains);
-}
-
-VKAPI_ATTR VkResult VKAPI_CALL GetCalibratedTimestampsEXT(
-    VkDevice                                    device,
-    uint32_t                                    timestampCount,
-    const VkCalibratedTimestampInfoKHR*         pTimestampInfos,
-    uint64_t*                                   pTimestamps,
-    uint64_t*                                   pMaxDeviation) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetCalibratedTimestampsEXT: Invalid device "
-                   "[VUID-vkGetCalibratedTimestampsEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
-    return disp->GetCalibratedTimestampsEXT(device, timestampCount, pTimestampInfos, pTimestamps, pMaxDeviation);
-}
-
-
 // ---- VK_EXT_line_rasterization extension trampoline/terminators
 
 VKAPI_ATTR void VKAPI_CALL CmdSetLineStippleEXT(
@@ -2688,6 +2735,71 @@ VKAPI_ATTR void VKAPI_CALL CmdSetStencilOpEXT(
     disp->CmdSetStencilOpEXT(commandBuffer, faceMask, failOp, passOp, depthFailOp, compareOp);
 }
 
+
+// ---- VK_NV_acquire_winrt_display extension trampoline/terminators
+
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+VKAPI_ATTR VkResult VKAPI_CALL AcquireWinrtDisplayNV(
+    VkPhysicalDevice                            physicalDevice,
+    VkDisplayKHR                                display) {
+    const VkLayerInstanceDispatchTable *disp;
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
+    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkAcquireWinrtDisplayNV: Invalid physicalDevice "
+                   "[VUID-vkAcquireWinrtDisplayNV-physicalDevice-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    disp = loader_get_instance_layer_dispatch(physicalDevice);
+    return disp->AcquireWinrtDisplayNV(unwrapped_phys_dev, display);
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL terminator_AcquireWinrtDisplayNV(
+    VkPhysicalDevice                            physicalDevice,
+    VkDisplayKHR                                display) {
+    struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
+    struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+    if (NULL == icd_term->dispatch.AcquireWinrtDisplayNV) {
+        loader_log(icd_term->this_instance, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT, 0,
+                   "ICD associated with VkPhysicalDevice does not support AcquireWinrtDisplayNV");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    return icd_term->dispatch.AcquireWinrtDisplayNV(phys_dev_term->phys_dev, display);
+}
+
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+VKAPI_ATTR VkResult VKAPI_CALL GetWinrtDisplayNV(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t                                    deviceRelativeId,
+    VkDisplayKHR*                               pDisplay) {
+    const VkLayerInstanceDispatchTable *disp;
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
+    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
+        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
+                   "vkGetWinrtDisplayNV: Invalid physicalDevice "
+                   "[VUID-vkGetWinrtDisplayNV-physicalDevice-parameter]");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    disp = loader_get_instance_layer_dispatch(physicalDevice);
+    return disp->GetWinrtDisplayNV(unwrapped_phys_dev, deviceRelativeId, pDisplay);
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL terminator_GetWinrtDisplayNV(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t                                    deviceRelativeId,
+    VkDisplayKHR*                               pDisplay) {
+    struct loader_physical_device_term *phys_dev_term = (struct loader_physical_device_term *)physicalDevice;
+    struct loader_icd_term *icd_term = phys_dev_term->this_icd_term;
+    if (NULL == icd_term->dispatch.GetWinrtDisplayNV) {
+        loader_log(icd_term->this_instance, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT, 0,
+                   "ICD associated with VkPhysicalDevice does not support GetWinrtDisplayNV");
+        abort(); /* Intentionally fail so user can correct issue. */
+    }
+    return icd_term->dispatch.GetWinrtDisplayNV(phys_dev_term->phys_dev, deviceRelativeId, pDisplay);
+}
+
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
 // ---- VK_EXT_vertex_input_dynamic_state extension trampoline/terminators
 
@@ -3181,6 +3293,22 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
         return true;
     }
 
+    // ---- VK_KHR_line_rasterization extension commands
+    if (!strcmp("vkCmdSetLineStippleKHR", name)) {
+        *addr = (void *)CmdSetLineStippleKHR;
+        return true;
+    }
+
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    if (!strcmp("vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", name)) {
+        *addr = (void *)GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+        return true;
+    }
+    if (!strcmp("vkGetCalibratedTimestampsKHR", name)) {
+        *addr = (void *)GetCalibratedTimestampsKHR;
+        return true;
+    }
+
     // ---- VK_EXT_direct_mode_display extension commands
     if (!strcmp("vkReleaseDisplayEXT", name)) {
         *addr = (ptr_instance->enabled_known_extensions.ext_direct_mode_display == 1)
@@ -3307,16 +3435,6 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
         return true;
     }
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    if (!strcmp("vkGetPhysicalDeviceCalibrateableTimeDomainsEXT", name)) {
-        *addr = (void *)GetPhysicalDeviceCalibrateableTimeDomainsEXT;
-        return true;
-    }
-    if (!strcmp("vkGetCalibratedTimestampsEXT", name)) {
-        *addr = (void *)GetCalibratedTimestampsEXT;
-        return true;
-    }
-
     // ---- VK_EXT_line_rasterization extension commands
     if (!strcmp("vkCmdSetLineStippleEXT", name)) {
         *addr = (void *)CmdSetLineStippleEXT;
@@ -3372,6 +3490,20 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
         *addr = (void *)CmdSetStencilOpEXT;
         return true;
     }
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    if (!strcmp("vkAcquireWinrtDisplayNV", name)) {
+        *addr = (void *)AcquireWinrtDisplayNV;
+        return true;
+    }
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    if (!strcmp("vkGetWinrtDisplayNV", name)) {
+        *addr = (void *)GetWinrtDisplayNV;
+        return true;
+    }
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_EXT_vertex_input_dynamic_state extension commands
     if (!strcmp("vkCmdSetVertexInputEXT", name)) {
@@ -3645,6 +3777,9 @@ const VkLayerInstanceDispatchTable instance_disp = {
     // ---- VK_KHR_object_refresh extension commands
     .GetPhysicalDeviceRefreshableObjectTypesKHR = terminator_GetPhysicalDeviceRefreshableObjectTypesKHR,
 
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    .GetPhysicalDeviceCalibrateableTimeDomainsKHR = terminator_GetPhysicalDeviceCalibrateableTimeDomainsKHR,
+
     // ---- VK_EXT_direct_mode_display extension commands
     .ReleaseDisplayEXT = terminator_ReleaseDisplayEXT,
 
@@ -3659,11 +3794,16 @@ const VkLayerInstanceDispatchTable instance_disp = {
     // ---- VK_EXT_sample_locations extension commands
     .GetPhysicalDeviceMultisamplePropertiesEXT = terminator_GetPhysicalDeviceMultisamplePropertiesEXT,
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    .GetPhysicalDeviceCalibrateableTimeDomainsEXT = terminator_GetPhysicalDeviceCalibrateableTimeDomainsEXT,
-
     // ---- VK_EXT_headless_surface extension commands
     .CreateHeadlessSurfaceEXT = terminator_CreateHeadlessSurfaceEXT,
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    .AcquireWinrtDisplayNV = terminator_AcquireWinrtDisplayNV,
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    .GetWinrtDisplayNV = terminator_GetWinrtDisplayNV,
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)

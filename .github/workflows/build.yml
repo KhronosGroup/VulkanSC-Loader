@@ -46,7 +46,7 @@ jobs:
             - uses: actions/checkout@v4
             - uses: actions/setup-python@v5
               with:
-                python-version: '3.7'
+                python-version: '3.11'
             - name: Test CMake min
               # NOTE: The main users who benefit from an older CMake version
               # are linux users stuck on older LTS releases. It's idiomatic best
@@ -110,7 +110,7 @@ jobs:
             - uses: actions/checkout@v4
             - uses: actions/setup-python@v5
               with:
-                python-version: '3.7'
+                python-version: '3.11'
             - uses: lukka/get-cmake@latest
               with:
                 cmakeVersion: 3.17.2
@@ -145,7 +145,7 @@ jobs:
             - uses: actions/checkout@v4
             - uses: actions/setup-python@v5
               with:
-                python-version: '3.7'
+                python-version: '3.11'
             - uses: lukka/get-cmake@latest
               with:
                 cmakeVersion: 3.17.2
@@ -242,7 +242,7 @@ jobs:
         - uses: actions/checkout@v4
         - uses: actions/setup-python@v5
           with:
-            python-version: '3.8'
+            python-version: '3.11'
         - uses: lukka/get-cmake@latest
         - name: Setup uasm
           run: |
@@ -259,6 +259,27 @@ jobs:
         - run: cmake --build build
         - run: cmake --install build --prefix /tmp
 
+    mingw-use-gas:
+      runs-on: windows-2022
+      defaults:
+        run:
+          shell: bash
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+        - uses: lukka/get-cmake@latest
+        - run: |
+            cmake -S. -B build \
+            -D UPDATE_DEPS=ON \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_WERROR=ON \
+            -D USE_GAS=ON \
+            -G Ninja
+        - run: cmake --build build
+        - run: cmake --install build --prefix /tmp
+
     mingw-no-asm:
       runs-on: windows-2022
       defaults:
@@ -268,7 +289,7 @@ jobs:
         - uses: actions/checkout@v4
         - uses: actions/setup-python@v5
           with:
-            python-version: '3.8'
+            python-version: '3.11'
         - uses: lukka/get-cmake@latest
         # Make sure this doesn't fail even without explicitly setting '-D USE_MASM=OFF' and without uasm
         - run: |

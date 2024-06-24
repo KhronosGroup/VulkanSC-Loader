@@ -170,8 +170,6 @@ struct VulkanFunctions {
 
     PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr = nullptr;
     PFN_vkCreateDevice vkCreateDevice = nullptr;
-    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
-    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
 
     // WSI
     PFN_vkCreateHeadlessSurfaceEXT vkCreateHeadlessSurfaceEXT = nullptr;
@@ -234,11 +232,19 @@ struct VulkanFunctions {
 #endif  // VK_USE_PLATFORM_WIN32_KHR
     PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR = nullptr;
 
+    // instance extensions functions (can only be loaded with a valid instance)
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;    // Null unless the extension is enabled
+    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;  // Null unless the extension is enabled
+    PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT = nullptr;    // Null unless the extension is enabled
+    PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT = nullptr;  // Null unless the extension is enabled
+
     // device functions
     PFN_vkDestroyDevice vkDestroyDevice = nullptr;
     PFN_vkGetDeviceQueue vkGetDeviceQueue = nullptr;
 
     VulkanFunctions();
+
+    void load_instance_functions(VkInstance instance);
 
     FromVoidStarFunc load(VkInstance inst, const char* func_name) const {
         return FromVoidStarFunc(vkGetInstanceProcAddr(inst, func_name));
@@ -345,6 +351,41 @@ struct DeviceWrapper {
     DeviceCreateInfo create_info{};
 };
 
+template <typename HandleType, typename ParentType, typename DestroyFuncType>
+struct WrappedHandle {
+    WrappedHandle(HandleType in_handle, ParentType in_parent, DestroyFuncType in_destroy_func,
+                  VkAllocationCallbacks* in_callbacks = nullptr)
+        : handle(in_handle), parent(in_parent), destroy_func(in_destroy_func), callbacks(in_callbacks) {}
+    ~WrappedHandle() {
+        if (handle) {
+            destroy_func(parent, handle, callbacks);
+            handle = VK_NULL_HANDLE;
+        }
+    }
+    WrappedHandle(WrappedHandle const&) = delete;
+    WrappedHandle& operator=(WrappedHandle const&) = delete;
+    WrappedHandle(WrappedHandle&& other) noexcept
+        : handle(other.handle), parent(other.parent), destroy_func(other.destroy_func), callbacks(other.callbacks) {
+        other.handle = VK_NULL_HANDLE;
+    }
+    WrappedHandle& operator=(WrappedHandle&& other) noexcept {
+        if (handle != VK_NULL_HANDLE) {
+            destroy_func(parent, handle, callbacks);
+        }
+        handle = other.handle;
+        other.handle = VK_NULL_HANDLE;
+        parent = other.parent;
+        destroy_func = other.destroy_func;
+        callbacks = other.callbacks;
+        return *this;
+    }
+
+    HandleType handle = VK_NULL_HANDLE;
+    ParentType parent = VK_NULL_HANDLE;
+    DestroyFuncType destroy_func = nullptr;
+    VkAllocationCallbacks* callbacks = nullptr;
+};
+
 struct DebugUtilsLogger {
     static VkBool32 VKAPI_PTR
     DebugUtilsMessengerLoggerCallback([[maybe_unused]] VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -376,6 +417,16 @@ struct DebugUtilsLogger {
     DebugUtilsLogger& operator=(DebugUtilsLogger&&) = delete;
     // Find a string in the log output
     bool find(std::string const& search_text) const { return returned_output.find(search_text) != std::string::npos; }
+    // Find the number of times a string appears in the log output
+    uint32_t count(std::string const& search_text) const {
+        uint32_t occurrences = 0;
+        std::string::size_type position = 0;
+        while ((position = returned_output.find(search_text, position)) != std::string::npos) {
+            ++occurrences;
+            position += search_text.length();
+        }
+        return occurrences;
+    }
 
     // Look through the event log. If you find a line containing the prefix we're interested in, look for the end of
     // line character, and then see if the postfix occurs in it as well.
@@ -394,15 +445,17 @@ struct DebugUtilsWrapper {
                       VkDebugUtilsMessageSeverityFlagsEXT severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                                                      VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
                       VkAllocationCallbacks* callbacks = nullptr)
-        : logger(severity), inst(inst_wrapper.inst), callbacks(callbacks) {
-        vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-            inst_wrapper.functions->vkGetInstanceProcAddr(inst_wrapper.inst, "vkCreateDebugUtilsMessengerEXT"));
-        vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-            inst_wrapper.functions->vkGetInstanceProcAddr(inst_wrapper.inst, "vkDestroyDebugUtilsMessengerEXT"));
-    };
+        : logger(severity),
+          inst(inst_wrapper.inst),
+          callbacks(callbacks),
+          local_vkCreateDebugUtilsMessengerEXT(
+              FromVoidStarFunc(inst_wrapper.functions->vkGetInstanceProcAddr(inst_wrapper.inst, "vkCreateDebugUtilsMessengerEXT"))),
+          local_vkDestroyDebugUtilsMessengerEXT(FromVoidStarFunc(
+              inst_wrapper.functions->vkGetInstanceProcAddr(inst_wrapper.inst, "vkDestroyDebugUtilsMessengerEXT"))){};
     ~DebugUtilsWrapper() noexcept {
         if (messenger) {
-            vkDestroyDebugUtilsMessengerEXT(inst, messenger, callbacks);
+            local_vkDestroyDebugUtilsMessengerEXT(inst, messenger, callbacks);
+            messenger = VK_NULL_HANDLE;
         }
     }
     // Immoveable object
@@ -412,13 +465,14 @@ struct DebugUtilsWrapper {
     DebugUtilsWrapper& operator=(DebugUtilsWrapper&&) = delete;
 
     bool find(std::string const& search_text) { return logger.find(search_text); }
+    uint32_t count(std::string const& search_text) { return logger.count(search_text); }
     VkDebugUtilsMessengerCreateInfoEXT* get() noexcept { return logger.get(); }
 
     DebugUtilsLogger logger;
     VkInstance inst = VK_NULL_HANDLE;
     VkAllocationCallbacks* callbacks = nullptr;
-    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = nullptr;
-    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = nullptr;
+    PFN_vkCreateDebugUtilsMessengerEXT local_vkCreateDebugUtilsMessengerEXT = nullptr;
+    PFN_vkDestroyDebugUtilsMessengerEXT local_vkDestroyDebugUtilsMessengerEXT = nullptr;
     VkDebugUtilsMessengerEXT messenger = VK_NULL_HANDLE;
 };
 
@@ -431,7 +485,7 @@ void FillDebugUtilsCreateDetails(InstanceCreateInfo& create_info, DebugUtilsWrap
 
 struct LoaderSettingsLayerConfiguration {
     BUILDER_VALUE(LoaderSettingsLayerConfiguration, std::string, name, {})
-    BUILDER_VALUE(LoaderSettingsLayerConfiguration, std::string, path, {})
+    BUILDER_VALUE(LoaderSettingsLayerConfiguration, std::filesystem::path, path, {})
     BUILDER_VALUE(LoaderSettingsLayerConfiguration, std::string, control, {})
     BUILDER_VALUE(LoaderSettingsLayerConfiguration, bool, treat_as_implicit_manifest, false)
 };
@@ -482,35 +536,39 @@ struct PlatformShimWrapper {
 
 struct TestICDHandle {
     TestICDHandle() noexcept;
-    TestICDHandle(fs::path const& icd_path) noexcept;
+    TestICDHandle(std::filesystem::path const& icd_path) noexcept;
     TestICD& reset_icd() noexcept;
     TestICD& get_test_icd() noexcept;
-    fs::path get_icd_full_path() noexcept;
-    fs::path get_icd_manifest_path() noexcept;
-    fs::path get_shimmed_manifest_path() noexcept;
+    std::filesystem::path get_icd_full_path() noexcept;
+    std::filesystem::path get_icd_manifest_path() noexcept;
+    std::filesystem::path get_shimmed_manifest_path() noexcept;
 
     // Must use statically
     LibraryWrapper icd_library;
     GetTestICDFunc proc_addr_get_test_icd = nullptr;
     GetNewTestICDFunc proc_addr_reset_icd = nullptr;
-    fs::path manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
-    fs::path shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
+    std::filesystem::path
+        manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
+    std::filesystem::path
+        shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
 };
 struct TestLayerHandle {
     TestLayerHandle() noexcept;
-    TestLayerHandle(fs::path const& layer_path) noexcept;
+    TestLayerHandle(std::filesystem::path const& layer_path) noexcept;
     TestLayer& reset_layer() noexcept;
     TestLayer& get_test_layer() noexcept;
-    fs::path get_layer_full_path() noexcept;
-    fs::path get_layer_manifest_path() noexcept;
-    fs::path get_shimmed_manifest_path() noexcept;
+    std::filesystem::path get_layer_full_path() noexcept;
+    std::filesystem::path get_layer_manifest_path() noexcept;
+    std::filesystem::path get_shimmed_manifest_path() noexcept;
 
     // Must use statically
     LibraryWrapper layer_library;
     GetTestLayerFunc proc_addr_get_test_layer = nullptr;
     GetNewTestLayerFunc proc_addr_reset_layer = nullptr;
-    fs::path manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
-    fs::path shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
+    std::filesystem::path
+        manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
+    std::filesystem::path
+        shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
 };
 
 // Controls whether to create a manifest and where to put it
@@ -534,11 +592,11 @@ enum class LibraryPathType {
 
 struct TestICDDetails {
     TestICDDetails(ManifestICD icd_manifest) noexcept : icd_manifest(icd_manifest) {}
-    TestICDDetails(fs::path icd_binary_path, uint32_t api_version = VK_API_VERSION_1_0) noexcept {
-        icd_manifest.set_lib_path(icd_binary_path.str()).set_api_version(api_version);
+    TestICDDetails(std::filesystem::path icd_binary_path, uint32_t api_version = VK_API_VERSION_1_0) noexcept {
+        icd_manifest.set_lib_path(icd_binary_path).set_api_version(api_version);
     }
     BUILDER_VALUE(TestICDDetails, ManifestICD, icd_manifest, {});
-    BUILDER_VALUE(TestICDDetails, std::string, json_name, "test_icd");
+    BUILDER_VALUE(TestICDDetails, std::filesystem::path, json_name, "test_icd");
     // Uses the json_name without modification - default is to append _1 in the json file to distinguish drivers
     BUILDER_VALUE(TestICDDetails, bool, disable_icd_inc, false);
     BUILDER_VALUE(TestICDDetails, ManifestDiscoveryType, discovery_type, ManifestDiscoveryType::generic);
@@ -608,15 +666,15 @@ struct FrameworkEnvironment {
 
     TestICD& get_test_icd(size_t index = 0) noexcept;
     TestICD& reset_icd(size_t index = 0) noexcept;
-    fs::path get_test_icd_path(size_t index = 0) noexcept;
-    fs::path get_icd_manifest_path(size_t index = 0) noexcept;
-    fs::path get_shimmed_icd_manifest_path(size_t index = 0) noexcept;
+    std::filesystem::path get_test_icd_path(size_t index = 0) noexcept;
+    std::filesystem::path get_icd_manifest_path(size_t index = 0) noexcept;
+    std::filesystem::path get_shimmed_icd_manifest_path(size_t index = 0) noexcept;
 
     TestLayer& get_test_layer(size_t index = 0) noexcept;
     TestLayer& reset_layer(size_t index = 0) noexcept;
-    fs::path get_test_layer_path(size_t index = 0) noexcept;
-    fs::path get_layer_manifest_path(size_t index = 0) noexcept;
-    fs::path get_shimmed_layer_manifest_path(size_t index = 0) noexcept;
+    std::filesystem::path get_test_layer_path(size_t index = 0) noexcept;
+    std::filesystem::path get_layer_manifest_path(size_t index = 0) noexcept;
+    std::filesystem::path get_shimmed_layer_manifest_path(size_t index = 0) noexcept;
 
     fs::FolderManager& get_folder(ManifestLocation location) noexcept;
     fs::FolderManager const& get_folder(ManifestLocation location) const noexcept;
@@ -660,3 +718,6 @@ struct FrameworkEnvironment {
 VkResult create_surface(InstWrapper& inst, VkSurfaceKHR& out_surface, const char* api_selection = nullptr);
 // Alternate parameter list for allocation callback tests
 VkResult create_surface(VulkanFunctions* functions, VkInstance inst, VkSurfaceKHR& surface, const char* api_selection = nullptr);
+
+VkResult create_debug_callback(InstWrapper& inst, const VkDebugReportCallbackCreateInfoEXT& create_info,
+                               VkDebugReportCallbackEXT& callback);

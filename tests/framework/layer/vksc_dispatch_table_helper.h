@@ -228,8 +228,9 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
         (PFN_vkGetImageDrmFormatModifierPropertiesEXT)gpa(device, "vkGetImageDrmFormatModifierPropertiesEXT");
     table->GetMemoryHostPointerPropertiesEXT =
         (PFN_vkGetMemoryHostPointerPropertiesEXT)gpa(device, "vkGetMemoryHostPointerPropertiesEXT");
-    table->GetCalibratedTimestampsEXT = (PFN_vkGetCalibratedTimestampsEXT)gpa(device, "vkGetCalibratedTimestampsEXT");
+    table->GetCalibratedTimestampsKHR = (PFN_vkGetCalibratedTimestampsKHR)gpa(device, "vkGetCalibratedTimestampsKHR");
     table->CmdSetLineStippleEXT = (PFN_vkCmdSetLineStippleEXT)gpa(device, "vkCmdSetLineStippleEXT");
+    table->CmdSetLineStippleKHR = (PFN_vkCmdSetLineStippleEXT)gpa(device, "vkCmdSetLineStippleKHR");
     table->CmdSetCullModeEXT = (PFN_vkCmdSetCullModeEXT)gpa(device, "vkCmdSetCullModeEXT");
     table->CmdSetFrontFaceEXT = (PFN_vkCmdSetFrontFaceEXT)gpa(device, "vkCmdSetFrontFaceEXT");
     table->CmdSetPrimitiveTopologyEXT = (PFN_vkCmdSetPrimitiveTopologyEXT)gpa(device, "vkCmdSetPrimitiveTopologyEXT");
@@ -338,7 +339,13 @@ static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLay
     table->SubmitDebugUtilsMessageEXT = (PFN_vkSubmitDebugUtilsMessageEXT)gpa(instance, "vkSubmitDebugUtilsMessageEXT");
     table->GetPhysicalDeviceMultisamplePropertiesEXT =
         (PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT)gpa(instance, "vkGetPhysicalDeviceMultisamplePropertiesEXT");
-    table->GetPhysicalDeviceCalibrateableTimeDomainsEXT =
-        (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)gpa(instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT");
+    table->GetPhysicalDeviceCalibrateableTimeDomainsKHR =
+        (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)gpa(instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR");
     table->CreateHeadlessSurfaceEXT = (PFN_vkCreateHeadlessSurfaceEXT)gpa(instance, "vkCreateHeadlessSurfaceEXT");
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    table->AcquireWinrtDisplayNV = (PFN_vkAcquireWinrtDisplayNV)gpa(instance, "vkAcquireWinrtDisplayNV");
+#endif  // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    table->GetWinrtDisplayNV = (PFN_vkGetWinrtDisplayNV)gpa(instance, "vkGetWinrtDisplayNV");
+#endif  // VK_USE_PLATFORM_WIN32_KHR
 }

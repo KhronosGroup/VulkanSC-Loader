@@ -33,7 +33,6 @@
  * All the standard library includes and main platform specific includes
  * Dll export macro
  * Manifest ICD & Layer structs
- * path abstraction class - modelled after C++17's filesystem::path
  * FolderManager - manages the contents of a folder, cleaning up when needed
  * per-platform library loading - mirrors the vk_loader_platform
  * LibraryWrapper - RAII wrapper for a library
@@ -55,6 +54,7 @@
 #include <utility>
 #include <memory>
 #include <functional>
+#include <filesystem>
 
 #include <cassert>
 #include <cstring>
@@ -92,7 +92,7 @@
 #include <vulkan/vk_icd.h>
 #include <vulkan/vk_layer.h>
 
-#include "framework_config.h"
+#include FRAMEWORK_CONFIG_HEADER
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define FRAMEWORK_EXPORT __attribute__((visibility("default")))
@@ -182,75 +182,16 @@ void print_error_message(LSTATUS status, const char* function_name, std::string 
 struct ManifestICD;    // forward declaration for FolderManager::write
 struct ManifestLayer;  // forward declaration for FolderManager::write
 
+std::string escape_backslashes_for_json(std::string const& in_path);
+std::string escape_backslashes_for_json(std::filesystem::path const& in_path);
 namespace fs {
-std::string make_native(std::string const&);
 
-struct path {
-#if defined(WIN32)
-    static const char path_separator = '\\';
-#elif COMMON_UNIX_PLATFORMS
-    static const char path_separator = '/';
-#endif
-
-   public:
-    path() {}
-    path(std::string const& in) : contents(make_native(in)) {}
-    path(const char* in) : contents(make_native(std::string(in))) {}
-
-    // concat paths without directoryseperator
-    path& operator+=(path const& in);
-    path& operator+=(std::string const& in);
-    path& operator+=(const char* in);
-
-    // append paths with directoryseperator
-    path& operator/=(path const& in);
-    path& operator/=(std::string const& in);
-    path& operator/=(const char* in);
-
-    // concat paths without directory seperator
-    path operator+(path const& in) const;
-    path operator+(std::string const& in) const;
-    path operator+(const char* in) const;
-
-    // append paths with directory seperator
-    path operator/(path const& in) const;
-    path operator/(std::string const& in) const;
-    path operator/(const char* in) const;
-
-    // accessors
-    path parent_path() const;      // Everything before the last path separator, if there is one.
-    bool has_parent_path() const;  // True if the path contains more than just a filename.
-    path filename() const;         // Everything after the last path separator.
-    path extension() const;        // The file extension, if it has one.
-    path stem() const;             // The filename minus the extension.
-
-    // modifiers
-    path& replace_filename(path const& replacement);
-
-    // get c style string
-    const char* c_str() const { return contents.c_str(); }
-    // get C++ style string
-    std::string const& str() const { return contents; }
-    std::string& str() { return contents; }
-    size_t size() const { return contents.size(); }
-
-    // equality
-    bool operator==(path const& other) const noexcept { return contents == other.contents; }
-    bool operator!=(path const& other) const noexcept { return !(*this == other); }
-
-   private:
-    std::string contents;
-};
-
-std::string fixup_backslashes_in_path(std::string const& in_path);
-fs::path fixup_backslashes_in_path(fs::path const& in_path);
-
-int create_folder(path const& path);
-int delete_folder(path const& folder);
+int create_folder(std::filesystem::path const& path);
+int delete_folder(std::filesystem::path const& folder);
 
 class FolderManager {
    public:
-    explicit FolderManager(path root_path, std::string name) noexcept;
+    explicit FolderManager(std::filesystem::path root_path, std::string name) noexcept;
     ~FolderManager() noexcept;
     FolderManager(FolderManager const&) = delete;
     FolderManager& operator=(FolderManager const&) = delete;
@@ -258,25 +199,25 @@ class FolderManager {
     FolderManager& operator=(FolderManager&& other) noexcept;
 
     // Add a manifest to the folder
-    path write_manifest(std::string const& name, std::string const& contents);
+    std::filesystem::path write_manifest(std::filesystem::path const& name, std::string const& contents);
 
     // Add an already existing file to the manager, so it will be cleaned up automatically
-    void add_existing_file(std::string const& file_name);
+    void add_existing_file(std::filesystem::path const& file_name);
 
     // close file handle, delete file, remove `name` from managed file list.
-    void remove(std::string const& name);
+    void remove(std::filesystem::path const& name);
 
     // copy file into this folder with name `new_name`. Returns the full path of the file that was copied
-    path copy_file(path const& file, std::string const& new_name);
+    std::filesystem::path copy_file(std::filesystem::path const& file, std::filesystem::path const& new_name);
 
     // location of the managed folder
-    path location() const { return folder; }
+    std::filesystem::path location() const { return folder; }
 
-    std::vector<std::string> get_files() const { return files; }
+    std::vector<std::filesystem::path> get_files() const { return files; }
 
    private:
-    path folder;
-    std::vector<std::string> files;
+    std::filesystem::path folder;
+    std::vector<std::filesystem::path> files;
 };
 }  // namespace fs
 
@@ -291,25 +232,26 @@ inline void copy_string_to_char_array(std::string const& src, char* dst, size_t 
 std::string narrow(const std::wstring& utf16);
 // Convert an UTF-8 string to an UTF-16 wstring
 std::wstring widen(const std::string& utf8);
+#else
+// Do nothing passthrough for the sake of Windows & UTF-16
+std::string narrow(const std::string& utf16);
+// Do nothing passthrough for the sake of Windows & UTF-16
+std::string widen(const std::string& utf8);
 #endif
 
 #if defined(WIN32)
 typedef HMODULE loader_platform_dl_handle;
-inline loader_platform_dl_handle loader_platform_open_library(const char* lib_path) {
-    std::wstring lib_path_utf16 = widen(lib_path);
+inline loader_platform_dl_handle loader_platform_open_library(const wchar_t* lib_path) {
     // Try loading the library the original way first.
-    loader_platform_dl_handle lib_handle = LoadLibraryW(lib_path_utf16.c_str());
+    loader_platform_dl_handle lib_handle = LoadLibraryW(lib_path);
     if (lib_handle == nullptr && GetLastError() == ERROR_MOD_NOT_FOUND) {
         // If that failed, then try loading it with broader search folders.
-        lib_handle =
-            LoadLibraryExW(lib_path_utf16.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
+        lib_handle = LoadLibraryExW(lib_path, nullptr, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
     }
     return lib_handle;
 }
-inline char* loader_platform_open_library_error(const char* libPath) {
-    static char errorMsg[164];
-    snprintf(errorMsg, 163, "Failed to open dynamic library \"%s\" with error %lu", libPath, GetLastError());
-    return errorMsg;
+inline void loader_platform_open_library_print_error(std::filesystem::path const& libPath) {
+    std::wcerr << L"Unable to open library: " << libPath << L" due to: " << std::to_wstring(GetLastError()) << L"\n";
 }
 inline void loader_platform_close_library(loader_platform_dl_handle library) { FreeLibrary(library); }
 inline void* loader_platform_get_proc_address(loader_platform_dl_handle library, const char* name) {
@@ -329,7 +271,9 @@ typedef void* loader_platform_dl_handle;
 inline loader_platform_dl_handle loader_platform_open_library(const char* libPath) {
     return dlopen(libPath, RTLD_LAZY | RTLD_LOCAL);
 }
-inline const char* loader_platform_open_library_error([[maybe_unused]] const char* libPath) { return dlerror(); }
+inline void loader_platform_open_library_print_error(std::filesystem::path const& libPath) {
+    std::wcerr << "Unable to open library: " << libPath << " due to: " << dlerror() << "\n";
+}
 inline void loader_platform_close_library(loader_platform_dl_handle library) { dlclose(library); }
 inline void* loader_platform_get_proc_address(loader_platform_dl_handle library, const char* name) {
     assert(library);
@@ -355,11 +299,10 @@ class FromVoidStarFunc {
 
 struct LibraryWrapper {
     explicit LibraryWrapper() noexcept {}
-    explicit LibraryWrapper(fs::path const& lib_path) noexcept : lib_path(lib_path) {
-        lib_handle = loader_platform_open_library(lib_path.c_str());
+    explicit LibraryWrapper(std::filesystem::path const& lib_path) noexcept : lib_path(lib_path) {
+        lib_handle = loader_platform_open_library(lib_path.native().c_str());
         if (lib_handle == nullptr) {
-            fprintf(stderr, "Unable to open library %s: %s\n", lib_path.c_str(),
-                    loader_platform_open_library_error(lib_path.c_str()));
+            loader_platform_open_library_print_error(lib_path);
             assert(lib_handle != nullptr && "Must be able to open library");
         }
     }
@@ -398,7 +341,7 @@ struct LibraryWrapper {
     explicit operator bool() const noexcept { return lib_handle != nullptr; }
 
     loader_platform_dl_handle lib_handle = nullptr;
-    fs::path lib_path;
+    std::filesystem::path lib_path;
 };
 
 template <typename T>
@@ -413,18 +356,20 @@ struct FRAMEWORK_EXPORT DispatchableHandle {
         handle = reinterpret_cast<T>(ptr_handle);
     }
     ~DispatchableHandle() {
-        delete reinterpret_cast<VK_LOADER_DATA*>(handle);
+        if (handle) {
+            delete reinterpret_cast<VK_LOADER_DATA*>(handle);
+        }
         handle = nullptr;
     }
     DispatchableHandle(DispatchableHandle const&) = delete;
     DispatchableHandle& operator=(DispatchableHandle const&) = delete;
     DispatchableHandle(DispatchableHandle&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
     DispatchableHandle& operator=(DispatchableHandle&& other) noexcept {
-        if (this != &other) {
+        if (handle) {
             delete reinterpret_cast<VK_LOADER_DATA*>(handle);
-            handle = other.handle;
-            other.handle = nullptr;
         }
+        handle = other.handle;
+        other.handle = nullptr;
         return *this;
     }
     bool operator==(T base_handle) { return base_handle == handle; }
@@ -613,7 +558,7 @@ struct ManifestVersion {
 struct ManifestICD {
     BUILDER_VALUE(ManifestICD, ManifestVersion, file_format_version, {})
     BUILDER_VALUE(ManifestICD, uint32_t, api_version, 0)
-    BUILDER_VALUE(ManifestICD, fs::path, lib_path, {})
+    BUILDER_VALUE(ManifestICD, std::filesystem::path, lib_path, {})
     BUILDER_VALUE(ManifestICD, bool, is_portability_driver, false)
     BUILDER_VALUE(ManifestICD, std::string, library_arch, "")
     std::string get_manifest_str() const;
@@ -648,7 +593,7 @@ struct ManifestLayer {
         };
         BUILDER_VALUE(LayerDescription, std::string, name, {})
         BUILDER_VALUE(LayerDescription, Type, type, Type::INSTANCE)
-        BUILDER_VALUE(LayerDescription, fs::path, lib_path, {})
+        BUILDER_VALUE(LayerDescription, std::filesystem::path, lib_path, {})
         BUILDER_VALUE(LayerDescription, uint32_t, api_version, VK_API_VERSION_1_0)
         BUILDER_VALUE(LayerDescription, uint32_t, implementation_version, 0)
         BUILDER_VALUE(LayerDescription, std::string, description, {})
@@ -659,7 +604,7 @@ struct ManifestLayer {
         BUILDER_VALUE(LayerDescription, std::string, disable_environment, {})
         BUILDER_VECTOR(LayerDescription, std::string, component_layers, component_layer)
         BUILDER_VECTOR(LayerDescription, std::string, blacklisted_layers, blacklisted_layer)
-        BUILDER_VECTOR(LayerDescription, std::string, override_paths, override_path)
+        BUILDER_VECTOR(LayerDescription, std::filesystem::path, override_paths, override_path)
         BUILDER_VECTOR(LayerDescription, FunctionOverride, pre_instance_functions, pre_instance_function)
         BUILDER_VECTOR(LayerDescription, std::string, app_keys, app_key)
         BUILDER_VALUE(LayerDescription, std::string, library_arch, "")
@@ -768,6 +713,9 @@ inline bool operator==(const VkQueueFamilyProperties& a, const VkQueueFamilyProp
 }
 inline bool operator!=(const VkQueueFamilyProperties& a, const VkQueueFamilyProperties& b) { return !(a == b); }
 
+inline bool operator==(const VkQueueFamilyProperties& a, const VkQueueFamilyProperties2& b) { return a == b.queueFamilyProperties; }
+inline bool operator!=(const VkQueueFamilyProperties& a, const VkQueueFamilyProperties2& b) { return a != b.queueFamilyProperties; }
+
 inline bool operator==(const VkLayerProperties& a, const VkLayerProperties& b) {
     return string_eq(a.layerName, b.layerName, 256) && string_eq(a.description, b.description, 256) &&
            a.implementationVersion == b.implementationVersion && a.specVersion == b.specVersion;
@@ -778,6 +726,158 @@ inline bool operator==(const VkExtensionProperties& a, const VkExtensionProperti
     return string_eq(a.extensionName, b.extensionName, 256) && a.specVersion == b.specVersion;
 }
 inline bool operator!=(const VkExtensionProperties& a, const VkExtensionProperties& b) { return !(a == b); }
+
+inline bool operator==(const VkPhysicalDeviceFeatures& feats1, const VkPhysicalDeviceFeatures2& feats2) {
+    return feats1.robustBufferAccess == feats2.features.robustBufferAccess &&
+           feats1.fullDrawIndexUint32 == feats2.features.fullDrawIndexUint32 &&
+           feats1.imageCubeArray == feats2.features.imageCubeArray && feats1.independentBlend == feats2.features.independentBlend &&
+           feats1.geometryShader == feats2.features.geometryShader &&
+           feats1.tessellationShader == feats2.features.tessellationShader &&
+           feats1.sampleRateShading == feats2.features.sampleRateShading && feats1.dualSrcBlend == feats2.features.dualSrcBlend &&
+           feats1.logicOp == feats2.features.logicOp && feats1.multiDrawIndirect == feats2.features.multiDrawIndirect &&
+           feats1.drawIndirectFirstInstance == feats2.features.drawIndirectFirstInstance &&
+           feats1.depthClamp == feats2.features.depthClamp && feats1.depthBiasClamp == feats2.features.depthBiasClamp &&
+           feats1.fillModeNonSolid == feats2.features.fillModeNonSolid && feats1.depthBounds == feats2.features.depthBounds &&
+           feats1.wideLines == feats2.features.wideLines && feats1.largePoints == feats2.features.largePoints &&
+           feats1.alphaToOne == feats2.features.alphaToOne && feats1.multiViewport == feats2.features.multiViewport &&
+           feats1.samplerAnisotropy == feats2.features.samplerAnisotropy &&
+           feats1.textureCompressionETC2 == feats2.features.textureCompressionETC2 &&
+           feats1.textureCompressionASTC_LDR == feats2.features.textureCompressionASTC_LDR &&
+           feats1.textureCompressionBC == feats2.features.textureCompressionBC &&
+           feats1.occlusionQueryPrecise == feats2.features.occlusionQueryPrecise &&
+           feats1.pipelineStatisticsQuery == feats2.features.pipelineStatisticsQuery &&
+           feats1.vertexPipelineStoresAndAtomics == feats2.features.vertexPipelineStoresAndAtomics &&
+           feats1.fragmentStoresAndAtomics == feats2.features.fragmentStoresAndAtomics &&
+           feats1.shaderTessellationAndGeometryPointSize == feats2.features.shaderTessellationAndGeometryPointSize &&
+           feats1.shaderImageGatherExtended == feats2.features.shaderImageGatherExtended &&
+           feats1.shaderStorageImageExtendedFormats == feats2.features.shaderStorageImageExtendedFormats &&
+           feats1.shaderStorageImageMultisample == feats2.features.shaderStorageImageMultisample &&
+           feats1.shaderStorageImageReadWithoutFormat == feats2.features.shaderStorageImageReadWithoutFormat &&
+           feats1.shaderStorageImageWriteWithoutFormat == feats2.features.shaderStorageImageWriteWithoutFormat &&
+           feats1.shaderUniformBufferArrayDynamicIndexing == feats2.features.shaderUniformBufferArrayDynamicIndexing &&
+           feats1.shaderSampledImageArrayDynamicIndexing == feats2.features.shaderSampledImageArrayDynamicIndexing &&
+           feats1.shaderStorageBufferArrayDynamicIndexing == feats2.features.shaderStorageBufferArrayDynamicIndexing &&
+           feats1.shaderStorageImageArrayDynamicIndexing == feats2.features.shaderStorageImageArrayDynamicIndexing &&
+           feats1.shaderClipDistance == feats2.features.shaderClipDistance &&
+           feats1.shaderCullDistance == feats2.features.shaderCullDistance &&
+           feats1.shaderFloat64 == feats2.features.shaderFloat64 && feats1.shaderInt64 == feats2.features.shaderInt64 &&
+           feats1.shaderInt16 == feats2.features.shaderInt16 &&
+           feats1.shaderResourceResidency == feats2.features.shaderResourceResidency &&
+           feats1.shaderResourceMinLod == feats2.features.shaderResourceMinLod &&
+           feats1.sparseBinding == feats2.features.sparseBinding &&
+           feats1.sparseResidencyBuffer == feats2.features.sparseResidencyBuffer &&
+           feats1.sparseResidencyImage2D == feats2.features.sparseResidencyImage2D &&
+           feats1.sparseResidencyImage3D == feats2.features.sparseResidencyImage3D &&
+           feats1.sparseResidency2Samples == feats2.features.sparseResidency2Samples &&
+           feats1.sparseResidency4Samples == feats2.features.sparseResidency4Samples &&
+           feats1.sparseResidency8Samples == feats2.features.sparseResidency8Samples &&
+           feats1.sparseResidency16Samples == feats2.features.sparseResidency16Samples &&
+           feats1.sparseResidencyAliased == feats2.features.sparseResidencyAliased &&
+           feats1.variableMultisampleRate == feats2.features.variableMultisampleRate &&
+           feats1.inheritedQueries == feats2.features.inheritedQueries;
+}
+
+inline bool operator==(const VkPhysicalDeviceMemoryProperties& props1, const VkPhysicalDeviceMemoryProperties2& props2) {
+    bool equal = true;
+    equal = equal && props1.memoryTypeCount == props2.memoryProperties.memoryTypeCount;
+    equal = equal && props1.memoryHeapCount == props2.memoryProperties.memoryHeapCount;
+    for (uint32_t i = 0; i < props1.memoryHeapCount; ++i) {
+        equal = equal && props1.memoryHeaps[i].size == props2.memoryProperties.memoryHeaps[i].size;
+        equal = equal && props1.memoryHeaps[i].flags == props2.memoryProperties.memoryHeaps[i].flags;
+    }
+    for (uint32_t i = 0; i < props1.memoryTypeCount; ++i) {
+        equal = equal && props1.memoryTypes[i].propertyFlags == props2.memoryProperties.memoryTypes[i].propertyFlags;
+        equal = equal && props1.memoryTypes[i].heapIndex == props2.memoryProperties.memoryTypes[i].heapIndex;
+    }
+    return equal;
+}
+inline bool operator==(const VkSparseImageFormatProperties& props1, const VkSparseImageFormatProperties& props2) {
+    return props1.aspectMask == props2.aspectMask && props1.imageGranularity.width == props2.imageGranularity.width &&
+           props1.imageGranularity.height == props2.imageGranularity.height &&
+           props1.imageGranularity.depth == props2.imageGranularity.depth && props1.flags == props2.flags;
+}
+inline bool operator==(const VkSparseImageFormatProperties& props1, const VkSparseImageFormatProperties2& props2) {
+    return props1 == props2.properties;
+}
+inline bool operator==(const VkExternalMemoryProperties& props1, const VkExternalMemoryProperties& props2) {
+    return props1.externalMemoryFeatures == props2.externalMemoryFeatures &&
+           props1.exportFromImportedHandleTypes == props2.exportFromImportedHandleTypes &&
+           props1.compatibleHandleTypes == props2.compatibleHandleTypes;
+}
+inline bool operator==(const VkExternalSemaphoreProperties& props1, const VkExternalSemaphoreProperties& props2) {
+    return props1.externalSemaphoreFeatures == props2.externalSemaphoreFeatures &&
+           props1.exportFromImportedHandleTypes == props2.exportFromImportedHandleTypes &&
+           props1.compatibleHandleTypes == props2.compatibleHandleTypes;
+}
+inline bool operator==(const VkExternalFenceProperties& props1, const VkExternalFenceProperties& props2) {
+    return props1.externalFenceFeatures == props2.externalFenceFeatures &&
+           props1.exportFromImportedHandleTypes == props2.exportFromImportedHandleTypes &&
+           props1.compatibleHandleTypes == props2.compatibleHandleTypes;
+}
+inline bool operator==(const VkSurfaceCapabilitiesKHR& props1, const VkSurfaceCapabilitiesKHR& props2) {
+    return props1.minImageCount == props2.minImageCount && props1.maxImageCount == props2.maxImageCount &&
+           props1.currentExtent.width == props2.currentExtent.width && props1.currentExtent.height == props2.currentExtent.height &&
+           props1.minImageExtent.width == props2.minImageExtent.width &&
+           props1.minImageExtent.height == props2.minImageExtent.height &&
+           props1.maxImageExtent.width == props2.maxImageExtent.width &&
+           props1.maxImageExtent.height == props2.maxImageExtent.height &&
+           props1.maxImageArrayLayers == props2.maxImageArrayLayers && props1.supportedTransforms == props2.supportedTransforms &&
+           props1.currentTransform == props2.currentTransform && props1.supportedCompositeAlpha == props2.supportedCompositeAlpha &&
+           props1.supportedUsageFlags == props2.supportedUsageFlags;
+}
+inline bool operator==(const VkSurfaceFormatKHR& format1, const VkSurfaceFormatKHR& format2) {
+    return format1.format == format2.format && format1.colorSpace == format2.colorSpace;
+}
+inline bool operator==(const VkSurfaceFormatKHR& format1, const VkSurfaceFormat2KHR& format2) {
+    return format1 == format2.surfaceFormat;
+}
+inline bool operator==(const VkDisplayPropertiesKHR& props1, const VkDisplayPropertiesKHR& props2) {
+    return props1.display == props2.display && props1.physicalDimensions.width == props2.physicalDimensions.width &&
+           props1.physicalDimensions.height == props2.physicalDimensions.height &&
+           props1.physicalResolution.width == props2.physicalResolution.width &&
+           props1.physicalResolution.height == props2.physicalResolution.height &&
+           props1.supportedTransforms == props2.supportedTransforms && props1.planeReorderPossible == props2.planeReorderPossible &&
+           props1.persistentContent == props2.persistentContent;
+}
+inline bool operator==(const VkDisplayPropertiesKHR& props1, const VkDisplayProperties2KHR& props2) {
+    return props1 == props2.displayProperties;
+}
+inline bool operator==(const VkDisplayModePropertiesKHR& disp1, const VkDisplayModePropertiesKHR& disp2) {
+    return disp1.displayMode == disp2.displayMode && disp1.parameters.visibleRegion.width == disp2.parameters.visibleRegion.width &&
+           disp1.parameters.visibleRegion.height == disp2.parameters.visibleRegion.height &&
+           disp1.parameters.refreshRate == disp2.parameters.refreshRate;
+}
+
+inline bool operator==(const VkDisplayModePropertiesKHR& disp1, const VkDisplayModeProperties2KHR& disp2) {
+    return disp1 == disp2.displayModeProperties;
+}
+inline bool operator==(const VkDisplayPlaneCapabilitiesKHR& caps1, const VkDisplayPlaneCapabilitiesKHR& caps2) {
+    return caps1.supportedAlpha == caps2.supportedAlpha && caps1.minSrcPosition.x == caps2.minSrcPosition.x &&
+           caps1.minSrcPosition.y == caps2.minSrcPosition.y && caps1.maxSrcPosition.x == caps2.maxSrcPosition.x &&
+           caps1.maxSrcPosition.y == caps2.maxSrcPosition.y && caps1.minSrcExtent.width == caps2.minSrcExtent.width &&
+           caps1.minSrcExtent.height == caps2.minSrcExtent.height && caps1.maxSrcExtent.width == caps2.maxSrcExtent.width &&
+           caps1.maxSrcExtent.height == caps2.maxSrcExtent.height && caps1.minDstPosition.x == caps2.minDstPosition.x &&
+           caps1.minDstPosition.y == caps2.minDstPosition.y && caps1.maxDstPosition.x == caps2.maxDstPosition.x &&
+           caps1.maxDstPosition.y == caps2.maxDstPosition.y && caps1.minDstExtent.width == caps2.minDstExtent.width &&
+           caps1.minDstExtent.height == caps2.minDstExtent.height && caps1.maxDstExtent.width == caps2.maxDstExtent.width &&
+           caps1.maxDstExtent.height == caps2.maxDstExtent.height;
+}
+
+inline bool operator==(const VkDisplayPlaneCapabilitiesKHR& caps1, const VkDisplayPlaneCapabilities2KHR& caps2) {
+    return caps1 == caps2.capabilities;
+}
+inline bool operator==(const VkDisplayPlanePropertiesKHR& props1, const VkDisplayPlanePropertiesKHR& props2) {
+    return props1.currentDisplay == props2.currentDisplay && props1.currentStackIndex == props2.currentStackIndex;
+}
+inline bool operator==(const VkDisplayPlanePropertiesKHR& props1, const VkDisplayPlaneProperties2KHR& props2) {
+    return props1 == props2.displayPlaneProperties;
+}
+// Allow comparison of vectors of different types as long as their elements are comparable (just has to make sure to only apply when
+// T != U)
+template <typename T, typename U, typename = std::enable_if_t<!std::is_same_v<T, U>>>
+bool operator==(const std::vector<T>& a, const std::vector<U>& b) {
+    return std::equal(a.begin(), a.end(), b.begin(), b.end(), [](const auto& left, const auto& right) { return left == right; });
+}
 
 struct VulkanFunction {
     std::string name;
@@ -906,14 +1006,6 @@ inline std::string test_platform_executable_path() {
     buffer.resize(ret);
     buffer[ret] = '\0';
     return buffer;
-}
-
-inline std::wstring conver_str_to_wstr(std::string const& input) {
-    std::wstring output{};
-    output.resize(input.size());
-    size_t characters_converted = 0;
-    mbstowcs_s(&characters_converted, &output[0], output.size() + 1, input.c_str(), input.size());
-    return output;
 }
 
 #endif

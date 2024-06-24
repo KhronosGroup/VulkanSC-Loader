@@ -22,9 +22,15 @@ cmake_minimum_required(VERSION 3.17.2)
 set(VULKANSC ON CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
 
 if(VULKANSC)
-    project(VULKAN_LOADER VERSION 1.0.14 LANGUAGES C)
+    project(VULKAN_LOADER VERSION 1.0.15 LANGUAGES C)
 else()
-    project(VULKAN_LOADER VERSION 1.3.278 LANGUAGES C)
+    project(VULKAN_LOADER VERSION 1.3.286 LANGUAGES C)
+endif()
+
+option(CODE_COVERAGE "Enable Code Coverage" OFF)
+if (CODE_COVERAGE)
+    include(scripts/CodeCoverage.cmake)
+    add_code_coverage_all_targets()
 endif()
 
 # This variable enables downstream users to customize the target API

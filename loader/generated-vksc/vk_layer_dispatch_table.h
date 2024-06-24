@@ -103,6 +103,9 @@ typedef struct VkLayerInstanceDispatchTable_ {
     // ---- VK_KHR_object_refresh extension commands
     PFN_vkGetPhysicalDeviceRefreshableObjectTypesKHR GetPhysicalDeviceRefreshableObjectTypesKHR;
 
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+
     // ---- VK_EXT_direct_mode_display extension commands
     PFN_vkReleaseDisplayEXT ReleaseDisplayEXT;
 
@@ -117,11 +120,16 @@ typedef struct VkLayerInstanceDispatchTable_ {
     // ---- VK_EXT_sample_locations extension commands
     PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT GetPhysicalDeviceMultisamplePropertiesEXT;
 
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT GetPhysicalDeviceCalibrateableTimeDomainsEXT;
-
     // ---- VK_EXT_headless_surface extension commands
     PFN_vkCreateHeadlessSurfaceEXT CreateHeadlessSurfaceEXT;
+
+    // ---- VK_NV_acquire_winrt_display extension commands
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    PFN_vkAcquireWinrtDisplayNV AcquireWinrtDisplayNV;
+#endif // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    PFN_vkGetWinrtDisplayNV GetWinrtDisplayNV;
+#endif // VK_USE_PLATFORM_WIN32_KHR
 
     // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
@@ -336,6 +344,12 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdBlitImage2KHR CmdBlitImage2KHR;
     PFN_vkCmdResolveImage2KHR CmdResolveImage2KHR;
 
+    // ---- VK_KHR_line_rasterization extension commands
+    PFN_vkCmdSetLineStippleKHR CmdSetLineStippleKHR;
+
+    // ---- VK_KHR_calibrated_timestamps extension commands
+    PFN_vkGetCalibratedTimestampsKHR GetCalibratedTimestampsKHR;
+
     // ---- VK_EXT_display_control extension commands
     PFN_vkDisplayPowerControlEXT DisplayPowerControlEXT;
     PFN_vkRegisterDeviceEventEXT RegisterDeviceEventEXT;
@@ -368,9 +382,6 @@ typedef struct VkLayerDispatchTable_ {
 
     // ---- VK_EXT_external_memory_host extension commands
     PFN_vkGetMemoryHostPointerPropertiesEXT GetMemoryHostPointerPropertiesEXT;
-
-    // ---- VK_EXT_calibrated_timestamps extension commands
-    PFN_vkGetCalibratedTimestampsEXT GetCalibratedTimestampsEXT;
 
     // ---- VK_EXT_line_rasterization extension commands
     PFN_vkCmdSetLineStippleEXT CmdSetLineStippleEXT;

@@ -31,7 +31,7 @@ std::string get_settings_location_log_message([[maybe_unused]] FrameworkEnvironm
                                               [[maybe_unused]] bool use_secure = false) {
     std::string s = "Using layer configurations found in loader settings from ";
 #if defined(WIN32)
-    return s + env.get_folder(ManifestLocation::settings_location).location().str() + "\\vk_loader_settings.json";
+    return s + (env.get_folder(ManifestLocation::settings_location).location() / "vk_loader_settings.json").string();
 #elif COMMON_UNIX_PLATFORMS
 #ifdef VULKANSC
     if (use_secure)
@@ -61,7 +61,7 @@ TEST(SettingsFile, FileExist) {
         AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
             LoaderSettingsLayerConfiguration{}
                 .set_name(regular_layer_name)
-                .set_path(env.get_shimmed_layer_manifest_path().str())
+                .set_path(env.get_shimmed_layer_manifest_path())
                 .set_control("on"))));
     {
         auto layer_props = env.GetLayerProperties(1);
@@ -88,11 +88,10 @@ TEST(SettingsFile, SettingsInUnsecuredLocation) {
         "regular_test_layer.json"}
                                .set_discovery_type(ManifestDiscoveryType::override_folder));
     env.update_loader_settings(env.loader_settings.set_file_format_version({1, 0, 0}).add_app_specific_setting(
-        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
-            LoaderSettingsLayerConfiguration{}
-                .set_name(regular_layer_name)
-                .set_path(env.get_layer_manifest_path().str())
-                .set_control("on"))));
+        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                       .set_name(regular_layer_name)
+                                                                                       .set_path(env.get_layer_manifest_path())
+                                                                                       .set_control("on"))));
     {
         auto layer_props = env.GetLayerProperties(1);
         EXPECT_TRUE(string_eq(layer_props.at(0).layerName, regular_layer_name));
@@ -130,11 +129,10 @@ TEST(SettingsFile, SettingsInSecuredLocation) {
         "regular_test_layer.json"}
                                .set_discovery_type(ManifestDiscoveryType::override_folder));
     env.update_loader_settings(env.loader_settings.set_file_format_version({1, 0, 0}).add_app_specific_setting(
-        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
-            LoaderSettingsLayerConfiguration{}
-                .set_name(regular_layer_name)
-                .set_path(env.get_layer_manifest_path().str())
-                .set_control("on"))));
+        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                       .set_name(regular_layer_name)
+                                                                                       .set_path(env.get_layer_manifest_path())
+                                                                                       .set_control("on"))));
     {
         auto layer_props = env.GetLayerProperties(1);
         EXPECT_TRUE(string_eq(layer_props.at(0).layerName, regular_layer_name));
@@ -186,7 +184,7 @@ TEST(SettingsFile, SupportsMultipleSetingsSimultaneously) {
                                           .add_stderr_log_filter("all")
                                           .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                                                        .set_name(app_specific_layer_name)
-                                                                       .set_path(env.get_layer_manifest_path(0).str())
+                                                                       .set_path(env.get_layer_manifest_path(0))
                                                                        .set_control("on"))
                                           .add_app_key("key0"))
             // configuration that should never be used
@@ -205,7 +203,7 @@ TEST(SettingsFile, SupportsMultipleSetingsSimultaneously) {
             .add_app_specific_setting(AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
                 LoaderSettingsLayerConfiguration{}
                     .set_name(global_layer_name)
-                    .set_path(env.get_layer_manifest_path(1).str())
+                    .set_path(env.get_layer_manifest_path(1))
                     .set_control("on"))));
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device({});
     {
@@ -222,7 +220,7 @@ TEST(SettingsFile, SupportsMultipleSetingsSimultaneously) {
     }
     env.debug_log.clear();
     // Set one set to contain the current executable path
-    env.loader_settings.app_specific_settings.at(0).add_app_key(fs::fixup_backslashes_in_path(test_platform_executable_path()));
+    env.loader_settings.app_specific_settings.at(0).add_app_key(escape_backslashes_for_json(test_platform_executable_path()));
     env.update_loader_settings(env.loader_settings);
     {
         auto layer_props = env.GetLayerProperties(1);
@@ -252,10 +250,7 @@ TEST(SettingsFile, LayerAutoEnabledByEnvVars) {
 
     env.update_loader_settings(
         env.loader_settings.add_app_specific_setting(AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
-            LoaderSettingsLayerConfiguration{}
-                .set_name(layer_name)
-                .set_path(env.get_layer_manifest_path(0).str())
-                .set_control("auto"))));
+            LoaderSettingsLayerConfiguration{}.set_name(layer_name).set_path(env.get_layer_manifest_path(0)).set_control("auto"))));
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2));
     {
         EnvVarWrapper instance_layers{"VK_INSTANCE_LAYERS", layer_name};
@@ -299,7 +294,7 @@ TEST(SettingsFile, LayerDisablesImplicitLayer) {
         AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
             LoaderSettingsLayerConfiguration{}
                 .set_name(implicit_layer_name)
-                .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                .set_path(env.get_shimmed_layer_manifest_path(0))
                 .set_control("off")
                 .set_treat_as_implicit_manifest(true))));
     {
@@ -344,19 +339,19 @@ TEST(SettingsFile, ImplicitLayersDontInterfere) {
         ASSERT_TRUE(string_eq(layers.at(1).layerName, implicit_layer_name2));
     }
     // Now setup the settings file to contain a specific order
-    env.update_loader_settings(LoaderSettings{}.add_app_specific_setting(
-        AppSpecificSettings{}
-            .add_stderr_log_filter("all")
-            .add_layer_configuration(LoaderSettingsLayerConfiguration{}
-                                         .set_name(implicit_layer_name1)
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
-                                         .set_control("auto")
-                                         .set_treat_as_implicit_manifest(true))
-            .add_layer_configuration(LoaderSettingsLayerConfiguration{}
-                                         .set_name(implicit_layer_name2)
-                                         .set_path(env.get_shimmed_layer_manifest_path(1).str())
-                                         .set_control("auto")
-                                         .set_treat_as_implicit_manifest(true))));
+    env.update_loader_settings(
+        LoaderSettings{}.add_app_specific_setting(AppSpecificSettings{}
+                                                      .add_stderr_log_filter("all")
+                                                      .add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                   .set_name(implicit_layer_name1)
+                                                                                   .set_path(env.get_shimmed_layer_manifest_path(0))
+                                                                                   .set_control("auto")
+                                                                                   .set_treat_as_implicit_manifest(true))
+                                                      .add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                   .set_name(implicit_layer_name2)
+                                                                                   .set_path(env.get_shimmed_layer_manifest_path(1))
+                                                                                   .set_control("auto")
+                                                                                   .set_treat_as_implicit_manifest(true))));
     {
         auto layer_props = env.GetLayerProperties(2);
         ASSERT_TRUE(string_eq(layer_props.at(0).layerName, implicit_layer_name1));
@@ -372,19 +367,19 @@ TEST(SettingsFile, ImplicitLayersDontInterfere) {
     }
 
     // Flip the order and store the settings in the env for later use in the test
-    env.loader_settings = LoaderSettings{}.add_app_specific_setting(
-        AppSpecificSettings{}
-            .add_stderr_log_filter("all")
-            .add_layer_configuration(LoaderSettingsLayerConfiguration{}
-                                         .set_name(implicit_layer_name2)
-                                         .set_path(env.get_shimmed_layer_manifest_path(1).str())
-                                         .set_control("auto")
-                                         .set_treat_as_implicit_manifest(true))
-            .add_layer_configuration(LoaderSettingsLayerConfiguration{}
-                                         .set_name(implicit_layer_name1)
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
-                                         .set_control("auto")
-                                         .set_treat_as_implicit_manifest(true)));
+    env.loader_settings =
+        LoaderSettings{}.add_app_specific_setting(AppSpecificSettings{}
+                                                      .add_stderr_log_filter("all")
+                                                      .add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                   .set_name(implicit_layer_name2)
+                                                                                   .set_path(env.get_shimmed_layer_manifest_path(1))
+                                                                                   .set_control("auto")
+                                                                                   .set_treat_as_implicit_manifest(true))
+                                                      .add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                   .set_name(implicit_layer_name1)
+                                                                                   .set_path(env.get_shimmed_layer_manifest_path(0))
+                                                                                   .set_control("auto")
+                                                                                   .set_treat_as_implicit_manifest(true)));
     env.update_loader_settings(env.loader_settings);
 
     {
@@ -411,7 +406,7 @@ TEST(SettingsFile, ImplicitLayersDontInterfere) {
         env.loader_settings.app_specific_settings.at(0).layer_configurations.begin() + 1,
         LoaderSettingsLayerConfiguration{}
             .set_name(explicit_layer_name3)
-            .set_path(env.get_shimmed_layer_manifest_path(2).str())
+            .set_path(env.get_shimmed_layer_manifest_path(2))
             .set_control("on"));
     env.update_loader_settings(env.loader_settings);
     {
@@ -445,7 +440,7 @@ TEST(SettingsFile, ApplicationEnablesIgnored) {
         AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
             LoaderSettingsLayerConfiguration{}
                 .set_name(explicit_layer_name)
-                .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                .set_path(env.get_shimmed_layer_manifest_path(0))
                 .set_control("off"))));
     {
         ASSERT_NO_FATAL_FAILURE(env.GetLayerProperties(0));
@@ -599,12 +594,12 @@ TEST(SettingsFile, UnknownLayersInRightPlace) {
             .add_stderr_log_filter("all")
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name2)
-                                         .set_path(env.get_shimmed_layer_manifest_path(2).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(2))
                                          .set_control("on"))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}.set_control("unordered_layer_location"))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(implicit_layer_name2)
-                                         .set_path(env.get_shimmed_layer_manifest_path(3).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(3))
                                          .set_control("on")
                                          .set_treat_as_implicit_manifest(true))));
 
@@ -648,11 +643,11 @@ TEST(SettingsFile, MultipleLayersWithSameName) {
             .add_stderr_log_filter("all")
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(0))
                                          .set_control("on"))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path(1).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(1))
                                          .set_control("on"))));
     auto layer_props = env.GetLayerProperties(2);
     ASSERT_TRUE(string_eq(layer_props.at(0).layerName, explicit_layer_name));
@@ -686,11 +681,11 @@ TEST(SettingsFile, MultipleLayersWithSamePath) {
             .add_stderr_log_filter("all")
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(0))
                                          .set_control("on"))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(0))
                                          .set_control("on"))));
 
     auto layer_props = env.GetLayerProperties(1);
@@ -728,7 +723,7 @@ TEST(SettingsFile, MismatchedLayerNameAndManifestPath) {
         AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
             LoaderSettingsLayerConfiguration{}
                 .set_name(settings_explicit_layer_name)
-                .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                .set_path(env.get_shimmed_layer_manifest_path(0))
                 .set_control("on"))));
 
     ASSERT_NO_FATAL_FAILURE(env.GetLayerProperties(0));
@@ -794,13 +789,13 @@ TEST(SettingsFile, MetaLayerAlsoActivates) {
             .add_stderr_log_filter("all")
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(settings_explicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(0))
                                          .set_control("on")
                                          .set_treat_as_implicit_manifest(false))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}.set_control("unordered_layer_location"))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(settings_implicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path(1).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(1))
                                          .set_control("auto")
                                          .set_treat_as_implicit_manifest(true))));
     {
@@ -883,22 +878,22 @@ TEST(SettingsFile, LayerOrdering) {
     std::vector<LoaderSettingsLayerConfiguration> layer_configs{4};
     layer_configs.at(0)
         .set_name(explicit_layer_name1)
-        .set_path(env.get_shimmed_layer_manifest_path(0).str())
+        .set_path(env.get_shimmed_layer_manifest_path(0))
         .set_control("on")
         .set_treat_as_implicit_manifest(false);
     layer_configs.at(1)
         .set_name(explicit_layer_name2)
-        .set_path(env.get_shimmed_layer_manifest_path(1).str())
+        .set_path(env.get_shimmed_layer_manifest_path(1))
         .set_control("on")
         .set_treat_as_implicit_manifest(false);
     layer_configs.at(2)
         .set_name(implicit_layer_name1)
-        .set_path(env.get_shimmed_layer_manifest_path(2).str())
+        .set_path(env.get_shimmed_layer_manifest_path(2))
         .set_control("on")
         .set_treat_as_implicit_manifest(true);
     layer_configs.at(3)
         .set_name(implicit_layer_name2)
-        .set_path(env.get_shimmed_layer_manifest_path(3).str())
+        .set_path(env.get_shimmed_layer_manifest_path(3))
         .set_control("on")
         .set_treat_as_implicit_manifest(true);
 
@@ -979,7 +974,7 @@ TEST(SettingsFile, EnvVarsWork_VK_LAYER_PATH) {
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(non_env_var_layer_name2)
                                          .set_control("on")
-                                         .set_path(env.get_shimmed_layer_manifest_path(2).str()))
+                                         .set_path(env.get_shimmed_layer_manifest_path(2)))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}.set_control("unordered_layer_location"))));
     {
         auto layer_props = env.GetLayerProperties(3);
@@ -1060,15 +1055,15 @@ TEST(SettingsFile, EnvVarsWork_VK_ADD_LAYER_PATH) {
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name1)
                                          .set_control("on")
-                                         .set_path(env.get_shimmed_layer_manifest_path(1).str()))
+                                         .set_path(env.get_shimmed_layer_manifest_path(1)))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(non_env_var_layer_name2)
                                          .set_control("on")
-                                         .set_path(env.get_shimmed_layer_manifest_path(2).str()))
+                                         .set_path(env.get_shimmed_layer_manifest_path(2)))
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(implicit_layer_name1)
                                          .set_control("on")
-                                         .set_path(env.get_shimmed_layer_manifest_path(0).str())
+                                         .set_path(env.get_shimmed_layer_manifest_path(0))
                                          .set_treat_as_implicit_manifest(true))));
     {
         auto layer_props = env.GetLayerProperties(3);
@@ -1125,7 +1120,7 @@ TEST(SettingsFile, EnvVarsWork_VK_INSTANCE_LAYERS) {
             LoaderSettingsLayerConfiguration{}
                 .set_name(explicit_layer_name)
                 .set_control("off")
-                .set_path(env.get_shimmed_layer_manifest_path(0).str()))));
+                .set_path(env.get_shimmed_layer_manifest_path(0)))));
     {
         ASSERT_NO_FATAL_FAILURE(env.GetLayerProperties(0));
 
@@ -1162,7 +1157,7 @@ TEST(SettingsFile, EnvVarsWork_VK_LOADER_LAYERS_ENABLE) {
             LoaderSettingsLayerConfiguration{}
                 .set_name(explicit_layer_name)
                 .set_control("off")
-                .set_path(env.get_shimmed_layer_manifest_path(0).str()))));
+                .set_path(env.get_shimmed_layer_manifest_path(0)))));
 
     EnvVarWrapper vk_instance_layers{"VK_LOADER_LAYERS_ENABLE", explicit_layer_name};
     ASSERT_NO_FATAL_FAILURE(env.GetLayerProperties(0));
@@ -1189,7 +1184,7 @@ TEST(SettingsFile, EnvVarsWork_VK_LOADER_LAYERS_DISABLE) {
             LoaderSettingsLayerConfiguration{}
                 .set_name(explicit_layer_name)
                 .set_control("on")
-                .set_path(env.get_shimmed_layer_manifest_path(0).str()))));
+                .set_path(env.get_shimmed_layer_manifest_path(0)))));
 
     EnvVarWrapper vk_instance_layers{"VK_LOADER_LAYERS_DISABLE", explicit_layer_name};
     auto layer_props = env.GetLayerProperties(1);
@@ -1216,11 +1211,10 @@ TEST(SettingsFile, MultipleKeysInRegistryInUnsecureLocation) {
         "regular_test_layer.json"}
                                .set_discovery_type(ManifestDiscoveryType::override_folder));
     env.update_loader_settings(env.loader_settings.set_file_format_version({1, 0, 0}).add_app_specific_setting(
-        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
-            LoaderSettingsLayerConfiguration{}
-                .set_name(regular_layer_name)
-                .set_path(env.get_layer_manifest_path().str())
-                .set_control("on"))));
+        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                       .set_name(regular_layer_name)
+                                                                                       .set_path(env.get_layer_manifest_path())
+                                                                                       .set_control("on"))));
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2));
 
     auto layer_props = env.GetLayerProperties(1);
@@ -1249,11 +1243,10 @@ TEST(SettingsFile, MultipleKeysInRegistryInSecureLocation) {
         "regular_test_layer.json"}
                                .set_discovery_type(ManifestDiscoveryType::override_folder));
     env.update_loader_settings(env.loader_settings.set_file_format_version({1, 0, 0}).add_app_specific_setting(
-        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
-            LoaderSettingsLayerConfiguration{}
-                .set_name(regular_layer_name)
-                .set_path(env.get_layer_manifest_path().str())
-                .set_control("on"))));
+        AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(LoaderSettingsLayerConfiguration{}
+                                                                                       .set_name(regular_layer_name)
+                                                                                       .set_path(env.get_layer_manifest_path())
+                                                                                       .set_control("on"))));
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2));
 
     // Make sure it works if the settings file is in the HKEY_LOCAL_MACHINE
@@ -1303,7 +1296,7 @@ TEST(SettingsFile, PreInstanceFunctions) {
         LoaderSettingsLayerConfiguration{}
             .set_name(implicit_layer_name)
             .set_control("on")
-            .set_path(env.get_shimmed_layer_manifest_path(0).str())
+            .set_path(env.get_shimmed_layer_manifest_path(0))
             .set_treat_as_implicit_manifest(true)));
     env.update_loader_settings(env.loader_settings);
     {
@@ -1430,7 +1423,7 @@ TEST(SettingsFile, ImplicitLayerDisableEnvironmentVariableOverriden) {
     env.loader_settings.add_app_specific_setting(AppSpecificSettings{}.add_stderr_log_filter("all").add_layer_configuration(
         LoaderSettingsLayerConfiguration{}
             .set_name(implicit_layer_name)
-            .set_path(env.get_shimmed_layer_manifest_path(0).str())
+            .set_path(env.get_shimmed_layer_manifest_path(0))
             .set_treat_as_implicit_manifest(true)));
 
     // control is set to on
@@ -1539,7 +1532,7 @@ TEST(SettingsFile, StderrLogFilters) {
         AppSpecificSettings{}
             .add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                          .set_name(explicit_layer_name)
-                                         .set_path(env.get_shimmed_layer_manifest_path().str())
+                                         .set_path(env.get_shimmed_layer_manifest_path())
                                          .set_control("on"))
             .add_layer_configuration(
                 LoaderSettingsLayerConfiguration{}.set_name("VK_LAYER_missing").set_path("/road/to/nowhere").set_control("on"))));
@@ -1548,7 +1541,7 @@ TEST(SettingsFile, StderrLogFilters) {
     expected_output_verbose += "Layer Configurations count = 2\n";
     expected_output_verbose += "---- Layer Configuration [0] ----\n";
     expected_output_verbose += std::string("Name: ") + explicit_layer_name + "\n";
-    expected_output_verbose += "Path: " + env.get_shimmed_layer_manifest_path().str() + "\n";
+    expected_output_verbose += "Path: " + env.get_shimmed_layer_manifest_path().string() + "\n";
     expected_output_verbose += "Control: on\n";
     expected_output_verbose += "---- Layer Configuration [1] ----\n";
     expected_output_verbose += "Name: VK_LAYER_missing\n";
@@ -1659,7 +1652,7 @@ TEST(SettingsFile, TooManyLayers) {
                                    .set_discovery_type(ManifestDiscoveryType::override_folder));
         env.loader_settings.app_specific_settings.at(0).add_layer_configuration(LoaderSettingsLayerConfiguration{}
                                                                                     .set_name(layer_name + std::to_string(i))
-                                                                                    .set_path(env.get_layer_manifest_path(i).str())
+                                                                                    .set_path(env.get_layer_manifest_path(i))
                                                                                     .set_control("on"));
     }
     env.update_loader_settings(env.loader_settings);
@@ -1689,7 +1682,7 @@ TEST(SettingsFile, TooManyLayers) {
         env.loader_settings.app_specific_settings.at(0).add_layer_configuration(
             LoaderSettingsLayerConfiguration{}
                 .set_name(layer_name + std::to_string(layer_count - i - 1))
-                .set_path(env.get_layer_manifest_path(layer_count - i - 1).str())
+                .set_path(env.get_layer_manifest_path(layer_count - i - 1))
                 .set_control("on"));
     }
     env.update_loader_settings(env.loader_settings);

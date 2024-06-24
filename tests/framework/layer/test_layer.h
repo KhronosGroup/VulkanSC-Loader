@@ -95,7 +95,7 @@ struct TestLayer;
 using FP_layer_callback = VkResult (*)(TestLayer& layer, void* data);
 
 struct TestLayer {
-    fs::path manifest_file_path;
+    std::filesystem::path manifest_file_path;
 #ifdef VULKANSC
     uint32_t manifest_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 13);
 #else
@@ -212,6 +212,10 @@ struct TestLayer {
     BUILDER_VALUE(TestLayer, bool, clobber_pInstance, false)
     // Clober the data pointed to by pDevice to overwrite the magic value
     BUILDER_VALUE(TestLayer, bool, clobber_pDevice, false)
+
+    BUILDER_VALUE(TestLayer, bool, query_vkEnumerateInstanceLayerProperties, false)
+    BUILDER_VALUE(TestLayer, bool, query_vkEnumerateInstanceExtensionProperties, false)
+    BUILDER_VALUE(TestLayer, bool, query_vkEnumerateInstanceVersion, false)
 
     PFN_vkGetInstanceProcAddr next_vkGetInstanceProcAddr = VK_NULL_HANDLE;
     PFN_GetPhysicalDeviceProcAddr next_GetPhysicalDeviceProcAddr = VK_NULL_HANDLE;

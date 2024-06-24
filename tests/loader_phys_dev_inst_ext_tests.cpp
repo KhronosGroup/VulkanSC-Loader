@@ -28,6 +28,8 @@
 
 #include "test_environment.h"
 
+#include <algorithm>
+
 // These tests are all instance extension tests that touch physical devices.  This was
 // before the idea that physical device extensions were more appropriately found in the
 // list of device extensions.  Because of that, all these tests need to support devices
@@ -412,57 +414,6 @@ void FillInRandomFeatures(VkPhysicalDeviceFeatures& feats) {
     feats.inheritedQueries = (rand() % 2) == 0 ? VK_FALSE : VK_TRUE;
 }
 
-// Compare the contents of the feature structs
-bool CompareFeatures(const VkPhysicalDeviceFeatures& feats1, const VkPhysicalDeviceFeatures2& feats2) {
-    return feats1.robustBufferAccess == feats2.features.robustBufferAccess &&
-           feats1.fullDrawIndexUint32 == feats2.features.fullDrawIndexUint32 &&
-           feats1.imageCubeArray == feats2.features.imageCubeArray && feats1.independentBlend == feats2.features.independentBlend &&
-           feats1.geometryShader == feats2.features.geometryShader &&
-           feats1.tessellationShader == feats2.features.tessellationShader &&
-           feats1.sampleRateShading == feats2.features.sampleRateShading && feats1.dualSrcBlend == feats2.features.dualSrcBlend &&
-           feats1.logicOp == feats2.features.logicOp && feats1.multiDrawIndirect == feats2.features.multiDrawIndirect &&
-           feats1.drawIndirectFirstInstance == feats2.features.drawIndirectFirstInstance &&
-           feats1.depthClamp == feats2.features.depthClamp && feats1.depthBiasClamp == feats2.features.depthBiasClamp &&
-           feats1.fillModeNonSolid == feats2.features.fillModeNonSolid && feats1.depthBounds == feats2.features.depthBounds &&
-           feats1.wideLines == feats2.features.wideLines && feats1.largePoints == feats2.features.largePoints &&
-           feats1.alphaToOne == feats2.features.alphaToOne && feats1.multiViewport == feats2.features.multiViewport &&
-           feats1.samplerAnisotropy == feats2.features.samplerAnisotropy &&
-           feats1.textureCompressionETC2 == feats2.features.textureCompressionETC2 &&
-           feats1.textureCompressionASTC_LDR == feats2.features.textureCompressionASTC_LDR &&
-           feats1.textureCompressionBC == feats2.features.textureCompressionBC &&
-           feats1.occlusionQueryPrecise == feats2.features.occlusionQueryPrecise &&
-           feats1.pipelineStatisticsQuery == feats2.features.pipelineStatisticsQuery &&
-           feats1.vertexPipelineStoresAndAtomics == feats2.features.vertexPipelineStoresAndAtomics &&
-           feats1.fragmentStoresAndAtomics == feats2.features.fragmentStoresAndAtomics &&
-           feats1.shaderTessellationAndGeometryPointSize == feats2.features.shaderTessellationAndGeometryPointSize &&
-           feats1.shaderImageGatherExtended == feats2.features.shaderImageGatherExtended &&
-           feats1.shaderStorageImageExtendedFormats == feats2.features.shaderStorageImageExtendedFormats &&
-           feats1.shaderStorageImageMultisample == feats2.features.shaderStorageImageMultisample &&
-           feats1.shaderStorageImageReadWithoutFormat == feats2.features.shaderStorageImageReadWithoutFormat &&
-           feats1.shaderStorageImageWriteWithoutFormat == feats2.features.shaderStorageImageWriteWithoutFormat &&
-           feats1.shaderUniformBufferArrayDynamicIndexing == feats2.features.shaderUniformBufferArrayDynamicIndexing &&
-           feats1.shaderSampledImageArrayDynamicIndexing == feats2.features.shaderSampledImageArrayDynamicIndexing &&
-           feats1.shaderStorageBufferArrayDynamicIndexing == feats2.features.shaderStorageBufferArrayDynamicIndexing &&
-           feats1.shaderStorageImageArrayDynamicIndexing == feats2.features.shaderStorageImageArrayDynamicIndexing &&
-           feats1.shaderClipDistance == feats2.features.shaderClipDistance &&
-           feats1.shaderCullDistance == feats2.features.shaderCullDistance &&
-           feats1.shaderFloat64 == feats2.features.shaderFloat64 && feats1.shaderInt64 == feats2.features.shaderInt64 &&
-           feats1.shaderInt16 == feats2.features.shaderInt16 &&
-           feats1.shaderResourceResidency == feats2.features.shaderResourceResidency &&
-           feats1.shaderResourceMinLod == feats2.features.shaderResourceMinLod &&
-           feats1.sparseBinding == feats2.features.sparseBinding &&
-           feats1.sparseResidencyBuffer == feats2.features.sparseResidencyBuffer &&
-           feats1.sparseResidencyImage2D == feats2.features.sparseResidencyImage2D &&
-           feats1.sparseResidencyImage3D == feats2.features.sparseResidencyImage3D &&
-           feats1.sparseResidency2Samples == feats2.features.sparseResidency2Samples &&
-           feats1.sparseResidency4Samples == feats2.features.sparseResidency4Samples &&
-           feats1.sparseResidency8Samples == feats2.features.sparseResidency8Samples &&
-           feats1.sparseResidency16Samples == feats2.features.sparseResidency16Samples &&
-           feats1.sparseResidencyAliased == feats2.features.sparseResidencyAliased &&
-           feats1.variableMultisampleRate == feats2.features.variableMultisampleRate &&
-           feats1.inheritedQueries == feats2.features.inheritedQueries;
-}
-
 // Test vkGetPhysicalDeviceFeatures2KHR where nothing supports it.
 TEST(LoaderInstPhysDevExts, PhysDevFeats2KHRNoSupport) {
     FrameworkEnvironment env{};
@@ -514,7 +465,7 @@ TEST(LoaderInstPhysDevExts, PhysDevFeats2KHRInstanceAndICDSupport) {
     instance->vkGetPhysicalDeviceFeatures(physical_device, &feats);
     VkPhysicalDeviceFeatures2 feats2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
     GetPhysDevFeats2KHR(physical_device, &feats2);
-    ASSERT_TRUE(CompareFeatures(feats, feats2));
+    ASSERT_EQ(feats, feats2);
 }
 
 // Test vkGetPhysicalDeviceFeatures2 where instance supports, an ICD, and a device under that ICD
@@ -546,7 +497,7 @@ TEST(LoaderInstPhysDevExts, PhysDevFeats2Simple) {
         instance->vkGetPhysicalDeviceFeatures(physical_device, &feats);
         VkPhysicalDeviceFeatures2 feats2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         GetPhysDevFeats2(physical_device, &feats2);
-        ASSERT_TRUE(CompareFeatures(feats, feats2));
+        ASSERT_EQ(feats, feats2);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -567,7 +518,7 @@ TEST(LoaderInstPhysDevExts, PhysDevFeats2Simple) {
         instance->vkGetPhysicalDeviceFeatures(physical_device, &feats);
         VkPhysicalDeviceFeatures2 feats2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         GetPhysDevFeats2(physical_device, &feats2);
-        ASSERT_TRUE(CompareFeatures(feats, feats2));
+        ASSERT_EQ(feats, feats2);
 
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
@@ -596,7 +547,7 @@ TEST(LoaderInstPhysDevExts, PhysDevFeats2Simple) {
         instance->vkGetPhysicalDeviceFeatures(physical_device, &feats);
         VkPhysicalDeviceFeatures2 feats2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         GetPhysDevFeats2(physical_device, &feats2);
-        ASSERT_TRUE(CompareFeatures(feats, feats2));
+        ASSERT_EQ(feats, feats2);
 
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
@@ -636,11 +587,11 @@ TEST(LoaderInstPhysDevExts, PhysDevFeats2KHRInstanceSupports11) {
 
     VkPhysicalDeviceFeatures2KHR feats2KHR{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
     GetPhysDevFeats2KHR(physical_device, &feats2KHR);
-    ASSERT_TRUE(CompareFeatures(feats, feats2KHR));
+    ASSERT_EQ(feats, feats2KHR);
 
     VkPhysicalDeviceFeatures2 feats2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
     GetPhysDevFeats2(physical_device, &feats2);
-    ASSERT_TRUE(CompareFeatures(feats, feats2));
+    ASSERT_EQ(feats, feats2);
 
     ASSERT_FALSE(log.find("Emulating call in ICD"));
 }
@@ -712,7 +663,7 @@ TEST(LoaderInstPhysDevExts, PhysDevFeatsMixed) {
         instance->vkGetPhysicalDeviceFeatures(physical_devices[dev], &feats);
         VkPhysicalDeviceFeatures2 feats2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
         GetPhysDevFeats2(physical_devices[dev], &feats2);
-        ASSERT_TRUE(CompareFeatures(feats, feats2));
+        ASSERT_EQ(feats, feats2);
     }
 }
 
@@ -1440,22 +1391,6 @@ void FillInRandomMemoryData(VkPhysicalDeviceMemoryProperties& props) {
     }
 }
 
-// Compare the memory structs
-bool CompareMemoryData(const VkPhysicalDeviceMemoryProperties& props1, const VkPhysicalDeviceMemoryProperties2& props2) {
-    bool equal = true;
-    equal = equal && props1.memoryTypeCount == props2.memoryProperties.memoryTypeCount;
-    equal = equal && props1.memoryHeapCount == props2.memoryProperties.memoryHeapCount;
-    for (uint32_t i = 0; i < props1.memoryHeapCount; ++i) {
-        equal = equal && props1.memoryHeaps[i].size == props2.memoryProperties.memoryHeaps[i].size;
-        equal = equal && props1.memoryHeaps[i].flags == props2.memoryProperties.memoryHeaps[i].flags;
-    }
-    for (uint32_t i = 0; i < props1.memoryTypeCount; ++i) {
-        equal = equal && props1.memoryTypes[i].propertyFlags == props2.memoryProperties.memoryTypes[i].propertyFlags;
-        equal = equal && props1.memoryTypes[i].heapIndex == props2.memoryProperties.memoryTypes[i].heapIndex;
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceMemoryProperties2KHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevMemoryProps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -1482,7 +1417,7 @@ TEST(LoaderInstPhysDevExts, PhysDevMemoryProps2KHRInstanceAndICDSupport) {
 
     VkPhysicalDeviceMemoryProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2};
     GetPhysDevMemoryProps2KHR(physical_device, &props2);
-    ASSERT_TRUE(CompareMemoryData(props, props2));
+    ASSERT_EQ(props, props2);
 }
 
 // Test vkGetPhysicalDeviceMemoryProperties2 where instance supports, an ICD, and a device under that ICD
@@ -1514,7 +1449,7 @@ TEST(LoaderInstPhysDevExts, PhysDevMemoryProps2Simple) {
 
         VkPhysicalDeviceMemoryProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2};
         GetPhysDevMemoryProps2(physical_device, &props2);
-        ASSERT_TRUE(CompareMemoryData(props, props2));
+        ASSERT_EQ(props, props2);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -1536,7 +1471,7 @@ TEST(LoaderInstPhysDevExts, PhysDevMemoryProps2Simple) {
 
         VkPhysicalDeviceMemoryProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2};
         GetPhysDevMemoryProps2(physical_device, &props2);
-        ASSERT_TRUE(CompareMemoryData(props, props2));
+        ASSERT_EQ(props, props2);
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -1565,7 +1500,7 @@ TEST(LoaderInstPhysDevExts, PhysDevMemoryProps2Simple) {
 
         VkPhysicalDeviceMemoryProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2};
         GetPhysDevMemoryProps2(physical_device, &props2);
-        ASSERT_TRUE(CompareMemoryData(props, props2));
+        ASSERT_EQ(props, props2);
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
 }
@@ -1605,11 +1540,11 @@ TEST(LoaderInstPhysDevExts, PhysDevMemoryProps2KHRInstanceSupports11) {
 
     VkPhysicalDeviceMemoryProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2};
     GetPhysDevMemoryProps2(physical_device, &props2);
-    ASSERT_TRUE(CompareMemoryData(props, props2));
+    ASSERT_EQ(props, props2);
 
     VkPhysicalDeviceMemoryProperties2KHR props2KHR{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2_KHR};
     GetPhysDevMemoryProps2KHR(physical_device, &props2KHR);
-    ASSERT_TRUE(CompareMemoryData(props, props2KHR));
+    ASSERT_EQ(props, props2KHR);
 
     ASSERT_FALSE(log.find("Emulating call in ICD"));
 }
@@ -1681,7 +1616,7 @@ TEST(LoaderInstPhysDevExts, PhysDevMemoryPropsMixed) {
 
         VkPhysicalDeviceMemoryProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2};
         GetPhysDevMemoryProps2(physical_devices[dev], &props2);
-        ASSERT_TRUE(CompareMemoryData(props, props2));
+        ASSERT_EQ(props, props2);
     }
 }
 
@@ -1729,25 +1664,6 @@ uint32_t FillInRandomQueueFamilyData(std::vector<MockQueueFamilyProperties>& pro
     return static_cast<uint32_t>(props.size());
 }
 
-// Compare the queue family structs
-bool CompareQueueFamilyData(const std::vector<VkQueueFamilyProperties>& props1,
-                            const std::vector<VkQueueFamilyProperties2>& props2) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        equal = equal && props1[i].queueFlags == props2[i].queueFamilyProperties.queueFlags;
-        equal = equal && props1[i].queueCount == props2[i].queueFamilyProperties.queueCount;
-        equal = equal && props1[i].timestampValidBits == props2[i].queueFamilyProperties.timestampValidBits;
-        equal = equal &&
-                props1[i].minImageTransferGranularity.width == props2[i].queueFamilyProperties.minImageTransferGranularity.width;
-        equal = equal &&
-                props1[i].minImageTransferGranularity.height == props2[i].queueFamilyProperties.minImageTransferGranularity.height;
-        equal = equal &&
-                props1[i].minImageTransferGranularity.depth == props2[i].queueFamilyProperties.minImageTransferGranularity.depth;
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceQueueFamilyProperties2KHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -1783,7 +1699,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2KHRInstanceAndICDSupport) {
     ASSERT_EQ(ret_fam_1, ret_fam_2);
     props2.resize(ret_fam_2, VkQueueFamilyProperties2{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2});
     GetPhysDevQueueFamilyProps2KHR(physical_device, &ret_fam_2, props2.data());
-    ASSERT_TRUE(CompareQueueFamilyData(props, props2));
+    ASSERT_EQ(props, props2);
 }
 
 // Test vkGetPhysicalDeviceQueueFamilyProperties2 where instance supports, an ICD, and a device under that ICD
@@ -1825,7 +1741,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2Simple) {
         ASSERT_EQ(ret_fam_1, ret_fam_2);
         props2.resize(ret_fam_2, VkQueueFamilyProperties2{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2});
         GetPhysDevQueueFamilyProps2(physical_device, &ret_fam_2, props2.data());
-        ASSERT_TRUE(CompareQueueFamilyData(props, props2));
+        ASSERT_EQ(props, props2);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -1857,7 +1773,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2Simple) {
         ASSERT_EQ(ret_fam_1, ret_fam_2);
         props2.resize(ret_fam_2, VkQueueFamilyProperties2{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2});
         GetPhysDevQueueFamilyProps2(physical_device, &ret_fam_2, props2.data());
-        ASSERT_TRUE(CompareQueueFamilyData(props, props2));
+        ASSERT_EQ(props, props2);
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -1896,7 +1812,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2Simple) {
         ASSERT_EQ(ret_fam_1, ret_fam_2);
         props2.resize(ret_fam_2, VkQueueFamilyProperties2{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2});
         GetPhysDevQueueFamilyProps2(physical_device, &ret_fam_2, props2.data());
-        ASSERT_TRUE(CompareQueueFamilyData(props, props2));
+        ASSERT_EQ(props, props2);
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
 }
@@ -1946,7 +1862,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2KHRInstanceSupports11) {
     ASSERT_EQ(ret_fam_1, ret_fam_2);
     props2.resize(ret_fam_2, VkQueueFamilyProperties2{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2});
     GetPhysDevQueueFamilyProps2(physical_device, &ret_fam_2, props2.data());
-    ASSERT_TRUE(CompareQueueFamilyData(props, props2));
+    ASSERT_EQ(props, props2);
 
     std::vector<VkQueueFamilyProperties2KHR> props2KHR{};
     uint32_t ret_fam_2_khr = 0;
@@ -1954,7 +1870,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyProps2KHRInstanceSupports11) {
     ASSERT_EQ(ret_fam_1, ret_fam_2_khr);
     props2KHR.resize(ret_fam_2_khr, VkQueueFamilyProperties2KHR{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2_KHR});
     GetPhysDevQueueFamilyProps2KHR(physical_device, &ret_fam_2_khr, props2KHR.data());
-    ASSERT_TRUE(CompareQueueFamilyData(props, props2KHR));
+    ASSERT_EQ(props, props2KHR);
 
     ASSERT_FALSE(log.find("Emulating call in ICD"));
 }
@@ -2035,7 +1951,7 @@ TEST(LoaderInstPhysDevExts, PhysDevQueueFamilyPropsMixed) {
         ASSERT_EQ(ret_fam_1, ret_fam_2);
         props2.resize(ret_fam_2, VkQueueFamilyProperties2{VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2});
         GetPhysDevQueueFamilyProps2(physical_devices[dev], &ret_fam_2, props2.data());
-        ASSERT_TRUE(CompareQueueFamilyData(props, props2));
+        ASSERT_EQ(props, props2);
     }
 }
 
@@ -2077,21 +1993,6 @@ void FillInRandomSparseImageFormatData(std::vector<VkSparseImageFormatProperties
                                      static_cast<uint32_t>(rand() % 512)};
         props[i].flags = static_cast<VkSparseImageFormatFlags>((rand() % 6) + 1);
     }
-}
-
-// Compare the sparse image format structs
-bool CompareSparseImageFormatData(const std::vector<VkSparseImageFormatProperties>& props1,
-                                  const std::vector<VkSparseImageFormatProperties2>& props2) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        equal = equal && props1[i].aspectMask == props2[i].properties.aspectMask;
-        equal = equal && props1[i].imageGranularity.width == props2[i].properties.imageGranularity.width;
-        equal = equal && props1[i].imageGranularity.height == props2[i].properties.imageGranularity.height;
-        equal = equal && props1[i].imageGranularity.depth == props2[i].properties.imageGranularity.depth;
-        equal = equal && props1[i].flags == props2[i].properties.flags;
-    }
-    return equal;
 }
 
 // Test vkGetPhysicalDeviceSparseImageFormatProperties2KHR where instance and ICD supports it, but device does not support it.
@@ -2143,7 +2044,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatProps2KHRInstanceAndICDSuppo
     props2.resize(sparse_count_2, VkSparseImageFormatProperties2{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2});
     GetPhysDevSparseImageFormatProps2KHR(physical_device, &info2, &sparse_count_2, props2.data());
     ASSERT_EQ(sparse_count_1, sparse_count_2);
-    ASSERT_TRUE(CompareSparseImageFormatData(props, props2));
+    ASSERT_EQ(props, props2);
 }
 
 // Test vkGetPhysicalDeviceSparseImageFormatProperties2 where instance supports, an ICD, and a device under that ICD
@@ -2199,7 +2100,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatProps2Simple) {
         props2.resize(sparse_count_2, VkSparseImageFormatProperties2{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2});
         GetPhysDevSparseImageFormatProps2(physical_device, &info2, &sparse_count_2, props2.data());
         ASSERT_EQ(sparse_count_1, sparse_count_2);
-        ASSERT_TRUE(CompareSparseImageFormatData(props, props2));
+        ASSERT_EQ(props, props2);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -2245,7 +2146,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatProps2Simple) {
         props2.resize(sparse_count_2, VkSparseImageFormatProperties2{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2});
         GetPhysDevSparseImageFormatProps2(physical_device, &info2, &sparse_count_2, props2.data());
         ASSERT_EQ(sparse_count_1, sparse_count_2);
-        ASSERT_TRUE(CompareSparseImageFormatData(props, props2));
+        ASSERT_EQ(props, props2);
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -2298,7 +2199,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatProps2Simple) {
         props2.resize(sparse_count_2, VkSparseImageFormatProperties2{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2});
         GetPhysDevSparseImageFormatProps2(physical_device, &info2, &sparse_count_2, props2.data());
         ASSERT_EQ(sparse_count_1, sparse_count_2);
-        ASSERT_TRUE(CompareSparseImageFormatData(props, props2));
+        ASSERT_EQ(props, props2);
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
 }
@@ -2362,7 +2263,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatProps2KHRInstanceSupports11)
     props2.resize(sparse_count_2, VkSparseImageFormatProperties2{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2});
     GetPhysDevSparseImageFormatProps2(physical_device, &info2, &sparse_count_2, props2.data());
     ASSERT_EQ(sparse_count_1, sparse_count_2);
-    ASSERT_TRUE(CompareSparseImageFormatData(props, props2));
+    ASSERT_EQ(props, props2);
 
     std::vector<VkSparseImageFormatProperties2KHR> props2KHR{};
     uint32_t sparse_count_2_khr = 0;
@@ -2371,7 +2272,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatProps2KHRInstanceSupports11)
     props2KHR.resize(sparse_count_2, VkSparseImageFormatProperties2KHR{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2_KHR});
     GetPhysDevSparseImageFormatProps2KHR(physical_device, &info2, &sparse_count_2_khr, props2KHR.data());
     ASSERT_EQ(sparse_count_1, sparse_count_2_khr);
-    ASSERT_TRUE(CompareSparseImageFormatData(props, props2KHR));
+    ASSERT_EQ(props, props2KHR);
 
     ASSERT_FALSE(log.find("Emulating call in ICD"));
 }
@@ -2468,7 +2369,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSparseImageFormatPropsMixed) {
         props2.resize(sparse_count_2, VkSparseImageFormatProperties2{VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2});
         GetPhysDevSparseImageFormatProps2(physical_devices[dev], &info2, &sparse_count_2, props2.data());
         ASSERT_EQ(sparse_count_1, sparse_count_2);
-        ASSERT_TRUE(CompareSparseImageFormatData(props, props2));
+        ASSERT_EQ(props, props2);
     }
 }
 
@@ -2512,22 +2413,6 @@ void FillInRandomExtMemoryData(VkExternalMemoryProperties& props) {
     props.compatibleHandleTypes = static_cast<VkExternalMemoryHandleTypeFlags>((rand() % 0x1FFE) + 1);
 }
 
-// Compare the external memory data structs
-bool CompareExtMemoryData(const VkExternalMemoryProperties& props1, const VkExternalMemoryProperties& props2,
-                          bool supported = true) {
-    bool equal = true;
-    if (supported) {
-        equal = equal && props1.externalMemoryFeatures == props2.externalMemoryFeatures;
-        equal = equal && props1.exportFromImportedHandleTypes == props2.exportFromImportedHandleTypes;
-        equal = equal && props1.compatibleHandleTypes == props2.compatibleHandleTypes;
-    } else {
-        equal = equal && 0 == props2.externalMemoryFeatures;
-        equal = equal && 0 == props2.exportFromImportedHandleTypes;
-        equal = equal && 0 == props2.compatibleHandleTypes;
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceExternalBufferPropertiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevExtBufProps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -2552,8 +2437,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtBufProps2KHRInstanceAndICDSupport) {
     VkPhysicalDeviceExternalBufferInfoKHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO_KHR};
     VkExternalBufferPropertiesKHR props{VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES_KHR};
     GetPhysicalDeviceExternalBufferPropertiesKHR(physical_device, &info, &props);
-    ASSERT_TRUE(CompareExtMemoryData(env.get_test_icd(0).physical_devices.back().external_memory_properties,
-                                     props.externalMemoryProperties));
+    ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_memory_properties, props.externalMemoryProperties);
 }
 
 // Test vkGetPhysicalDeviceExternalBufferProperties where instance supports, an ICD, and a device under that ICD
@@ -2584,8 +2468,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtBufProps2Simple) {
         VkPhysicalDeviceExternalBufferInfo info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO};
         VkExternalBufferProperties props{VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES};
         GetPhysicalDeviceExternalBufferProperties(physical_device, &info, &props);
-        ASSERT_TRUE(CompareExtMemoryData(env.get_test_icd(0).physical_devices.back().external_memory_properties,
-                                         props.externalMemoryProperties));
+        ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_memory_properties, props.externalMemoryProperties);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -2607,7 +2490,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtBufProps2Simple) {
         VkExternalBufferProperties props{VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES};
         GetPhysicalDeviceExternalBufferProperties(physical_device, &info, &props);
         // Compare against 'zeroed' out VkExternalMemoryProperties
-        ASSERT_TRUE(CompareExtMemoryData(VkExternalMemoryProperties{}, props.externalMemoryProperties));
+        ASSERT_EQ(VkExternalMemoryProperties{}, props.externalMemoryProperties);
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -2635,8 +2518,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtBufProps2Simple) {
         VkPhysicalDeviceExternalBufferInfo info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO};
         VkExternalBufferProperties props{VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES};
         GetPhysicalDeviceExternalBufferProperties(physical_device, &info, &props);
-        ASSERT_TRUE(CompareExtMemoryData(env.get_test_icd(0).physical_devices.back().external_memory_properties,
-                                         props.externalMemoryProperties));
+        ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_memory_properties, props.externalMemoryProperties);
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
 }
@@ -2723,7 +2605,12 @@ TEST(LoaderInstPhysDevExts, PhysDevExtBufPropsMixed) {
                     VkExternalBufferProperties props{VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES};
                     GetPhysicalDeviceExternalBufferProperties(physical_devices[dev], &info, &props);
                     // No driver support for extension or 1.1 for ICD 1, all others support
-                    ASSERT_TRUE(CompareExtMemoryData(cur_dev.external_memory_properties, props.externalMemoryProperties, icd != 1));
+                    if (icd != 1) {
+                        ASSERT_EQ(cur_dev.external_memory_properties, props.externalMemoryProperties);
+                    } else {
+                        ASSERT_EQ(props.externalMemoryProperties, VkExternalMemoryProperties{});
+                    }
+
                     found = true;
                     break;
                 }
@@ -2777,22 +2664,6 @@ void FillInRandomExtSemData(VkExternalSemaphoreProperties& props) {
     props.externalSemaphoreFeatures = static_cast<VkExternalSemaphoreFeatureFlags>((rand() % 0xFFF) + 1);
 }
 
-// Compare the external semaphore data structs
-bool CompareExtSemaphoreData(const VkExternalSemaphoreProperties& props1, const VkExternalSemaphoreProperties& props2,
-                             bool supported = true) {
-    bool equal = true;
-    if (supported) {
-        equal = equal && props1.externalSemaphoreFeatures == props2.externalSemaphoreFeatures;
-        equal = equal && props1.exportFromImportedHandleTypes == props2.exportFromImportedHandleTypes;
-        equal = equal && props1.compatibleHandleTypes == props2.compatibleHandleTypes;
-    } else {
-        equal = equal && 0 == props2.externalSemaphoreFeatures;
-        equal = equal && 0 == props2.exportFromImportedHandleTypes;
-        equal = equal && 0 == props2.compatibleHandleTypes;
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceExternalSemaphorePropertiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevExtSemProps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -2817,7 +2688,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtSemProps2KHRInstanceAndICDSupport) {
     VkPhysicalDeviceExternalSemaphoreInfoKHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO_KHR};
     VkExternalSemaphorePropertiesKHR props{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES_KHR};
     GetPhysicalDeviceExternalSemaphorePropertiesKHR(physical_device, &info, &props);
-    ASSERT_TRUE(CompareExtSemaphoreData(env.get_test_icd(0).physical_devices.back().external_semaphore_properties, props));
+    ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_semaphore_properties, props);
 }
 
 // Test vkGetPhysicalDeviceExternalSemaphoreProperties where instance supports, an ICD, and a device under that ICD
@@ -2848,7 +2719,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtSemProps2Simple) {
         VkPhysicalDeviceExternalSemaphoreInfo info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO};
         VkExternalSemaphoreProperties props{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES};
         GetPhysicalDeviceExternalSemaphoreProperties(physical_device, &info, &props);
-        ASSERT_TRUE(CompareExtSemaphoreData(env.get_test_icd(0).physical_devices.back().external_semaphore_properties, props));
+        ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_semaphore_properties, props);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -2869,7 +2740,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtSemProps2Simple) {
         VkExternalSemaphoreProperties props{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES};
         GetPhysicalDeviceExternalSemaphoreProperties(physical_device, &info, &props);
         // Compare against 'zeroed' out VkExternalSemaphoreProperties
-        ASSERT_TRUE(CompareExtSemaphoreData(VkExternalSemaphoreProperties{}, props));
+        ASSERT_EQ(VkExternalSemaphoreProperties{}, props);
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -2896,7 +2767,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtSemProps2Simple) {
         VkPhysicalDeviceExternalSemaphoreInfo info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO};
         VkExternalSemaphoreProperties props{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES};
         GetPhysicalDeviceExternalSemaphoreProperties(physical_device, &info, &props);
-        ASSERT_TRUE(CompareExtSemaphoreData(env.get_test_icd(0).physical_devices.back().external_semaphore_properties, props));
+        ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_semaphore_properties, props);
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
 }
@@ -2983,7 +2854,11 @@ TEST(LoaderInstPhysDevExts, PhysDevExtSemPropsMixed) {
                     VkExternalSemaphoreProperties props{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES};
                     GetPhysicalDeviceExternalSemaphoreProperties(physical_devices[dev], &info, &props);
                     // No driver support for extension or 1.1 for ICD 1, all others support
-                    ASSERT_TRUE(CompareExtSemaphoreData(cur_dev.external_semaphore_properties, props, icd != 1));
+                    if (icd != 1) {
+                        ASSERT_EQ(cur_dev.external_semaphore_properties, props);
+                    } else {
+                        ASSERT_EQ(props, VkExternalSemaphoreProperties{});
+                    }
                     found = true;
                     break;
                 }
@@ -3037,21 +2912,6 @@ void FillInRandomExtFenceData(VkExternalFenceProperties& props) {
     props.externalFenceFeatures = static_cast<VkExternalFenceFeatureFlags>((rand() % 0xFFF) + 1);
 }
 
-// Compare the external fence data structs
-bool CompareExtFenceData(const VkExternalFenceProperties& props1, const VkExternalFenceProperties& props2, bool supported = true) {
-    bool equal = true;
-    if (supported) {
-        equal = equal && props1.externalFenceFeatures == props2.externalFenceFeatures;
-        equal = equal && props1.exportFromImportedHandleTypes == props2.exportFromImportedHandleTypes;
-        equal = equal && props1.compatibleHandleTypes == props2.compatibleHandleTypes;
-    } else {
-        equal = equal && 0 == props2.externalFenceFeatures;
-        equal = equal && 0 == props2.exportFromImportedHandleTypes;
-        equal = equal && 0 == props2.compatibleHandleTypes;
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceExternalFencePropertiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevExtFenceProps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -3076,7 +2936,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFenceProps2KHRInstanceAndICDSupport) {
     VkPhysicalDeviceExternalFenceInfoKHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO_KHR};
     VkExternalFencePropertiesKHR props{VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES_KHR};
     GetPhysicalDeviceExternalFencePropertiesKHR(physical_device, &info, &props);
-    ASSERT_TRUE(CompareExtFenceData(env.get_test_icd(0).physical_devices.back().external_fence_properties, props));
+    ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_fence_properties, props);
 }
 
 // Test vkGetPhysicalDeviceExternalFenceProperties where instance supports, an ICD, and a device under that ICD
@@ -3107,7 +2967,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFenceProps2Simple) {
         VkPhysicalDeviceExternalFenceInfo info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO};
         VkExternalFenceProperties props{VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES};
         GetPhysicalDeviceExternalFenceProperties(physical_device, &info, &props);
-        ASSERT_TRUE(CompareExtFenceData(env.get_test_icd(0).physical_devices.back().external_fence_properties, props));
+        ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_fence_properties, props);
     }
     {  // Now do the same logic but the application didn't enable 1.0 or the extension so they get the emulated call
         InstWrapper instance(env.vulkan_functions);
@@ -3129,7 +2989,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFenceProps2Simple) {
         VkExternalFenceProperties props{VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES};
         GetPhysicalDeviceExternalFenceProperties(physical_device, &info, &props);
         // Compare against 'zeroed' out VkExternalFenceProperties
-        ASSERT_TRUE(CompareExtFenceData(VkExternalFenceProperties{}, props));
+        ASSERT_EQ(VkExternalFenceProperties{}, props);
         ASSERT_TRUE(log.find("Emulating call in ICD"));
     }
     env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
@@ -3156,7 +3016,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFenceProps2Simple) {
         VkPhysicalDeviceExternalFenceInfo info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO};
         VkExternalFenceProperties props{VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES};
         GetPhysicalDeviceExternalFenceProperties(physical_device, &info, &props);
-        ASSERT_TRUE(CompareExtFenceData(env.get_test_icd(0).physical_devices.back().external_fence_properties, props));
+        ASSERT_EQ(env.get_test_icd(0).physical_devices.back().external_fence_properties, props);
         ASSERT_FALSE(log.find("Emulating call in ICD"));
     }
 }
@@ -3242,7 +3102,11 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFencePropsMixed) {
                     VkExternalFenceProperties props{VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES};
                     GetPhysicalDeviceExternalFenceProperties(physical_devices[dev], &info, &props);
                     // No driver support for extension or 1.1 for ICD 1, all others support
-                    ASSERT_TRUE(CompareExtFenceData(cur_dev.external_fence_properties, props, icd != 1));
+                    if (icd != 1) {
+                        ASSERT_EQ(cur_dev.external_fence_properties, props);
+                    } else {
+                        ASSERT_EQ(props, VkExternalFenceProperties{});
+                    }
                     found = true;
                     break;
                 }
@@ -3305,41 +3169,6 @@ void FillInRandomSurfaceCapsData(VkSurfaceCapabilitiesKHR& props) {
     props.supportedUsageFlags = static_cast<VkImageUsageFlags>((rand() % 0xFFF) + 1);
 }
 
-// Compare the surface capability data structs
-bool CompareSurfaceCapsData(const VkSurfaceCapabilitiesKHR& props1, const VkSurfaceCapabilitiesKHR& props2, bool supported = true) {
-    bool equal = true;
-    if (supported) {
-        equal = equal && props1.minImageCount == props2.minImageCount;
-        equal = equal && props1.maxImageCount == props2.maxImageCount;
-        equal = equal && props1.currentExtent.width == props2.currentExtent.width;
-        equal = equal && props1.currentExtent.height == props2.currentExtent.height;
-        equal = equal && props1.minImageExtent.width == props2.minImageExtent.width;
-        equal = equal && props1.minImageExtent.height == props2.minImageExtent.height;
-        equal = equal && props1.maxImageExtent.width == props2.maxImageExtent.width;
-        equal = equal && props1.maxImageExtent.height == props2.maxImageExtent.height;
-        equal = equal && props1.maxImageArrayLayers == props2.maxImageArrayLayers;
-        equal = equal && props1.supportedTransforms == props2.supportedTransforms;
-        equal = equal && props1.currentTransform == props2.currentTransform;
-        equal = equal && props1.supportedCompositeAlpha == props2.supportedCompositeAlpha;
-        equal = equal && props1.supportedUsageFlags == props2.supportedUsageFlags;
-    } else {
-        equal = equal && 0 == props2.minImageCount;
-        equal = equal && 0 == props2.maxImageCount;
-        equal = equal && 0 == props2.currentExtent.width;
-        equal = equal && 0 == props2.currentExtent.height;
-        equal = equal && 0 == props2.minImageExtent.width;
-        equal = equal && 0 == props2.minImageExtent.height;
-        equal = equal && 0 == props2.maxImageExtent.width;
-        equal = equal && 0 == props2.maxImageExtent.height;
-        equal = equal && 0 == props2.maxImageArrayLayers;
-        equal = equal && 0 == props2.supportedTransforms;
-        equal = equal && 0 == props2.currentTransform;
-        equal = equal && 0 == props2.supportedCompositeAlpha;
-        equal = equal && 0 == props2.supportedUsageFlags;
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceSurfaceCapabilities2KHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevSurfaceCaps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -3385,7 +3214,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSurfaceCaps2KHRInstanceAndICDSupport) {
     VkPhysicalDeviceSurfaceInfo2KHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR, nullptr, surface};
     VkSurfaceCapabilities2KHR props2{VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR};
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceCapabilities2KHR(physical_device, &info, &props2));
-    ASSERT_TRUE(CompareSurfaceCapsData(props, props2.surfaceCapabilities));
+    ASSERT_EQ(props, props2.surfaceCapabilities);
 
     DestroySurfaceKHR(instance.inst, surface, nullptr);
 }
@@ -3481,7 +3310,7 @@ TEST(LoaderInstPhysDevExts, PhysDevSurfaceCaps2KHRMixed) {
         VkPhysicalDeviceSurfaceInfo2KHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR, nullptr, surface};
         VkSurfaceCapabilities2KHR props2{VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR};
         ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceCapabilities2KHR(physical_devices[dev], &info, &props2));
-        ASSERT_TRUE(CompareSurfaceCapsData(props, props2.surfaceCapabilities));
+        ASSERT_EQ(props, props2.surfaceCapabilities);
     }
 
     DestroySurfaceKHR(instance.inst, surface, nullptr);
@@ -3525,23 +3354,6 @@ void FillInRandomSurfaceFormatsData(std::vector<VkSurfaceFormatKHR>& props) {
     }
 }
 
-// Compare the surface formats data structs
-bool CompareSurfaceFormatsData(const std::vector<VkSurfaceFormatKHR>& props1, const std::vector<VkSurfaceFormat2KHR>& props2,
-                               bool supported = true) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        if (supported) {
-            equal = equal && props1[i].format == props2[i].surfaceFormat.format;
-            equal = equal && props1[i].colorSpace == props2[i].surfaceFormat.colorSpace;
-        } else {
-            equal = equal && 0 == props2[i].surfaceFormat.format;
-            equal = equal && 0 == props2[i].surfaceFormat.colorSpace;
-        }
-    }
-    return equal;
-}
-
 // Test vkGetPhysicalDeviceSurfaceFormats2KHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevSurfaceFormats2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -3581,23 +3393,22 @@ TEST(LoaderInstPhysDevExts, PhysDevSurfaceFormats2KHRInstanceAndICDSupport) {
     VkHeadlessSurfaceCreateInfoEXT create_info{VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT};
     ASSERT_EQ(VK_SUCCESS, CreateHeadlessSurfaceEXT(instance.inst, &create_info, nullptr, &surface));
 
-    std::vector<VkSurfaceFormatKHR> props{};
+    std::vector<VkSurfaceFormatKHR> formats{};
     uint32_t count_1 = 0;
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &count_1, nullptr));
     ASSERT_EQ(env.get_test_icd(0).physical_devices.back().surface_formats.size(), count_1);
-    props.resize(count_1);
-    ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &count_1, props.data()));
+    formats.resize(count_1);
+    ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &count_1, formats.data()));
     ASSERT_EQ(env.get_test_icd(0).physical_devices.back().surface_formats.size(), count_1);
 
     VkPhysicalDeviceSurfaceInfo2KHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR, nullptr, surface};
-    std::vector<VkSurfaceFormat2KHR> props2{};
+    std::vector<VkSurfaceFormat2KHR> formats2{};
     uint32_t count_2 = 0;
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormats2KHR(physical_device, &info, &count_2, nullptr));
     ASSERT_EQ(count_1, count_2);
-    props2.resize(count_2, VkSurfaceFormat2KHR{VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR});
-    ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormats2KHR(physical_device, &info, &count_2, props2.data()));
-    ASSERT_TRUE(CompareSurfaceFormatsData(props, props2));
-
+    formats2.resize(count_2, VkSurfaceFormat2KHR{VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR});
+    ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormats2KHR(physical_device, &info, &count_2, formats2.data()));
+    ASSERT_EQ(formats, formats2);
     DestroySurfaceKHR(instance.inst, surface, nullptr);
 }
 
@@ -3686,23 +3497,23 @@ TEST(LoaderInstPhysDevExts, PhysDevSurfaceFormats2KHRMixed) {
     ASSERT_EQ(VK_SUCCESS, CreateHeadlessSurfaceEXT(instance.inst, &create_info, nullptr, &surface));
 
     for (uint32_t dev = 0; dev < device_count; ++dev) {
-        std::vector<VkSurfaceFormatKHR> props{};
+        std::vector<VkSurfaceFormatKHR> formats{};
         uint32_t count_1 = 0;
         ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormatsKHR(physical_devices[dev], surface, &count_1, nullptr));
         ASSERT_NE(0U, count_1);
-        props.resize(count_1);
-        ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormatsKHR(physical_devices[dev], surface, &count_1, props.data()));
+        formats.resize(count_1);
+        ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormatsKHR(physical_devices[dev], surface, &count_1, formats.data()));
         ASSERT_NE(0U, count_1);
 
         VkPhysicalDeviceSurfaceInfo2KHR info{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR, nullptr, surface};
-        std::vector<VkSurfaceFormat2KHR> props2{};
+        std::vector<VkSurfaceFormat2KHR> formats2{};
         uint32_t count_2 = 0;
         ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormats2KHR(physical_devices[dev], &info, &count_2, nullptr));
         ASSERT_EQ(count_1, count_2);
-        props2.resize(count_2, VkSurfaceFormat2KHR{VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR});
-        ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormats2KHR(physical_devices[dev], &info, &count_2, props2.data()));
+        formats2.resize(count_2, VkSurfaceFormat2KHR{VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR});
+        ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceSurfaceFormats2KHR(physical_devices[dev], &info, &count_2, formats2.data()));
         ASSERT_EQ(count_1, count_2);
-        ASSERT_TRUE(CompareSurfaceFormatsData(props, props2));
+        ASSERT_EQ(formats, formats2);
     }
 
     DestroySurfaceKHR(instance.inst, surface, nullptr);
@@ -3762,23 +3573,6 @@ void FillInRandomDisplayPropData(std::vector<VkDisplayPropertiesKHR>& props) {
     }
 }
 
-// Compare the display property data structs
-bool CompareDisplayPropData(const std::vector<VkDisplayPropertiesKHR>& props1, const std::vector<VkDisplayPropertiesKHR>& props2) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        equal = equal && props1[i].display == props2[i].display;
-        equal = equal && props1[i].physicalDimensions.width == props2[i].physicalDimensions.width;
-        equal = equal && props1[i].physicalDimensions.height == props2[i].physicalDimensions.height;
-        equal = equal && props1[i].physicalResolution.width == props2[i].physicalResolution.width;
-        equal = equal && props1[i].physicalResolution.height == props2[i].physicalResolution.height;
-        equal = equal && props1[i].supportedTransforms == props2[i].supportedTransforms;
-        equal = equal && props1[i].planeReorderPossible == props2[i].planeReorderPossible;
-        equal = equal && props1[i].persistentContent == props2[i].persistentContent;
-    }
-    return equal;
-}
-
 // Test vGetPhysicalDeviceDisplayPropertiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevDispPropsKHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -3808,7 +3602,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPropsKHRInstanceAndICDSupport) {
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceDisplayPropertiesKHR(physical_device, &prop_count, props.data()));
     ASSERT_EQ(env.get_test_icd(0).physical_devices.back().display_properties.size(), prop_count);
 
-    ASSERT_TRUE(CompareDisplayPropData(props, env.get_test_icd(0).physical_devices.back().display_properties));
+    ASSERT_EQ(props, env.get_test_icd(0).physical_devices.back().display_properties);
 }
 
 // Test vkGetPhysicalDeviceDisplayPropertiesKHR where instance supports it with some ICDs that both support
@@ -3904,7 +3698,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPropsKHRMixed) {
                                   GetPhysicalDeviceDisplayPropertiesKHR(physical_devices[dev], &prop_count, props.data()));
                         ASSERT_EQ(cur_dev.display_properties.size(), prop_count);
 
-                        ASSERT_TRUE(CompareDisplayPropData(props, cur_dev.display_properties));
+                        ASSERT_EQ(props, cur_dev.display_properties);
                     }
                     found = true;
                     break;
@@ -3955,18 +3749,6 @@ void FillInRandomDisplayPlanePropData(std::vector<VkDisplayPlanePropertiesKHR>& 
     }
 }
 
-// Compare the display plane property data structs
-bool CompareDisplayPlanePropData(const std::vector<VkDisplayPlanePropertiesKHR>& props1,
-                                 const std::vector<VkDisplayPlanePropertiesKHR>& props2) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        equal = equal && props1[i].currentDisplay == props2[i].currentDisplay;
-        equal = equal && props1[i].currentStackIndex == props2[i].currentStackIndex;
-    }
-    return equal;
-}
-
 // Test vGetPhysicalDeviceDisplayPlanePropertiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevDispPlanePropsKHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -3996,7 +3778,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPlanePropsKHRInstanceAndICDSupport) {
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceDisplayPlanePropertiesKHR(physical_device, &prop_count, props.data()));
     ASSERT_EQ(env.get_test_icd(0).physical_devices.back().display_plane_properties.size(), prop_count);
 
-    ASSERT_TRUE(CompareDisplayPlanePropData(props, env.get_test_icd(0).physical_devices.back().display_plane_properties));
+    ASSERT_EQ(props, env.get_test_icd(0).physical_devices.back().display_plane_properties);
 }
 
 // Test vkGetPhysicalDeviceDisplayPlanePropertiesKHR where instance supports it with some ICDs that both support
@@ -4092,7 +3874,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPlanePropsKHRMixed) {
                                   GetPhysicalDeviceDisplayPlanePropertiesKHR(physical_devices[dev], &prop_count, props.data()));
                         ASSERT_EQ(cur_dev.display_plane_properties.size(), prop_count);
 
-                        ASSERT_TRUE(CompareDisplayPlanePropData(props, cur_dev.display_plane_properties));
+                        ASSERT_EQ(props, cur_dev.display_plane_properties);
                     }
                     found = true;
                     break;
@@ -4142,16 +3924,6 @@ void GenerateRandomDisplays(std::vector<VkDisplayKHR>& disps) {
     }
 }
 
-// Compare the display plane property data structs
-bool CompareDisplays(const std::vector<VkDisplayKHR>& disps1, const std::vector<VkDisplayKHR>& disps2) {
-    if (disps1.size() != disps2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < disps1.size(); ++i) {
-        equal = equal && disps1[i] == disps2[i];
-    }
-    return equal;
-}
-
 // Test vGetDisplayPlaneSupportedDisplaysKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, GetDispPlaneSupDispsKHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -4181,7 +3953,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneSupDispsKHRInstanceAndICDSupport) {
     ASSERT_EQ(VK_SUCCESS, GetDisplayPlaneSupportedDisplaysKHR(physical_device, 0, &disp_count, disps.data()));
     ASSERT_EQ(env.get_test_icd(0).physical_devices.back().displays.size(), disp_count);
 
-    ASSERT_TRUE(CompareDisplays(disps, env.get_test_icd(0).physical_devices.back().displays));
+    ASSERT_EQ(disps, env.get_test_icd(0).physical_devices.back().displays);
 }
 
 // Test vkGetDisplayPlaneSupportedDisplaysKHR where instance supports it with some ICDs that both support
@@ -4277,7 +4049,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneSupDispsKHRMixed) {
                                   GetDisplayPlaneSupportedDisplaysKHR(physical_devices[dev], 0, &disp_count, disps.data()));
                         ASSERT_EQ(cur_dev.displays.size(), disp_count);
 
-                        ASSERT_TRUE(CompareDisplays(disps, cur_dev.displays));
+                        ASSERT_EQ(disps, cur_dev.displays);
                     }
                     found = true;
                     break;
@@ -4328,20 +4100,6 @@ void GenerateRandomDisplayModeProps(std::vector<VkDisplayModePropertiesKHR>& dis
     }
 }
 
-// Compare the display mode properties data structs
-bool CompareDisplayModeProps(const std::vector<VkDisplayModePropertiesKHR>& disps1,
-                             const std::vector<VkDisplayModePropertiesKHR>& disps2) {
-    if (disps1.size() != disps2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < disps1.size(); ++i) {
-        equal = equal && disps1[i].displayMode == disps2[i].displayMode;
-        equal = equal && disps1[i].parameters.visibleRegion.width == disps2[i].parameters.visibleRegion.width;
-        equal = equal && disps1[i].parameters.visibleRegion.height == disps2[i].parameters.visibleRegion.height;
-        equal = equal && disps1[i].parameters.refreshRate == disps2[i].parameters.refreshRate;
-    }
-    return equal;
-}
-
 // Test vGetDisplayModePropertiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, GetDispModePropsKHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -4370,7 +4128,7 @@ TEST(LoaderInstPhysDevExts, GetDispModePropsKHRInstanceAndICDSupport) {
     ASSERT_EQ(VK_SUCCESS, GetDisplayModePropertiesKHR(physical_device, VK_NULL_HANDLE, &props_count, props.data()));
     ASSERT_EQ(env.get_test_icd(0).physical_devices.back().display_mode_properties.size(), props_count);
 
-    ASSERT_TRUE(CompareDisplayModeProps(props, env.get_test_icd(0).physical_devices.back().display_mode_properties));
+    ASSERT_EQ(props, env.get_test_icd(0).physical_devices.back().display_mode_properties);
 }
 
 // Test vkGetDisplayModePropertiesKHR where instance supports it with some ICDs that both support
@@ -4466,7 +4224,7 @@ TEST(LoaderInstPhysDevExts, GetDispModePropsKHRMixed) {
                                   GetDisplayModePropertiesKHR(physical_devices[dev], VK_NULL_HANDLE, &props_count, props.data()));
                         ASSERT_EQ(cur_dev.display_mode_properties.size(), props_count);
 
-                        ASSERT_TRUE(CompareDisplayModeProps(props, cur_dev.display_mode_properties));
+                        ASSERT_EQ(props, cur_dev.display_mode_properties);
                     }
                     found = true;
                     break;
@@ -4506,9 +4264,6 @@ TEST(LoaderInstPhysDevExts, GetDispModesKHRNoICDSupport) {
     ASSERT_EQ(CreateDisplayModeKHR, nullptr);
 }
 
-// Compare the display modes
-bool CompareDisplayModes(const VkDisplayModeKHR& disps1, VkDisplayModeKHR& disps2) { return disps1 == disps2; }
-
 // Test vkCreateDisplayModeKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, GetDispModesKHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -4532,7 +4287,7 @@ TEST(LoaderInstPhysDevExts, GetDispModesKHRInstanceAndICDSupport) {
     VkDisplayModeKHR mode{};
     VkDisplayModeCreateInfoKHR create_info{VK_STRUCTURE_TYPE_DISPLAY_MODE_CREATE_INFO_KHR};
     ASSERT_EQ(VK_SUCCESS, CreateDisplayModeKHR(physical_device, VK_NULL_HANDLE, &create_info, nullptr, &mode));
-    ASSERT_TRUE(CompareDisplayModes(mode, env.get_test_icd(0).physical_devices.back().display_mode));
+    ASSERT_EQ(mode, env.get_test_icd(0).physical_devices.back().display_mode);
 }
 
 // Test vkCreateDisplayModeKHR where instance supports it with some ICDs that both support
@@ -4622,7 +4377,7 @@ TEST(LoaderInstPhysDevExts, GetDispModesKHRMixed) {
                     } else {
                         ASSERT_EQ(VK_SUCCESS,
                                   CreateDisplayModeKHR(physical_devices[dev], VK_NULL_HANDLE, &create_info, nullptr, &mode));
-                        ASSERT_TRUE(CompareDisplayModes(mode, cur_dev.display_mode));
+                        ASSERT_EQ(mode, cur_dev.display_mode);
                     }
                     found = true;
                     break;
@@ -4683,50 +4438,6 @@ void GenerateRandomDisplayPlaneCaps(VkDisplayPlaneCapabilitiesKHR& caps) {
     caps.maxDstExtent.height = static_cast<uint32_t>((rand() % 0xFFFFFFF) + 1);
 }
 
-// Compare the display plane caps
-bool CompareDisplayPlaneCaps(const VkDisplayPlaneCapabilitiesKHR& caps1, VkDisplayPlaneCapabilitiesKHR& caps2,
-                             bool supported = true) {
-    bool equal = true;
-    if (supported) {
-        equal = equal && caps1.supportedAlpha == caps2.supportedAlpha;
-        equal = equal && caps1.minSrcPosition.x == caps2.minSrcPosition.x;
-        equal = equal && caps1.minSrcPosition.y == caps2.minSrcPosition.y;
-        equal = equal && caps1.maxSrcPosition.x == caps2.maxSrcPosition.x;
-        equal = equal && caps1.maxSrcPosition.y == caps2.maxSrcPosition.y;
-        equal = equal && caps1.minSrcExtent.width == caps2.minSrcExtent.width;
-        equal = equal && caps1.minSrcExtent.height == caps2.minSrcExtent.height;
-        equal = equal && caps1.maxSrcExtent.width == caps2.maxSrcExtent.width;
-        equal = equal && caps1.maxSrcExtent.height == caps2.maxSrcExtent.height;
-        equal = equal && caps1.minDstPosition.x == caps2.minDstPosition.x;
-        equal = equal && caps1.minDstPosition.y == caps2.minDstPosition.y;
-        equal = equal && caps1.maxDstPosition.x == caps2.maxDstPosition.x;
-        equal = equal && caps1.maxDstPosition.y == caps2.maxDstPosition.y;
-        equal = equal && caps1.minDstExtent.width == caps2.minDstExtent.width;
-        equal = equal && caps1.minDstExtent.height == caps2.minDstExtent.height;
-        equal = equal && caps1.maxDstExtent.width == caps2.maxDstExtent.width;
-        equal = equal && caps1.maxDstExtent.height == caps2.maxDstExtent.height;
-    } else {
-        equal = equal && caps1.supportedAlpha == 0;
-        equal = equal && caps1.minSrcPosition.x == 0;
-        equal = equal && caps1.minSrcPosition.y == 0;
-        equal = equal && caps1.maxSrcPosition.x == 0;
-        equal = equal && caps1.maxSrcPosition.y == 0;
-        equal = equal && caps1.minSrcExtent.width == 0;
-        equal = equal && caps1.minSrcExtent.height == 0;
-        equal = equal && caps1.maxSrcExtent.width == 0;
-        equal = equal && caps1.maxSrcExtent.height == 0;
-        equal = equal && caps1.minDstPosition.x == 0;
-        equal = equal && caps1.minDstPosition.y == 0;
-        equal = equal && caps1.maxDstPosition.x == 0;
-        equal = equal && caps1.maxDstPosition.y == 0;
-        equal = equal && caps1.minDstExtent.width == 0;
-        equal = equal && caps1.minDstExtent.height == 0;
-        equal = equal && caps1.maxDstExtent.width == 0;
-        equal = equal && caps1.maxDstExtent.height == 0;
-    }
-    return equal;
-}
-
 // Test vkGetDisplayPlaneCapabilitiesKHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, GetDispPlaneCapsKHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -4749,7 +4460,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCapsKHRInstanceAndICDSupport) {
 
     VkDisplayPlaneCapabilitiesKHR caps{};
     ASSERT_EQ(VK_SUCCESS, GetDisplayPlaneCapabilitiesKHR(physical_device, 0, 0, &caps));
-    ASSERT_TRUE(CompareDisplayPlaneCaps(caps, env.get_test_icd(0).physical_devices.back().display_plane_capabilities));
+    ASSERT_EQ(caps, env.get_test_icd(0).physical_devices.back().display_plane_capabilities);
 }
 
 // Test vkGetDisplayPlaneCapabilitiesKHR where instance supports it with some ICDs that both support
@@ -4832,7 +4543,11 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCapsKHRMixed) {
                     cur_dev.properties.vendorID == pd_props.vendorID) {
                     VkDisplayPlaneCapabilitiesKHR caps{};
                     ASSERT_EQ(VK_SUCCESS, GetDisplayPlaneCapabilitiesKHR(physical_devices[dev], 0, 0, &caps));
-                    ASSERT_TRUE(CompareDisplayPlaneCaps(caps, cur_dev.display_plane_capabilities, icd != 1));
+                    if (icd != 1) {
+                        ASSERT_EQ(caps, cur_dev.display_plane_capabilities);
+                    } else {
+                        ASSERT_EQ(caps, VkDisplayPlaneCapabilitiesKHR{});
+                    }
                     found = true;
                     break;
                 }
@@ -4877,23 +4592,6 @@ TEST(LoaderInstPhysDevExts, PhysDevDispProps2KHRNoICDSupport) {
     ASSERT_EQ(GetPhysicalDeviceDisplayProperties2KHR, nullptr);
 }
 
-// Compare the display property data structs
-bool CompareDisplayPropData(const std::vector<VkDisplayPropertiesKHR>& props1, const std::vector<VkDisplayProperties2KHR>& props2) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        equal = equal && props1[i].display == props2[i].displayProperties.display;
-        equal = equal && props1[i].physicalDimensions.width == props2[i].displayProperties.physicalDimensions.width;
-        equal = equal && props1[i].physicalDimensions.height == props2[i].displayProperties.physicalDimensions.height;
-        equal = equal && props1[i].physicalResolution.width == props2[i].displayProperties.physicalResolution.width;
-        equal = equal && props1[i].physicalResolution.height == props2[i].displayProperties.physicalResolution.height;
-        equal = equal && props1[i].supportedTransforms == props2[i].displayProperties.supportedTransforms;
-        equal = equal && props1[i].planeReorderPossible == props2[i].displayProperties.planeReorderPossible;
-        equal = equal && props1[i].persistentContent == props2[i].displayProperties.persistentContent;
-    }
-    return equal;
-}
-
 // Test vGetPhysicalDeviceDisplayProperties2KHR where instance and ICD supports it, but device does not support it.
 TEST(LoaderInstPhysDevExts, PhysDevDispProps2KHRInstanceAndICDSupport) {
     FrameworkEnvironment env{};
@@ -4934,8 +4632,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispProps2KHRInstanceAndICDSupport) {
     props2.resize(prop_count_2, {VK_STRUCTURE_TYPE_DISPLAY_PROPERTIES_2_KHR});
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceDisplayProperties2KHR(physical_device, &prop_count_2, props2.data()));
     ASSERT_EQ(prop_count, prop_count_2);
-
-    ASSERT_TRUE(CompareDisplayPropData(props, props2));
+    ASSERT_EQ(props, props2);
 }
 
 // Test vkGetPhysicalDeviceDisplayProperties2KHR where instance supports it with some ICDs that both support
@@ -5022,8 +4719,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispProps2KHRMixed) {
         props2.resize(prop_count_2, {VK_STRUCTURE_TYPE_DISPLAY_PROPERTIES_2_KHR});
         ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceDisplayProperties2KHR(physical_devices[dev], &prop_count_2, props2.data()));
         ASSERT_EQ(prop_count, prop_count_2);
-
-        ASSERT_TRUE(CompareDisplayPropData(props, props2));
+        ASSERT_EQ(props, props2);
     }
 }
 
@@ -5054,18 +4750,6 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPlaneProps2KHRNoICDSupport) {
     PFN_vkGetPhysicalDeviceDisplayPlaneProperties2KHR GetPhysicalDeviceDisplayPlaneProperties2KHR =
         instance.load("vkGetPhysicalDeviceDisplayPlaneProperties2KHR");
     ASSERT_EQ(GetPhysicalDeviceDisplayPlaneProperties2KHR, nullptr);
-}
-
-// Compare the display plane property data structs
-bool CompareDisplayPlanePropData(const std::vector<VkDisplayPlanePropertiesKHR>& props1,
-                                 const std::vector<VkDisplayPlaneProperties2KHR>& props2) {
-    if (props1.size() != props2.size()) return false;
-    bool equal = true;
-    for (uint32_t i = 0; i < props1.size(); ++i) {
-        equal = equal && props1[i].currentDisplay == props2[i].displayPlaneProperties.currentDisplay;
-        equal = equal && props1[i].currentStackIndex == props2[i].displayPlaneProperties.currentStackIndex;
-    }
-    return equal;
 }
 
 // Test vGetPhysicalDeviceDisplayPlaneProperties2KHR where instance and ICD supports it, but device does not support it.
@@ -5107,8 +4791,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPlaneProps2KHRInstanceAndICDSupport) {
     ASSERT_EQ(prop_count, prop_count2);
     props2.resize(prop_count2, {VK_STRUCTURE_TYPE_DISPLAY_PLANE_PROPERTIES_2_KHR});
     ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceDisplayPlaneProperties2KHR(physical_device, &prop_count2, props2.data()));
-
-    ASSERT_TRUE(CompareDisplayPlanePropData(props, props2));
+    ASSERT_EQ(props, props2);
 }
 
 // Test vkGetPhysicalDeviceDisplayPlaneProperties2KHR where instance supports it with some ICDs that both support
@@ -5194,8 +4877,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPlaneProps2KHRMixed) {
         ASSERT_EQ(prop_count, prop_count2);
         props2.resize(prop_count2, {VK_STRUCTURE_TYPE_DISPLAY_PLANE_PROPERTIES_2_KHR});
         ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceDisplayPlaneProperties2KHR(physical_devices[dev], &prop_count2, props2.data()));
-
-        ASSERT_TRUE(CompareDisplayPlanePropData(props, props2));
+        ASSERT_EQ(props, props2);
     }
 }
 
@@ -5224,22 +4906,6 @@ TEST(LoaderInstPhysDevExts, GetDispModeProps2KHRNoICDSupport) {
 
     PFN_vkGetDisplayModeProperties2KHR GetDisplayModeProperties2KHR = instance.load("vkGetDisplayModeProperties2KHR");
     ASSERT_EQ(GetDisplayModeProperties2KHR, nullptr);
-}
-
-// Compare the display mode properties data structs
-bool CompareDisplayModeProps(const std::vector<VkDisplayModePropertiesKHR>& disps1,
-                             const std::vector<VkDisplayModeProperties2KHR>& disps2) {
-    if (disps1.size() != disps2.size()) return false;
-
-    bool equal = true;
-    for (uint32_t i = 0; i < disps1.size(); ++i) {
-        equal = equal && disps1[i].displayMode == disps2[i].displayModeProperties.displayMode;
-        equal = equal && disps1[i].parameters.visibleRegion.width == disps2[i].displayModeProperties.parameters.visibleRegion.width;
-        equal =
-            equal && disps1[i].parameters.visibleRegion.height == disps2[i].displayModeProperties.parameters.visibleRegion.height;
-        equal = equal && disps1[i].parameters.refreshRate == disps2[i].displayModeProperties.parameters.refreshRate;
-    }
-    return equal;
 }
 
 // Test vGetDisplayModeProperties2KHR where instance and ICD supports it, but device does not support it.
@@ -5279,8 +4945,7 @@ TEST(LoaderInstPhysDevExts, GetDispModeProps2KHRInstanceAndICDSupport) {
     ASSERT_EQ(props_count1, props_count2);
     props2.resize(props_count2, {VK_STRUCTURE_TYPE_DISPLAY_MODE_PROPERTIES_2_KHR});
     ASSERT_EQ(VK_SUCCESS, GetDisplayModeProperties2KHR(physical_device, VK_NULL_HANDLE, &props_count2, props2.data()));
-
-    ASSERT_TRUE(CompareDisplayModeProps(props, props2));
+    ASSERT_EQ(props, props2);
 }
 
 // Test vkGetDisplayModeProperties2KHR where instance supports it with some ICDs that both support
@@ -5364,8 +5029,7 @@ TEST(LoaderInstPhysDevExts, GetDispModeProps2KHRMixed) {
         ASSERT_EQ(props_count1, props_count2);
         props2.resize(props_count2, {VK_STRUCTURE_TYPE_DISPLAY_MODE_PROPERTIES_2_KHR});
         ASSERT_EQ(VK_SUCCESS, GetDisplayModeProperties2KHR(physical_devices[dev], VK_NULL_HANDLE, &props_count2, props2.data()));
-
-        ASSERT_TRUE(CompareDisplayModeProps(props, props2));
+        ASSERT_EQ(props, props2);
     }
 }
 
@@ -5394,29 +5058,6 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCaps2KHRNoICDSupport) {
 
     PFN_vkGetDisplayPlaneCapabilitiesKHR GetDisplayPlaneCapabilitiesKHR = instance.load("vkGetDisplayPlaneCapabilitiesKHR");
     ASSERT_EQ(GetDisplayPlaneCapabilitiesKHR, nullptr);
-}
-
-// Compare the display plane caps
-bool CompareDisplayPlaneCaps(const VkDisplayPlaneCapabilitiesKHR& caps1, VkDisplayPlaneCapabilities2KHR& caps2) {
-    bool equal = true;
-    equal = equal && caps1.supportedAlpha == caps2.capabilities.supportedAlpha;
-    equal = equal && caps1.minSrcPosition.x == caps2.capabilities.minSrcPosition.x;
-    equal = equal && caps1.minSrcPosition.y == caps2.capabilities.minSrcPosition.y;
-    equal = equal && caps1.maxSrcPosition.x == caps2.capabilities.maxSrcPosition.x;
-    equal = equal && caps1.maxSrcPosition.y == caps2.capabilities.maxSrcPosition.y;
-    equal = equal && caps1.minSrcExtent.width == caps2.capabilities.minSrcExtent.width;
-    equal = equal && caps1.minSrcExtent.height == caps2.capabilities.minSrcExtent.height;
-    equal = equal && caps1.maxSrcExtent.width == caps2.capabilities.maxSrcExtent.width;
-    equal = equal && caps1.maxSrcExtent.height == caps2.capabilities.maxSrcExtent.height;
-    equal = equal && caps1.minDstPosition.x == caps2.capabilities.minDstPosition.x;
-    equal = equal && caps1.minDstPosition.y == caps2.capabilities.minDstPosition.y;
-    equal = equal && caps1.maxDstPosition.x == caps2.capabilities.maxDstPosition.x;
-    equal = equal && caps1.maxDstPosition.y == caps2.capabilities.maxDstPosition.y;
-    equal = equal && caps1.minDstExtent.width == caps2.capabilities.minDstExtent.width;
-    equal = equal && caps1.minDstExtent.height == caps2.capabilities.minDstExtent.height;
-    equal = equal && caps1.maxDstExtent.width == caps2.capabilities.maxDstExtent.width;
-    equal = equal && caps1.maxDstExtent.height == caps2.capabilities.maxDstExtent.height;
-    return equal;
 }
 
 // Test vkGetDisplayPlaneCapabilities2KHR where instance and ICD supports it, but device does not support it.
@@ -5448,7 +5089,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCaps2KHRInstanceAndICDSupport) {
     VkDisplayPlaneCapabilities2KHR caps2{};
     VkDisplayPlaneInfo2KHR info{VK_STRUCTURE_TYPE_DISPLAY_PLANE_INFO_2_KHR};
     ASSERT_EQ(VK_SUCCESS, GetDisplayPlaneCapabilities2KHR(physical_device, &info, &caps2));
-    ASSERT_TRUE(CompareDisplayPlaneCaps(caps, caps2));
+    ASSERT_EQ(caps, caps2);
 }
 
 // Test vkGetDisplayPlaneCapabilities2KHR where instance supports it with some ICDs that both support
@@ -5524,7 +5165,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCaps2KHRMixed) {
         VkDisplayPlaneCapabilities2KHR caps2{};
         VkDisplayPlaneInfo2KHR info{VK_STRUCTURE_TYPE_DISPLAY_PLANE_INFO_2_KHR};
         ASSERT_EQ(VK_SUCCESS, GetDisplayPlaneCapabilities2KHR(physical_devices[dev], &info, &caps2));
-        CompareDisplayPlaneCaps(caps, caps2);
+        ASSERT_EQ(caps, caps2);
     }
 }
 
