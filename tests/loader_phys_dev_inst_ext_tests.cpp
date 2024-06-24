@@ -5548,16 +5548,22 @@ TEST(LoaderInstPhysDevExts, DifferentPhysicalDeviceExtensions) {
     env.get_test_icd(1).physical_devices.push_back("pd1");
     env.get_test_icd(1).physical_devices.back().extensions.push_back({VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME, 0});
 
+#ifndef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2, VK_API_VERSION_1_0));
     env.get_test_icd(2).physical_devices.push_back("pd2");
     env.get_test_icd(2).physical_devices.back().extensions.push_back({VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME, 0});
+#endif  // VULKANSC
 
     DebugUtilsLogger log{VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT};
     InstWrapper inst{env.vulkan_functions};
     FillDebugUtilsCreateDetails(inst.create_info, log);
     inst.CheckCreate();
 
+#ifdef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
+    const uint32_t expected_device_count = 2;
+#else
     const uint32_t expected_device_count = 3;
+#endif  // VULKANSC
     auto physical_devices = inst.GetPhysDevs(expected_device_count);
 
     PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR
@@ -5565,18 +5571,24 @@ TEST(LoaderInstPhysDevExts, DifferentPhysicalDeviceExtensions) {
             inst.load("vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR");
     PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT GetPhysicalDeviceMultisamplePropertiesEXT =
         inst.load("vkGetPhysicalDeviceMultisamplePropertiesEXT");
+#ifndef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
     PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT GetPhysicalDeviceCalibrateableTimeDomainsEXT =
         inst.load("vkGetPhysicalDeviceCalibrateableTimeDomainsEXT");
+#endif
     ASSERT_NE(nullptr, EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR);
     ASSERT_NE(nullptr, GetPhysicalDeviceMultisamplePropertiesEXT);
+#ifndef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
     ASSERT_NE(nullptr, GetPhysicalDeviceCalibrateableTimeDomainsEXT);
+#endif  // VULKANSC
 
     for (uint32_t dev = 0; dev < expected_device_count; ++dev) {
         uint32_t extension_count = 0;
         std::vector<VkExtensionProperties> device_extensions;
         bool supports_query = false;
         bool supports_samples = false;
+#ifndef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
         bool supports_timestamps = false;
+#endif  // VULKANSC
         ASSERT_EQ(VK_SUCCESS,
                   inst->vkEnumerateDeviceExtensionProperties(physical_devices[dev], nullptr, &extension_count, nullptr));
         ASSERT_GT(extension_count, 0U);
@@ -5590,9 +5602,11 @@ TEST(LoaderInstPhysDevExts, DifferentPhysicalDeviceExtensions) {
             if (string_eq(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME, &device_extensions[ext].extensionName[0])) {
                 supports_samples = true;
             }
+#ifndef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
             if (string_eq(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME, &device_extensions[ext].extensionName[0])) {
                 supports_timestamps = true;
             }
+#endif  // VULKANSC
         }
 
         // For physical device extensions, they should work for devices that support it and crash for those that don't.
@@ -5614,6 +5628,7 @@ TEST(LoaderInstPhysDevExts, DifferentPhysicalDeviceExtensions) {
             ASSERT_FALSE(
                 log.find("ICD associated with VkPhysicalDevice does not support GetPhysicalDeviceMultisamplePropertiesEXT"));
         }
+#ifndef VULKANSC  // VK_EXT_calibrated_timestamps is not supported in Vulkan SC
         if (supports_timestamps) {
             ASSERT_EQ(VK_SUCCESS, GetPhysicalDeviceCalibrateableTimeDomainsEXT(physical_devices[dev], nullptr, nullptr));
         } else {
@@ -5621,5 +5636,6 @@ TEST(LoaderInstPhysDevExts, DifferentPhysicalDeviceExtensions) {
             ASSERT_FALSE(
                 log.find("ICD associated with VkPhysicalDevice does not support GetPhysicalDeviceCalibrateableTimeDomainsEXT"));
         }
+#endif  // VULKANSC
     }
 }
