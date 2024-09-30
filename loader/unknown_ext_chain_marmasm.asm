@@ -1,60 +1,62 @@
-//
-// Copyright (c) 2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Author: Eric Sullivan <esullivan@nvidia.com>
-//
+;
+; Copyright (c) 2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+; Copyright (c) 2024 Valve Corporation
+; Copyright (c) 2024 LunarG, Inc.
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+;
+; Author: Eric Sullivan <esullivan@nvidia.com>
+; Author: Charles Giessen <charles@lunarg.com>
+;
 
-// This code is used to pass on device (including physical device) extensions through the call chain. It must do this without
-// creating a stack frame, because the actual parameters of the call are not known. Since the first parameter is known to be a
-// VkPhysicalDevice or a dispatchable object it can unwrap the object, possibly overwriting the wrapped physical device, and then
-// jump to the next function in the call chain
+; This code is used to pass on device (including physical device) extensions through the call chain. It must do this without
+; creating a stack frame, because the actual parameters of the call are not known. Since the first parameter is known to be a
+; VkPhysicalDevice or a dispatchable object it can unwrap the object, possibly overwriting the wrapped physical device, and then
+; jump to the next function in the call chain
 
-.include "gen_defines.asm"
 
-.if AARCH_64
+    GET gen_defines.asm
 
-.macro PhysDevExtTramp num
-.global vkPhysDevExtTramp\num
-#if defined(__ELF__)
- .hidden vkPhysDevExtTramp\num
-#endif
-.balign 4
+    EXTERN loader_log_asm_function_not_supported
 
-vkPhysDevExtTramp\num:
-    ldr     x9, [x0]                                                 // Load the loader_instance_dispatch_table* into x9
-    ldr     x0, [x0, PHYS_DEV_OFFSET_PHYS_DEV_TRAMP]                 // Load the unwrapped VkPhysicalDevice into x0
-    mov     x10, (PHYS_DEV_OFFSET_INST_DISPATCH + (PTR_SIZE * \num)) // Put the offset of the entry in the dispatch table for the function
-    ldr     x11, [x9, x10]                                           // Load the address to branch to out of the dispatch table
-    br      x11                                                      // Branch to the next member of the dispatch chain
-.endm
+    IF AARCH_64==1
 
-.macro PhysDevExtTermin num
-.global vkPhysDevExtTermin\num
-#if defined(__ELF__)
- .hidden vkPhysDevExtTermin\num
-#endif
-.balign 4
-vkPhysDevExtTermin\num:
+    MACRO
+    PhysDevExtTramp $num
+    ALIGN
+    EXPORT vkPhysDevExtTramp$num [FUNC]
+vkPhysDevExtTramp$num FUNCTION
+    ldr     x9, [x0]                                                 ; Load the loader_instance_dispatch_table* into x9
+    ldr     x0, [x0, PHYS_DEV_OFFSET_PHYS_DEV_TRAMP]                 ; Load the unwrapped VkPhysicalDevice into x0
+    mov     x10, #(PHYS_DEV_OFFSET_INST_DISPATCH + (PTR_SIZE * $num)) ; Put the offset of the entry in the dispatch table for the function
+    ldr     x11, [x9, x10]                                           ; Load the address to branch to out of the dispatch table
+    br      x11                                                      ; Branch to the next member of the dispatch chain
+    ENDFUNC
+    MEND
+
+    MACRO
+$label    PhysDevExtTermin $num
+    ALIGN
+    EXPORT vkPhysDevExtTermin$num [FUNC]
+vkPhysDevExtTermin$num FUNCTION
     ldr     x9, [x0, ICD_TERM_OFFSET_PHYS_DEV_TERM]             // Load the loader_icd_term* in x9
-    mov     x11, (DISPATCH_OFFSET_ICD_TERM + (PTR_SIZE * \num)) // Put the offset into the dispatch table in x11
+    mov     x11, (DISPATCH_OFFSET_ICD_TERM + (PTR_SIZE * $num)) // Put the offset into the dispatch table in x11
     ldr     x10, [x9, x11]                                      // Load the address of the next function in the dispatch chain
-    cbz     x10, terminError\num                                // Go to the error section if the next function in the chain is NULL
+    cbz     x10, terminError$num                                // Go to the error section if the next function in the chain is NULL
     ldr     x0, [x0, PHYS_DEV_OFFSET_PHYS_DEV_TERM]             // Unwrap the VkPhysicalDevice in x0
     br      x10                                                 // Jump to the next function in the chain
-terminError\num:
-    mov     x10, (FUNCTION_OFFSET_INSTANCE + (CHAR_PTR_SIZE * \num)) // Offset of the function name string in the instance
+terminError$num
+    mov     x10, (FUNCTION_OFFSET_INSTANCE + (CHAR_PTR_SIZE * $num)) // Offset of the function name string in the instance
     ldr     x11, [x9, INSTANCE_OFFSET_ICD_TERM]   // Load the instance pointer
     mov     x0, x11                               // Vulkan instance pointer (first arg)
     mov     x1, VULKAN_LOADER_ERROR_BIT           // The error logging bit (second arg)
@@ -63,33 +65,80 @@ terminError\num:
     bl      loader_log_asm_function_not_supported // Log the error message before we crash
     mov     x0, #0
     br      x0                                    // Crash intentionally by jumping to address zero
-.endm
+    ENDFUNC
+    MEND
 
-.macro DevExtTramp num
-.global vkdev_ext\num
-#if defined(__ELF__)
- .hidden vkdev_ext\num
-#endif
-.balign 4
-vkdev_ext\num:
+    MACRO
+    DevExtTramp $num
+    ALIGN
+    EXPORT vkdev_ext$num [FUNC]
+vkdev_ext$num FUNCTION
     ldr     x9, [x0]                                              // Load the loader_instance_dispatch_table* into x9
-    mov     x10, (EXT_OFFSET_DEVICE_DISPATCH + (PTR_SIZE * \num)) // Offset of the desired function in the dispatch table
+    mov     x10, (EXT_OFFSET_DEVICE_DISPATCH + (PTR_SIZE * $num)) // Offset of the desired function in the dispatch table
     ldr     x11, [x9, x10]                                        // Load the function address
     br      x11
-.endm
+    ENDFUNC
+    MEND
 
-.endif
+; 32 bit (armhf) assembly
+    ELSE
 
-#if defined(__ELF__)
-.section .note.GNU-stack,"",%progbits
-#endif
+    MACRO
+    PhysDevExtTramp $num
+    ALIGN
+    EXPORT vkPhysDevExtTramp$num [FUNC]
+vkPhysDevExtTramp$num FUNCTION
+    ldr     r4, [r0]                                                 // Load the loader_instance_dispatch_table* into r4
+    ldr     r0, [r0, #PHYS_DEV_OFFSET_PHYS_DEV_TRAMP]                // Load the unwrapped VkPhysicalDevice into r0
+    mov     r5, #(PHYS_DEV_OFFSET_INST_DISPATCH + (PTR_SIZE * $num)) // Put the offset of the entry in the dispatch table for the function
+    ldr     r6, [r4, r5]                                             // Load the address to branch to out of the dispatch table
+    bx      r6                                                       // Branch to the next member of the dispatch chain
+    ENDFUNC
+    MEND
 
-.data
+    MACRO
+$label    PhysDevExtTermin $num
+    ALIGN
+    EXPORT vkPhysDevExtTermin$num [FUNC]
+vkPhysDevExtTermin$num FUNCTION
+    ldr     r4, [r0, #ICD_TERM_OFFSET_PHYS_DEV_TERM]            // Load the loader_icd_term* in r4
+    mov     r6, #(DISPATCH_OFFSET_ICD_TERM + (PTR_SIZE * $num)) // Put the offset into the dispatch table in r6
+    ldr     r5, [r4, r6]                                        // Load the address of the next function in the dispatch chain
+    cbz     r5, terminError$num                                 // Go to the error section if the next function in the chain is NULL
+    ldr     r0, [r0, #PHYS_DEV_OFFSET_PHYS_DEV_TERM]            // Unwrap the VkPhysicalDevice in r0
+    bx      r5                                                  // Jump to the next function in the chain
+terminError$num
+    mov     r5, #(FUNCTION_OFFSET_INSTANCE + (CHAR_PTR_SIZE * $num)) // Offset of the function name string in the instance
+    ldr     r6, [r4, #INSTANCE_OFFSET_ICD_TERM]                      // Load the instance pointer
+    mov     r0, r6                                                   // Vulkan instance pointer (first arg)
+    mov     r1, #VULKAN_LOADER_ERROR_BIT                             // The error logging bit (second arg)
+    mov     r2, #0                                                   // Zero (third arg)
+    ldr     r3, [r6, r5]                                             // The function name (fourth arg)
+    bl      loader_log_asm_function_not_supported                    // Log the error message before we crash
+    mov     r0, #0
+    bx      r0                                                       // Crash intentionally by jumping to address zero
+    ENDFUNC
+    MEND
 
-termin_error_string:
-.string "Function %s not supported for this physical device"
+    MACRO
+    DevExtTramp $num
+    ALIGN
+    EXPORT vkdev_ext$num [FUNC]
+vkdev_ext$num FUNCTION
+    ldr     r4, [r0]                                              // Load the loader_instance_dispatch_table* into r4
+    mov     r5, #(EXT_OFFSET_DEVICE_DISPATCH + (PTR_SIZE * $num)) // Offset of the desired function in the dispatch table
+    ldr     r6, [r4, r5]                                          // Load the function address
+    bx      r6
+    ENDFUNC
+    MEND
 
-.text
+    ENDIF
+
+    AREA terminator_string_data, DATA, READONLY
+
+termin_error_string DCB "Function %s not supported for this physical device", 0
+
+    AREA UnknownFunctionImpl, CODE, READONLY
 
     PhysDevExtTramp 0
     PhysDevExtTramp 1
@@ -843,3 +892,5 @@ termin_error_string:
     DevExtTramp 247
     DevExtTramp 248
     DevExtTramp 249
+
+    END

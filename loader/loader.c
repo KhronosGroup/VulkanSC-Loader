@@ -2589,7 +2589,8 @@ VkResult loader_read_layer_json(const struct loader_instance *inst, struct loade
         result = loader_parse_json_string(functions, "vkGetInstanceProcAddr", &props.functions.str_gipa);
         if (result == VK_ERROR_OUT_OF_HOST_MEMORY) goto out;
 
-        if (props.functions.str_gipa && loader_check_version_meets_required(loader_combine_version(1, 1, 0), version)) {
+        if (NULL == props.functions.str_negotiate_interface && props.functions.str_gipa &&
+            loader_check_version_meets_required(loader_combine_version(1, 1, 0), version)) {
             loader_log(inst, VULKAN_LOADER_INFO_BIT, 0,
                        "Layer \"%s\" using deprecated \'vkGetInstanceProcAddr\' tag which was deprecated starting with JSON "
                        "file version 1.1.0. The new vkNegotiateLoaderLayerInterfaceVersion function is preferred, though for "
@@ -2600,7 +2601,8 @@ VkResult loader_read_layer_json(const struct loader_instance *inst, struct loade
         result = loader_parse_json_string(functions, "vkGetDeviceProcAddr", &props.functions.str_gdpa);
         if (result == VK_ERROR_OUT_OF_HOST_MEMORY) goto out;
 
-        if (props.functions.str_gdpa && loader_check_version_meets_required(loader_combine_version(1, 1, 0), version)) {
+        if (NULL == props.functions.str_negotiate_interface && props.functions.str_gdpa &&
+            loader_check_version_meets_required(loader_combine_version(1, 1, 0), version)) {
             loader_log(inst, VULKAN_LOADER_INFO_BIT, 0,
                        "Layer \"%s\" using deprecated \'vkGetDeviceProcAddr\' tag which was deprecated starting with JSON "
                        "file version 1.1.0. The new vkNegotiateLoaderLayerInterfaceVersion function is preferred, though for "
@@ -5348,7 +5350,8 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
                    "#LLP_LAYER_21)");
     } else if (LOADER_MAGIC_NUMBER != ptr_instance->magic) {
         loader_log(ptr_instance, VULKAN_LOADER_WARN_BIT, 0,
-                   "terminator_CreateInstance: Instance pointer (%p) has invalid MAGIC value 0x%08lx. Instance value possibly "
+                   "terminator_CreateInstance: Instance pointer (%p) has invalid MAGIC value 0x%08" PRIx64
+                   ". Instance value possibly "
                    "corrupted by active layer (Policy #LLP_LAYER_21).  ",
                    ptr_instance, ptr_instance->magic);
     }
@@ -5798,7 +5801,8 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
                    "#LLP_LAYER_22)");
     } else if (DEVICE_DISP_TABLE_MAGIC_NUMBER != dev->loader_dispatch.core_dispatch.magic) {
         loader_log(icd_term->this_instance, VULKAN_LOADER_WARN_BIT, 0,
-                   "terminator_CreateDevice: Device pointer (%p) has invalid MAGIC value 0x%08lx. The expected value is "
+                   "terminator_CreateDevice: Device pointer (%p) has invalid MAGIC value 0x%08" PRIx64
+                   ". The expected value is "
                    "0x10ADED040410ADED. Device value possibly "
                    "corrupted by active layer (Policy #LLP_LAYER_22).  ",
                    dev, dev->loader_dispatch.core_dispatch.magic);
@@ -6016,8 +6020,10 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
             dev->driver_extensions.khr_device_group_enabled = true;
         } else if (!strcmp(localCreateInfo.ppEnabledExtensionNames[i], VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
             dev->driver_extensions.ext_debug_marker_enabled = true;
-        } else if (!strcmp(localCreateInfo.ppEnabledExtensionNames[i], "VK_EXT_full_screen_exclusive")) {
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+        } else if (!strcmp(localCreateInfo.ppEnabledExtensionNames[i], VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME)) {
             dev->driver_extensions.ext_full_screen_exclusive_enabled = true;
+#endif
         } else if (!strcmp(localCreateInfo.ppEnabledExtensionNames[i], VK_KHR_MAINTENANCE_5_EXTENSION_NAME) &&
                    maintenance5_feature_enabled) {
             dev->should_ignore_device_commands_from_newer_version = true;
@@ -6029,10 +6035,14 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
 
     VkPhysicalDeviceProperties properties;
     icd_term->dispatch.GetPhysicalDeviceProperties(phys_dev_term->phys_dev, &properties);
-    if (!dev->driver_extensions.khr_device_group_enabled) {
-        if (properties.apiVersion >= VK_API_VERSION_1_1) {
-            dev->driver_extensions.khr_device_group_enabled = true;
-        }
+    if (properties.apiVersion >= VK_API_VERSION_1_1) {
+        dev->driver_extensions.version_1_1_enabled = true;
+    }
+    if (properties.apiVersion >= VK_API_VERSION_1_2) {
+        dev->driver_extensions.version_1_2_enabled = true;
+    }
+    if (properties.apiVersion >= VK_API_VERSION_1_3) {
+        dev->driver_extensions.version_1_3_enabled = true;
     }
 
     loader_log(icd_term->this_instance, VULKAN_LOADER_LAYER_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
@@ -6612,7 +6622,7 @@ void unload_drivers_without_physical_devices(struct loader_instance *inst) {
                     for (uint32_t i = 0; i < preloaded_icds.count; i++) {
                         if (NULL != preloaded_icds.scanned_list[i].lib_name && NULL != scanned_icd_to_remove->lib_name &&
                             strcmp(preloaded_icds.scanned_list[i].lib_name, scanned_icd_to_remove->lib_name) == 0) {
-                            loader_unload_scanned_icd(inst, &preloaded_icds.scanned_list[i]);
+                            loader_unload_scanned_icd(NULL, &preloaded_icds.scanned_list[i]);
                             // condense the list so that it doesn't contain empty elements.
                             if (i < preloaded_icds.count - 1) {
                                 memcpy((void *)&preloaded_icds.scanned_list[i],

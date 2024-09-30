@@ -55,7 +55,6 @@ Instructions for building this repository on Linux, Windows, and MacOS.
   - [Cross Compilation](#cross-compilation)
     - [Unknown function handling which requires explicit assembly implementations](#unknown-function-handling-which-requires-explicit-assembly-implementations)
       - [Platforms which fully support unknown function handling](#platforms-which-fully-support-unknown-function-handling)
-    - [Link Time Optimization](#link-time-optimization)
   - [Tests](#tests)
 
 
@@ -640,6 +639,8 @@ can be manually disabled by setting `USE_GAS` or `USE_MASM` to `OFF`.
 * 64 bit Linux (x64)
 * 32 bit Linux (x86)
 * 64 bit Arm (aarch64)
+* 32 bit Arm (aarch32)
+
 
 Platforms not listed will use a fallback C Code path that relies on tail-call optimization to work.
 No guarantees are made about the use of the fallback code paths.
