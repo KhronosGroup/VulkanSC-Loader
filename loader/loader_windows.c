@@ -77,11 +77,9 @@ void windows_initialization(void) {
         loader_log(NULL, VULKAN_LOADER_INFO_BIT, 0, "Using Vulkan Loader %s", dll_location);
     }
 
-    SetDllDirectory("");  // Remove current directory from default DLL search order
     // This is needed to ensure that newer APIs are available right away
     // and not after the first call that has been statically linked
-    LoadLibrary("gdi32.dll");
-    SetDllDirectory(NULL);  // Restores the default search order
+    LoadLibraryEx("gdi32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 
     wchar_t systemPath[MAX_PATH] = L"";
     GetSystemDirectoryW(systemPath, MAX_PATH);
@@ -1225,41 +1223,37 @@ VkResult get_settings_path_if_exists_in_registry_key(const struct loader_instanc
 VkResult windows_get_loader_settings_file_path(const struct loader_instance *inst, char **out_path) {
     VkResult result = VK_SUCCESS;
     DWORD access_flags = KEY_QUERY_VALUE;
+    LONG rtn_value = 0;
     HKEY key = NULL;
-
     *out_path = NULL;
 
-    // if we are running with admin privileges, only check HKEY_LOCAL_MACHINE.
-    // Otherwise check HKEY_CURRENT_USER, and if nothing is there, look in HKEY_LOCAL_MACHINE
+    // Search in HKEY_CURRENT_USER first if we are running without admin privileges
+    // Exit if a settings file was found.
+    // Otherwise check in HKEY_LOCAL_MACHINE.
 
-    if (is_high_integrity()) {
-        LONG rtn_value = RegOpenKeyEx(HKEY_LOCAL_MACHINE, VK_SETTINGS_INFO_REGISTRY_LOC, 0, access_flags, &key);
-        if (ERROR_SUCCESS != rtn_value) {
-            result = VK_ERROR_FEATURE_NOT_PRESENT;
-            goto out;
-        }
-        result = get_settings_path_if_exists_in_registry_key(inst, out_path, key);
-    } else {
-        LONG rtn_value = RegOpenKeyEx(HKEY_CURRENT_USER, VK_SETTINGS_INFO_REGISTRY_LOC, 0, access_flags, &key);
+    if (!is_high_integrity()) {
+        rtn_value = RegOpenKeyEx(HKEY_CURRENT_USER, VK_SETTINGS_INFO_REGISTRY_LOC, 0, access_flags, &key);
         if (ERROR_SUCCESS == rtn_value) {
             result = get_settings_path_if_exists_in_registry_key(inst, out_path, key);
-            RegCloseKey(key);
+
             // Either we got OOM and *must* exit or we successfully found the settings file and can exit
             if (result == VK_ERROR_OUT_OF_HOST_MEMORY || result == VK_SUCCESS) {
                 goto out;
             }
+            RegCloseKey(key);
+            key = NULL;
         }
+    }
 
-        rtn_value = RegOpenKeyEx(HKEY_LOCAL_MACHINE, VK_SETTINGS_INFO_REGISTRY_LOC, 0, access_flags, &key);
-        if (ERROR_SUCCESS != rtn_value) {
-            result = VK_ERROR_FEATURE_NOT_PRESENT;
-            goto out;
-        }
+    rtn_value = RegOpenKeyEx(HKEY_LOCAL_MACHINE, VK_SETTINGS_INFO_REGISTRY_LOC, 0, access_flags, &key);
+    if (ERROR_SUCCESS != rtn_value) {
+        result = VK_ERROR_FEATURE_NOT_PRESENT;
+        goto out;
+    }
 
-        result = get_settings_path_if_exists_in_registry_key(inst, out_path, key);
-        if (result == VK_ERROR_OUT_OF_HOST_MEMORY) {
-            goto out;
-        }
+    result = get_settings_path_if_exists_in_registry_key(inst, out_path, key);
+    if (result == VK_ERROR_OUT_OF_HOST_MEMORY) {
+        goto out;
     }
 
 out:
