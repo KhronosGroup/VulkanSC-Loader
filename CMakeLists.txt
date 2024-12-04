@@ -110,12 +110,7 @@ endif()
 
 add_library(platform_wsi INTERFACE)
 if(WIN32)
-    if(VULKANSC)
-        # Explicitly define WIN32 as some compiler stacks (e.g. clang) do not define it automatically
-        add_definitions(-DWIN32)
-    else()
-        target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_WIN32_KHR)
-    endif()
+    target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(ANDROID)
     message(FATAL_ERROR "Android build not supported!")
 elseif(APPLE)
