@@ -28,6 +28,8 @@
 
 #include "test_util.h"
 
+#include <fstream>
+
 #if defined(WIN32)
 #include <wchar.h>
 #include <strsafe.h>

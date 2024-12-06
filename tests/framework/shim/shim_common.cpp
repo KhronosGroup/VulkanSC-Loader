@@ -28,8 +28,6 @@
 
 #include "shim.h"
 
-#include <random>
-
 void PlatformShim::redirect_all_paths(std::filesystem::path const& path) {
     redirect_category(path, ManifestCategory::implicit_layer);
     redirect_category(path, ManifestCategory::explicit_layer);
@@ -219,6 +217,9 @@ void PlatformShim::redirect_category(std::filesystem::path const& new_path, Mani
     parse_and_add_env_var_override(paths, get_env_var("XDG_CONFIG_HOME", report_errors));
     if (category == ManifestCategory::explicit_layer) {
         parse_and_add_env_var_override(paths, get_env_var("VK_LAYER_PATH", false));  // don't report failure
+    }
+    if (category == ManifestCategory::implicit_layer) {
+        parse_and_add_env_var_override(paths, get_env_var("VK_IMPLICIT_LAYER_PATH", false));  // don't report failure
     }
     parse_and_add_env_var_override(paths, FALLBACK_DATA_DIRS);
     parse_and_add_env_var_override(paths, FALLBACK_CONFIG_DIRS);

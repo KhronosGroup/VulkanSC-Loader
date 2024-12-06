@@ -24,7 +24,7 @@ set(VULKANSC ON CACHE BOOL "User defined variable for VULKANSC mode to be passed
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.16 LANGUAGES C)
 else()
-    project(VULKAN_LOADER VERSION 1.3.295 LANGUAGES C)
+    project(VULKAN_LOADER VERSION 1.3.302 LANGUAGES C)
 endif()
 
 option(CODE_COVERAGE "Enable Code Coverage" OFF)
@@ -145,21 +145,25 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
 
     if(BUILD_WSI_XCB_SUPPORT)
         pkg_check_modules(XCB REQUIRED QUIET IMPORTED_TARGET xcb)
+        pkg_get_variable(XCB_INCLUDE_DIRS xcb includedir)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_XCB_KHR)
-        target_link_libraries(platform_wsi INTERFACE PkgConfig::XCB)
+        target_include_directories(platform_wsi INTERFACE ${XCB_INCLUDE_DIRS})
     endif()
     if(BUILD_WSI_XLIB_SUPPORT)
         pkg_check_modules(X11 REQUIRED QUIET IMPORTED_TARGET x11)
+        pkg_get_variable(XLIB_INCLUDE_DIRS x11 includedir)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_XLIB_KHR VK_USE_PLATFORM_XLIB_XRANDR_EXT)
-        target_link_libraries(platform_wsi INTERFACE PkgConfig::X11)
+        target_include_directories(platform_wsi INTERFACE ${XLIB_INCLUDE_DIRS})
     endif()
     if(BUILD_WSI_WAYLAND_SUPPORT)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_WAYLAND_KHR)
     endif()
     if(BUILD_WSI_DIRECTFB_SUPPORT)
         pkg_check_modules(DirectFB QUIET REQUIRED IMPORTED_TARGET directfb)
+        pkg_get_variable(DIRECTFB_INCLUDE_DIRS directfb includedir)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_DIRECTFB_EXT)
-        target_link_libraries(platform_wsi INTERFACE PkgConfig::DirectFB)
+        # vulkan_core.h includes <directfb.h> but the header is installed to directfb/directfb.h
+        target_include_directories(platform_wsi INTERFACE ${DIRECTFB_INCLUDE_DIRS} ${DIRECTFB_INCLUDE_DIRS}/directfb)
     endif()
     if(BUILD_WSI_SCI_SUPPORT)
         target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_SCI)
@@ -200,35 +204,46 @@ option(BUILD_WERROR "Enable warnings as errors")
 # Note that clang-cl.exe should use MSVC flavor flags, not GNU
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "MSVC"))
     if (BUILD_WERROR)
-        target_compile_options(loader_common_options INTERFACE /WX)
+        target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:/WX>)
     endif()
-    target_compile_options(loader_common_options INTERFACE /W4)
+    target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:/W4>)
 elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     # using GCC or Clang with the regular front end
     if (BUILD_WERROR)
-        target_compile_options(loader_common_options INTERFACE -Werror)
+        target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:-Werror>)
     endif()
-    target_compile_options(loader_common_options INTERFACE -Wall -Wextra)
+    target_compile_options(loader_common_options INTERFACE
+        $<$<COMPILE_LANGUAGE::CXX,C>:-Wall>
+        $<$<COMPILE_LANGUAGE::CXX,C>:-Wextra>
+    )
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(loader_common_options INTERFACE -Wno-missing-field-initializers)
+    target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:-Wno-missing-field-initializers>)
 
     # need to prepend /clang: to compiler arguments when using clang-cl
     if (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND "${CMAKE_C_COMPILER_FRONTEND_VARIANT}" MATCHES "MSVC")
-        target_compile_options(loader_common_options INTERFACE /clang:-fno-strict-aliasing)
+        target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:/clang:-fno-strict-aliasing>)
     else()
-        target_compile_options(loader_common_options INTERFACE -fno-strict-aliasing)
+        target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:-fno-strict-aliasing>)
     endif()
 
     if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(loader_common_options INTERFACE -Wno-stringop-truncation -Wno-stringop-overflow)
+        target_compile_options(loader_common_options INTERFACE
+            $<$<COMPILE_LANGUAGE::CXX,C>:-Wno-stringop-truncation>
+            $<$<COMPILE_LANGUAGE::CXX,C>:-Wno-stringop-overflow>
+        )
         if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 7.1)
-            target_compile_options(loader_common_options INTERFACE -Wshadow=local) #only added in GCC 7
+            target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:-Wshadow=local>) #only added in GCC 7
         endif()
     endif()
 
-    target_compile_options(loader_common_options INTERFACE -Wpointer-arith)
+    target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:-Wpointer-arith>)
+
+    # Force GLIBC to use the 64 bit interface for file operations instead of 32 bit - More info in issue #1551
+    if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+        target_compile_definitions(loader_common_options INTERFACE _FILE_OFFSET_BITS=64)
+    endif()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_FRONTEND_VARIANT MATCHES "MSVC"))
@@ -237,7 +252,13 @@ if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" A
     # /guard:cf: Enable control flow guard
     # /wd4152: Disable warning on conversion of a function pointer to a data pointer
     # /wd4201: Disable warning on anonymous struct/unions
-    target_compile_options(loader_common_options INTERFACE /sdl /GR- /guard:cf /wd4152 /wd4201)
+    target_compile_options(loader_common_options INTERFACE
+        $<$<COMPILE_LANGUAGE::CXX,C>:/sdl>
+        $<$<COMPILE_LANGUAGE::CXX,C>:/GR->
+        $<$<COMPILE_LANGUAGE::CXX,C>:/guard:cf>
+        $<$<COMPILE_LANGUAGE::CXX,C>:/wd4152>
+        $<$<COMPILE_LANGUAGE::CXX,C>:/wd4201>
+    )
 
     # Enable control flow guard
     target_link_options(loader_common_options INTERFACE "LINKER:/guard:cf")

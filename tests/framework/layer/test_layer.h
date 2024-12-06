@@ -31,6 +31,8 @@
 
 #include "test_util.h"
 
+#include <functional>
+
 #include "layer/layer_util.h"
 
 #ifdef VULKANSC

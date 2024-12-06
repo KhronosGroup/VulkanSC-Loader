@@ -26,7 +26,6 @@
 
 #include <string.h>
 
-#include "loader.h"
 #include "debug_utils.h"
 #include "unknown_function_handling.h"
 #include "wsi.h"

@@ -94,7 +94,11 @@ VkResult loader_validate_instance_extensions(struct loader_instance *inst, const
                                              const struct loader_envvar_all_filters *layer_filters,
                                              const VkInstanceCreateInfo *pCreateInfo);
 
+#if defined(_WIN32)
+BOOL __stdcall loader_initialize(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context);
+#else
 void loader_initialize(void);
+#endif
 void loader_release(void);
 void loader_preload_icds(void);
 void loader_unload_preloaded_icds(void);
@@ -168,6 +172,7 @@ VkResult loader_get_icd_loader_instance_extensions(const struct loader_instance 
                                                    struct loader_extension_list *inst_exts);
 struct loader_icd_term *loader_get_icd_and_device(const void *device, struct loader_device **found_dev);
 struct loader_instance *loader_get_instance(const VkInstance instance);
+loader_platform_dl_handle loader_open_layer_file(const struct loader_instance *inst, struct loader_layer_properties *prop);
 struct loader_device *loader_create_logical_device(const struct loader_instance *inst, const VkAllocationCallbacks *pAllocator);
 void loader_add_logical_device(struct loader_icd_term *icd_term, struct loader_device *found_dev);
 void loader_remove_logical_device(struct loader_icd_term *icd_term, struct loader_device *found_dev,

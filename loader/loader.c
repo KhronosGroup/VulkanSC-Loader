@@ -30,7 +30,7 @@
 
 #include "loader.h"
 
-#include <ctype.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,10 +54,10 @@
 #endif  // _WIN32
 
 #include "allocation.h"
+#include "stack_allocation.h"
 #include "cJSON.h"
 #include "debug_utils.h"
 #include "loader_environment.h"
-#include "gpa_helper.h"
 #include "log.h"
 #include "unknown_function_handling.h"
 #include "vk_loader_platform.h"
@@ -81,7 +81,10 @@ struct activated_layer_info {
     char *manifest;
     char *library;
     bool is_implicit;
+    enum loader_layer_enabled_by_what enabled_by_what;
     char *disable_env;
+    char *enable_name_env;
+    char *enable_value_env;
 };
 
 // thread safety lock for accessing global data structures such as "loader"
@@ -138,6 +141,29 @@ bool loader_check_version_meets_required(loader_api_version required, loader_api
            (version.major == required.major && version.minor > required.minor) ||
            // major and minor version are equal, patch version is greater or equal to minimum patch
            (version.major == required.major && version.minor == required.minor && version.patch >= required.patch);
+}
+
+const char *get_enabled_by_what_str(enum loader_layer_enabled_by_what enabled_by_what) {
+    switch (enabled_by_what) {
+        default:
+            assert(true && "Shouldn't reach this");
+            return "Unknown";
+        case (ENABLED_BY_WHAT_UNSET):
+            assert(true && "Shouldn't reach this");
+            return "Unknown";
+        case (ENABLED_BY_WHAT_LOADER_SETTINGS_FILE):
+            return "Loader Settings File (Vulkan Configurator)";
+        case (ENABLED_BY_WHAT_IMPLICIT_LAYER):
+            return "Implicit Layer";
+        case (ENABLED_BY_WHAT_VK_INSTANCE_LAYERS):
+            return "Environment Variable VK_INSTANCE_LAYERS";
+        case (ENABLED_BY_WHAT_VK_LOADER_LAYERS_ENABLE):
+            return "Environment Variable VK_LOADER_LAYERS_ENABLE";
+        case (ENABLED_BY_WHAT_IN_APPLICATION_API):
+            return "By the Application";
+        case (ENABLED_BY_WHAT_META_LAYER):
+            return "Meta Layer (Vulkan Configurator)";
+    }
 }
 
 // Wrapper around opendir so that the dirent_on_windows gets the instance it needs
@@ -978,6 +1004,7 @@ VkResult loader_add_layer_names_to_list(const struct loader_instance *inst, cons
 
         // If not a meta-layer, simply add it.
         if (0 == (layer_prop->type_flags & VK_LAYER_TYPE_FLAG_META_LAYER)) {
+            layer_prop->enabled_by_what = ENABLED_BY_WHAT_IN_APPLICATION_API;
             err = loader_add_layer_properties_to_list(inst, output_list, layer_prop);
             if (err == VK_ERROR_OUT_OF_HOST_MEMORY) return err;
             err = loader_add_layer_properties_to_list(inst, expanded_output_list, layer_prop);
@@ -1088,7 +1115,7 @@ VkResult loader_add_implicit_layer(const struct loader_instance *inst, struct lo
             if (loader_find_layer_name_in_list(&prop->info.layerName[0], target_list)) {
                 return result;
             }
-
+            prop->enabled_by_what = ENABLED_BY_WHAT_IMPLICIT_LAYER;
             result = loader_add_layer_properties_to_list(inst, target_list, prop);
             if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
             if (NULL != expanded_target_list) {
@@ -1133,17 +1160,20 @@ VkResult loader_add_meta_layer(const struct loader_instance *inst, const struct 
             // If the component layer is itself an implicit layer, we need to do the implicit layer enable
             // checks
             if (0 == (search_prop->type_flags & VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER)) {
+                search_prop->enabled_by_what = ENABLED_BY_WHAT_META_LAYER;
                 result = loader_add_implicit_layer(inst, search_prop, filters, target_list, expanded_target_list, source_list);
                 if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
             } else {
                 if (0 != (search_prop->type_flags & VK_LAYER_TYPE_FLAG_META_LAYER)) {
                     bool found_layers_in_component_meta_layer = true;
+                    search_prop->enabled_by_what = ENABLED_BY_WHAT_META_LAYER;
                     result = loader_add_meta_layer(inst, filters, search_prop, target_list, expanded_target_list, source_list,
                                                    &found_layers_in_component_meta_layer);
                     if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
                     if (!found_layers_in_component_meta_layer) found_all_component_layers = false;
                 } else if (!loader_find_layer_name_in_list(&search_prop->info.layerName[0], target_list)) {
                     // Make sure the layer isn't already in the output_list, skip adding it if it is.
+                    search_prop->enabled_by_what = ENABLED_BY_WHAT_META_LAYER;
                     result = loader_add_layer_properties_to_list(inst, target_list, search_prop);
                     if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
                     if (NULL != expanded_target_list) {
@@ -1162,6 +1192,7 @@ VkResult loader_add_meta_layer(const struct loader_instance *inst, const struct 
 
     // Add this layer to the overall target list (not the expanded one)
     if (found_all_component_layers) {
+        prop->enabled_by_what = ENABLED_BY_WHAT_META_LAYER;
         result = loader_add_layer_properties_to_list(inst, target_list, prop);
         if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
         // Write the result to out_found_all_component_layers in case this function is being recursed
@@ -1671,13 +1702,15 @@ VkResult loader_scan_for_direct_drivers(const struct loader_instance *inst, cons
     }
     const VkDirectDriverLoadingListLUNARG *ddl_list = NULL;
     // Find the VkDirectDriverLoadingListLUNARG struct in the pNext chain of vkInstanceCreateInfo
-    const VkBaseOutStructure *chain = pCreateInfo->pNext;
-    while (chain) {
-        if (chain->sType == VK_STRUCTURE_TYPE_DIRECT_DRIVER_LOADING_LIST_LUNARG) {
-            ddl_list = (VkDirectDriverLoadingListLUNARG *)chain;
+    const void *pNext = pCreateInfo->pNext;
+    while (pNext) {
+        VkBaseInStructure out_structure = {0};
+        memcpy(&out_structure, pNext, sizeof(VkBaseInStructure));
+        if (out_structure.sType == VK_STRUCTURE_TYPE_DIRECT_DRIVER_LOADING_LIST_LUNARG) {
+            ddl_list = (VkDirectDriverLoadingListLUNARG *)pNext;
             break;
         }
-        chain = (const VkBaseOutStructure *)chain->pNext;
+        pNext = out_structure.pNext;
     }
     if (NULL == ddl_list) {
         if (direct_driver_loading_enabled) {
@@ -1945,12 +1978,18 @@ out:
     return res;
 }
 
+#if defined(_WIN32)
+BOOL __stdcall loader_initialize(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context) {
+    (void)InitOnce;
+    (void)Parameter;
+    (void)Context;
+#else
 void loader_initialize(void) {
-    // initialize mutexes
     loader_platform_thread_create_mutex(&loader_lock);
     loader_platform_thread_create_mutex(&loader_preload_icd_lock);
     loader_platform_thread_create_mutex(&loader_global_instance_list_lock);
     init_global_loader_settings();
+#endif
 
     // initialize logging
     loader_init_global_debug_level();
@@ -1976,6 +2015,9 @@ void loader_initialize(void) {
     loader_free_getenv(loader_disable_dynamic_library_unloading_env_var, NULL);
 #if defined(LOADER_USE_UNSAFE_FILE_SEARCH)
     loader_log(NULL, VULKAN_LOADER_WARN_BIT, 0, "Vulkan Loader: unsafe searching is enabled");
+#endif
+#if defined(_WIN32)
+    return TRUE;
 #endif
 }
 
@@ -2968,21 +3010,16 @@ out:
 VkResult add_data_files(const struct loader_instance *inst, char *search_path, struct loader_string_list *out_files,
                         bool use_first_found_manifest) {
     VkResult vk_result = VK_SUCCESS;
-    DIR *dir_stream = NULL;
-    struct dirent *dir_entry;
-    char *cur_file;
-    char *next_file;
-    char *name;
     char full_path[2048];
 #if !defined(_WIN32)
     char temp_path[2048];
 #endif
 
     // Now, parse the paths
-    next_file = search_path;
+    char *next_file = search_path;
     while (NULL != next_file && *next_file != '\0') {
-        name = NULL;
-        cur_file = next_file;
+        char *name = NULL;
+        char *cur_file = next_file;
         next_file = loader_get_next_path(cur_file);
 
         // Is this a JSON file, then try to open it.
@@ -3021,12 +3058,19 @@ VkResult add_data_files(const struct loader_instance *inst, char *search_path, s
                 break;
             }
         } else {  // Otherwise, treat it as a directory
-            dir_stream = loader_opendir(inst, cur_file);
+            DIR *dir_stream = loader_opendir(inst, cur_file);
             if (NULL == dir_stream) {
                 continue;
             }
             while (1) {
-                dir_entry = readdir(dir_stream);
+                errno = 0;
+                struct dirent *dir_entry = readdir(dir_stream);
+#if !defined(WIN32)  // Windows doesn't use readdir, don't check errors on functions which aren't called
+                if (errno != 0) {
+                    loader_log(inst, VULKAN_LOADER_ERROR_BIT, 0, "readdir failed with %d: %s", errno, strerror(errno));
+                    break;
+                }
+#endif
                 if (NULL == dir_entry) {
                     break;
                 }
@@ -3164,6 +3208,8 @@ VkResult read_data_files_in_search_paths(const struct loader_instance *inst, enu
 #endif
             break;
         case LOADER_DATA_FILE_MANIFEST_IMPLICIT_LAYER:
+            override_env = loader_secure_getenv(VK_IMPLICIT_LAYER_PATH_ENV_VAR, inst);
+            additional_env = loader_secure_getenv(VK_ADDITIONAL_IMPLICIT_LAYER_PATH_ENV_VAR, inst);
 #if COMMON_UNIX_PLATFORMS
             relative_location = VK_ILAYERS_INFO_RELATIVE_DIR;
 #endif
@@ -3172,8 +3218,8 @@ VkResult read_data_files_in_search_paths(const struct loader_instance *inst, enu
 #endif
             break;
         case LOADER_DATA_FILE_MANIFEST_EXPLICIT_LAYER:
-            override_env = loader_secure_getenv(VK_LAYER_PATH_ENV_VAR, inst);
-            additional_env = loader_secure_getenv(VK_ADDITIONAL_LAYER_PATH_ENV_VAR, inst);
+            override_env = loader_secure_getenv(VK_EXPLICIT_LAYER_PATH_ENV_VAR, inst);
+            additional_env = loader_secure_getenv(VK_ADDITIONAL_EXPLICIT_LAYER_PATH_ENV_VAR, inst);
 #if COMMON_UNIX_PLATFORMS
             relative_location = VK_ELAYERS_INFO_RELATIVE_DIR;
 #endif
@@ -3983,6 +4029,17 @@ VkResult loader_scan_for_implicit_layers(struct loader_instance *inst, struct lo
         goto out;
     }
 
+    // Remove layers from settings file that are off, are implicit, or are implicit layers that aren't active
+    for (uint32_t i = 0; i < settings_layers.count; ++i) {
+        if (settings_layers.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_OFF ||
+            settings_layers.list[i].settings_control_value == LOADER_SETTINGS_LAYER_UNORDERED_LAYER_LOCATION ||
+            (settings_layers.list[i].type_flags & VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER) == VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER ||
+            !loader_implicit_layer_is_enabled(inst, layer_filters, &settings_layers.list[i])) {
+            loader_remove_layer_in_list(inst, &settings_layers, i);
+            i--;
+        }
+    }
+
     // If we should not look for layers using other mechanisms, assign settings_layers to instance_layers and jump to the
     // output
     if (!should_search_for_other_layers) {
@@ -4703,8 +4760,11 @@ VkResult loader_create_instance_chain(const VkInstanceCreateInfo *pCreateInfo, c
             activated_layers[num_activated_layers].manifest = layer_prop->manifest_file_name;
             activated_layers[num_activated_layers].library = layer_prop->lib_name;
             activated_layers[num_activated_layers].is_implicit = !(layer_prop->type_flags & VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER);
+            activated_layers[num_activated_layers].enabled_by_what = layer_prop->enabled_by_what;
             if (activated_layers[num_activated_layers].is_implicit) {
                 activated_layers[num_activated_layers].disable_env = layer_prop->disable_env_var.name;
+                activated_layers[num_activated_layers].enable_name_env = layer_prop->enable_env_var.name;
+                activated_layers[num_activated_layers].enable_value_env = layer_prop->enable_env_var.value;
             }
 
             loader_log(inst, VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_LAYER_BIT, 0, "Insert instance layer \"%s\" (%s)",
@@ -4776,6 +4836,11 @@ VkResult loader_create_instance_chain(const VkInstanceCreateInfo *pCreateInfo, c
     feature_flags = windows_initialize_dxgi();
 #endif
 
+    // The following line of code is actually invalid at least according to the Vulkan spec with header update 1.2.193 and onwards.
+    // The update required calls to vkGetInstanceProcAddr querying "global" functions (which includes vkCreateInstance) to pass NULL
+    // for the instance parameter. Because it wasn't required to be NULL before, there may be layers which expect the loader's
+    // behavior of passing a non-NULL value into vkGetInstanceProcAddr.
+    // In an abundance of caution, the incorrect code remains as is, with a big comment to indicate that its wrong
     PFN_vkCreateInstance fpCreateInstance = (PFN_vkCreateInstance)next_gipa(*created_instance, "vkCreateInstance");
     if (fpCreateInstance) {
         VkLayerInstanceCreateInfo instance_dispatch;
@@ -4811,9 +4876,16 @@ VkResult loader_create_instance_chain(const VkInstanceCreateInfo *pCreateInfo, c
             loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "   %s", activated_layers[index].name);
             loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "           Type: %s",
                        activated_layers[index].is_implicit ? "Implicit" : "Explicit");
+            loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "           Enabled By: %s",
+                       get_enabled_by_what_str(activated_layers[index].enabled_by_what));
             if (activated_layers[index].is_implicit) {
                 loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "               Disable Env Var:  %s",
                            activated_layers[index].disable_env);
+                if (activated_layers[index].enable_name_env) {
+                    loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0,
+                               "               This layer was enabled because Env Var %s was set to Value %s",
+                               activated_layers[index].enable_name_env, activated_layers[index].enable_value_env);
+                }
             }
             loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "           Manifest: %s", activated_layers[index].manifest);
             loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "           Library:  %s", activated_layers[index].library);
@@ -5040,6 +5112,7 @@ VkResult loader_create_device_chain(const VkPhysicalDevice pd, const VkDeviceCre
             activated_layers[num_activated_layers].manifest = layer_prop->manifest_file_name;
             activated_layers[num_activated_layers].library = layer_prop->lib_name;
             activated_layers[num_activated_layers].is_implicit = !(layer_prop->type_flags & VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER);
+            activated_layers[num_activated_layers].enabled_by_what = layer_prop->enabled_by_what;
             if (activated_layers[num_activated_layers].is_implicit) {
                 activated_layers[num_activated_layers].disable_env = layer_prop->disable_env_var.name;
             }
@@ -5074,6 +5147,8 @@ VkResult loader_create_device_chain(const VkPhysicalDevice pd, const VkDeviceCre
             loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "   %s", activated_layers[index].name);
             loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "           Type: %s",
                        activated_layers[index].is_implicit ? "Implicit" : "Explicit");
+            loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "           Enabled By: %s",
+                       get_enabled_by_what_str(activated_layers[index].enabled_by_what));
             if (activated_layers[index].is_implicit) {
                 loader_log(inst, VULKAN_LOADER_LAYER_BIT, 0, "               Disable Env Var:  %s",
                            activated_layers[index].disable_env);
@@ -5484,14 +5559,18 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
 #endif  // LOADER_ENABLE_LINUX_SORT
 
         // Determine if vkGetPhysicalDeviceProperties2 is available to this Instance
+        // Also determine if VK_EXT_surface_maintenance1 is available on the ICD
         if (icd_term->scanned_icd->api_version >= VK_API_VERSION_1_1) {
             icd_term->supports_get_dev_prop_2 = true;
-        } else {
-            for (uint32_t j = 0; j < icd_create_info.enabledExtensionCount; j++) {
-                if (!strcmp(filtered_extension_names[j], VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
-                    icd_term->supports_get_dev_prop_2 = true;
-                    break;
-                }
+        }
+        for (uint32_t j = 0; j < icd_create_info.enabledExtensionCount; j++) {
+            if (!strcmp(filtered_extension_names[j], VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
+                icd_term->supports_get_dev_prop_2 = true;
+                continue;
+            }
+            if (!strcmp(filtered_extension_names[j], VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME)) {
+                icd_term->supports_ext_surface_maintenance_1 = true;
+                continue;
             }
         }
 #endif  // VULKANSC
@@ -5923,7 +6002,9 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
     {
         const void *pNext = localCreateInfo.pNext;
         while (pNext != NULL) {
-            switch (*(VkStructureType *)pNext) {
+            VkBaseInStructure pNext_in_structure = {0};
+            memcpy(&pNext_in_structure, pNext, sizeof(VkBaseInStructure));
+            switch (pNext_in_structure.sType) {
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2: {
                     const VkPhysicalDeviceFeatures2KHR *features = pNext;
 
@@ -5975,8 +6056,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
                 // Multiview properties are also allowed, but since VK_KHX_multiview is a device extension, we'll just let the
                 // ICD handle that error when the user enables the extension here
                 default: {
-                    const VkBaseInStructure *header = pNext;
-                    pNext = header->pNext;
+                    pNext = pNext_in_structure.pNext;
                     break;
                 }
             }
@@ -5988,7 +6068,9 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
     {
         const void *pNext = localCreateInfo.pNext;
         while (pNext != NULL) {
-            switch (*(VkStructureType *)pNext) {
+            VkBaseInStructure pNext_in_structure = {0};
+            memcpy(&pNext_in_structure, pNext, sizeof(VkBaseInStructure));
+            switch (pNext_in_structure.sType) {
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_5_FEATURES_KHR: {
                     const VkPhysicalDeviceMaintenance5FeaturesKHR *maintenance_features = pNext;
                     if (maintenance_features->maintenance5 == VK_TRUE) {
@@ -5999,8 +6081,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDevice(VkPhysicalDevice physical
                 }
 
                 default: {
-                    const VkBaseInStructure *header = pNext;
-                    pNext = header->pNext;
+                    pNext = pNext_in_structure.pNext;
                     break;
                 }
             }
@@ -7043,8 +7124,6 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateInstanceLayerProperties(uint3
 
     LOADER_PLATFORM_THREAD_ONCE(&once_init, loader_initialize);
 
-    uint32_t copy_size;
-
     result = parse_layer_environment_var_filters(NULL, &layer_filters);
     if (VK_SUCCESS != result) {
         goto out;
@@ -7057,35 +7136,34 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateInstanceLayerProperties(uint3
         goto out;
     }
 
-    uint32_t active_layer_count = 0;
+    uint32_t layers_to_write_out = 0;
     for (uint32_t i = 0; i < instance_layer_list.count; i++) {
         if (instance_layer_list.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_ON ||
             instance_layer_list.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_DEFAULT) {
-            active_layer_count++;
+            layers_to_write_out++;
         }
     }
 
     if (pProperties == NULL) {
-        *pPropertyCount = active_layer_count;
+        *pPropertyCount = layers_to_write_out;
         goto out;
     }
 
-    copy_size = (*pPropertyCount < active_layer_count) ? *pPropertyCount : active_layer_count;
     uint32_t output_properties_index = 0;
-    for (uint32_t i = 0; i < copy_size; i++) {
-        if (instance_layer_list.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_ON ||
-            instance_layer_list.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_DEFAULT) {
+    for (uint32_t i = 0; i < instance_layer_list.count; i++) {
+        if (output_properties_index < *pPropertyCount &&
+            (instance_layer_list.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_ON ||
+             instance_layer_list.list[i].settings_control_value == LOADER_SETTINGS_LAYER_CONTROL_DEFAULT)) {
             memcpy(&pProperties[output_properties_index], &instance_layer_list.list[i].info, sizeof(VkLayerProperties));
             output_properties_index++;
         }
     }
-
-    *pPropertyCount = copy_size;
-
-    if (copy_size < instance_layer_list.count) {
+    if (output_properties_index < layers_to_write_out) {
+        // Indicates that we had more elements to write but ran out of room
         result = VK_INCOMPLETE;
-        goto out;
     }
+
+    *pPropertyCount = output_properties_index;
 
 out:
 

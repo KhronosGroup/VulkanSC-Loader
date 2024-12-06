@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "vk_loader_platform.h"
 #include "loader.h"
 #include "vk_loader_extensions.h"
 #include <vulkan/vk_icd.h>
@@ -374,8 +373,6 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_extension_dispatch_table(struct lo
     table->CmdPipelineBarrier2KHR = (PFN_vkCmdPipelineBarrier2KHR)gdpa(dev, "vkCmdPipelineBarrier2KHR");
     table->CmdWriteTimestamp2KHR = (PFN_vkCmdWriteTimestamp2KHR)gdpa(dev, "vkCmdWriteTimestamp2KHR");
     table->QueueSubmit2KHR = (PFN_vkQueueSubmit2KHR)gdpa(dev, "vkQueueSubmit2KHR");
-    table->CmdWriteBufferMarker2AMD = (PFN_vkCmdWriteBufferMarker2AMD)gdpa(dev, "vkCmdWriteBufferMarker2AMD");
-    table->GetQueueCheckpointData2NV = (PFN_vkGetQueueCheckpointData2NV)gdpa(dev, "vkGetQueueCheckpointData2NV");
 
     // ---- VK_KHR_copy_commands2 extension commands
     table->CmdCopyBuffer2KHR = (PFN_vkCmdCopyBuffer2KHR)gdpa(dev, "vkCmdCopyBuffer2KHR");
@@ -1253,8 +1250,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "CmdPipelineBarrier2KHR")) return (void *)table->CmdPipelineBarrier2KHR;
     if (!strcmp(name, "CmdWriteTimestamp2KHR")) return (void *)table->CmdWriteTimestamp2KHR;
     if (!strcmp(name, "QueueSubmit2KHR")) return (void *)table->QueueSubmit2KHR;
-    if (!strcmp(name, "CmdWriteBufferMarker2AMD")) return (void *)table->CmdWriteBufferMarker2AMD;
-    if (!strcmp(name, "GetQueueCheckpointData2NV")) return (void *)table->GetQueueCheckpointData2NV;
 
     // ---- VK_KHR_copy_commands2 extension commands
     if (!strcmp(name, "CmdCopyBuffer2KHR")) return (void *)table->CmdCopyBuffer2KHR;
@@ -1870,36 +1865,6 @@ VKAPI_ATTR VkResult VKAPI_CALL QueueSubmit2KHR(
         abort(); /* Intentionally fail so user can correct issue. */
     }
     return disp->QueueSubmit2KHR(queue, submitCount, pSubmits, fence);
-}
-
-VKAPI_ATTR void VKAPI_CALL CmdWriteBufferMarker2AMD(
-    VkCommandBuffer                             commandBuffer,
-    VkPipelineStageFlags2                       stage,
-    VkBuffer                                    dstBuffer,
-    VkDeviceSize                                dstOffset,
-    uint32_t                                    marker) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdWriteBufferMarker2AMD: Invalid commandBuffer "
-                   "[VUID-vkCmdWriteBufferMarker2AMD-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
-    disp->CmdWriteBufferMarker2AMD(commandBuffer, stage, dstBuffer, dstOffset, marker);
-}
-
-VKAPI_ATTR void VKAPI_CALL GetQueueCheckpointData2NV(
-    VkQueue                                     queue,
-    uint32_t*                                   pCheckpointDataCount,
-    VkCheckpointData2NV*                        pCheckpointData) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetQueueCheckpointData2NV: Invalid queue "
-                   "[VUID-vkGetQueueCheckpointData2NV-queue-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
-    disp->GetQueueCheckpointData2NV(queue, pCheckpointDataCount, pCheckpointData);
 }
 
 
@@ -3256,14 +3221,6 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
     }
     if (!strcmp("vkQueueSubmit2KHR", name)) {
         *addr = (void *)QueueSubmit2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdWriteBufferMarker2AMD", name)) {
-        *addr = (void *)CmdWriteBufferMarker2AMD;
-        return true;
-    }
-    if (!strcmp("vkGetQueueCheckpointData2NV", name)) {
-        *addr = (void *)GetQueueCheckpointData2NV;
         return true;
     }
 

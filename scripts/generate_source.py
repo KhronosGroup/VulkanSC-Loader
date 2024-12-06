@@ -44,6 +44,13 @@ def main(argv):
     group.add_argument('-v', '--verify', action='store_true', help='verify repo files match generator output')
     args = parser.parse_args(argv)
 
+    registry = os.path.abspath(os.path.join(args.registry,  'vk.xml'))
+    if not os.path.isfile(registry):
+        registry = os.path.abspath(os.path.join(args.registry, 'Vulkan-Headers/registry/vk.xml'))
+        if not os.path.isfile(registry):
+            print(f'cannot find vk.xml in {args.registry}')
+            return -1
+
     gen_cmds = [[common_codegen.repo_relative('scripts/loader_genvk.py'),
                  '-api', args.api,
                  '-registry', os.path.abspath(os.path.join(args.registry,  'vk.xml')),

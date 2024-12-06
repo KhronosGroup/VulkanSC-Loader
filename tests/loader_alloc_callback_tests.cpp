@@ -29,6 +29,7 @@
 
 #include "test_environment.h"
 
+#include <fstream>
 #include <mutex>
 
 struct MemoryTrackerSettings {

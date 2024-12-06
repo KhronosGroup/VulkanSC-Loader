@@ -27,6 +27,8 @@
 // clang-format off
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 #if !defined(PFN_GetPhysicalDeviceProcAddr)
 typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_GetPhysicalDeviceProcAddr)(VkInstance instance, const char* pName);
 #endif
@@ -333,8 +335,6 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdPipelineBarrier2KHR CmdPipelineBarrier2KHR;
     PFN_vkCmdWriteTimestamp2KHR CmdWriteTimestamp2KHR;
     PFN_vkQueueSubmit2KHR QueueSubmit2KHR;
-    PFN_vkCmdWriteBufferMarker2AMD CmdWriteBufferMarker2AMD;
-    PFN_vkGetQueueCheckpointData2NV GetQueueCheckpointData2NV;
 
     // ---- VK_KHR_copy_commands2 extension commands
     PFN_vkCmdCopyBuffer2KHR CmdCopyBuffer2KHR;

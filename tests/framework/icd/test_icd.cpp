@@ -689,15 +689,15 @@ VKAPI_ATTR VkBool32 VKAPI_CALL test_vkGetPhysicalDeviceXlibPresentationSupportKH
 #endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
-VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateDirectFBSurfaceEXT(VkInstance instance,
-                                                               const VkDirectFBSurfaceCreateInfoEXT* pCreateInfo,
-                                                               const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface) {
+VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateDirectFBSurfaceEXT([[maybe_unused]] VkInstance instance,
+                                                               [[maybe_unused]] const VkDirectFBSurfaceCreateInfoEXT* pCreateInfo,
+                                                               [[maybe_unused]] const VkAllocationCallbacks* pAllocator,
+                                                               VkSurfaceKHR* pSurface) {
     common_nondispatch_handle_creation(icd.surface_handles, pSurface);
     return VK_SUCCESS;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL test_vkGetPhysicalDeviceDirectFBPresentationSupportEXT(VkPhysicalDevice physicalDevice,
-                                                                                      uint32_t queueFamilyIndex, IDirectFB* dfb) {
+VKAPI_ATTR VkBool32 VKAPI_CALL test_vkGetPhysicalDeviceDirectFBPresentationSupportEXT(VkPhysicalDevice, uint32_t, IDirectFB*) {
     return VK_TRUE;
 }
 
@@ -724,10 +724,9 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateIOSSurfaceMVK([[maybe_unused]] VkIns
 #endif  // VK_USE_PLATFORM_IOS_MVK
 
 #if defined(VK_USE_PLATFORM_GGP)
-VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateStreamDescriptorSurfaceGGP(VkInstance instance,
-                                                                       const VkStreamDescriptorSurfaceCreateInfoGGP* pCreateInfo,
-                                                                       const VkAllocationCallbacks* pAllocator,
-                                                                       VkSurfaceKHR* pSurface) {
+VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateStreamDescriptorSurfaceGGP(
+    [[maybe_unused]] VkInstance instance, [[maybe_unused]] const VkStreamDescriptorSurfaceCreateInfoGGP* pCreateInfo,
+    [[maybe_unused]] const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface) {
     common_nondispatch_handle_creation(icd.surface_handles, pSurface);
     return VK_SUCCESS;
 }
@@ -744,15 +743,16 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateMetalSurfaceEXT([[maybe_unused]] VkI
 #endif  // VK_USE_PLATFORM_METAL_EXT
 
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
-VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateScreenSurfaceQNX(VkInstance instance, const VkScreenSurfaceCreateInfoQNX* pCreateInfo,
-                                                             const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface) {
+VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateScreenSurfaceQNX([[maybe_unused]] VkInstance instance,
+                                                             [[maybe_unused]] const VkScreenSurfaceCreateInfoQNX* pCreateInfo,
+                                                             [[maybe_unused]] const VkAllocationCallbacks* pAllocator,
+                                                             VkSurfaceKHR* pSurface) {
     common_nondispatch_handle_creation(icd.surface_handles, pSurface);
     return VK_SUCCESS;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL test_vkGetPhysicalDeviceScreenPresentationSupportQNX(VkPhysicalDevice physicalDevice,
-                                                                                    uint32_t queueFamilyIndex,
-                                                                                    struct _screen_window* window) {
+VKAPI_ATTR VkBool32 VKAPI_CALL test_vkGetPhysicalDeviceScreenPresentationSupportQNX(VkPhysicalDevice, uint32_t,
+                                                                                    struct _screen_window*) {
     return VK_TRUE;
 }
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
@@ -938,6 +938,62 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkGetPhysicalDeviceSurfaceCapabilities2KHR(V
                                                                                const VkPhysicalDeviceSurfaceInfo2KHR* pSurfaceInfo,
                                                                                VkSurfaceCapabilities2KHR* pSurfaceCapabilities) {
     if (nullptr != pSurfaceInfo && nullptr != pSurfaceCapabilities) {
+        if (IsInstanceExtensionSupported("VK_EXT_surface_maintenance1") &&
+            IsInstanceExtensionEnabled("VK_EXT_surface_maintenance1")) {
+            auto& phys_dev = icd.GetPhysDevice(physicalDevice);
+            void* pNext = pSurfaceCapabilities->pNext;
+            while (pNext) {
+                VkBaseOutStructure pNext_base_structure{};
+                std::memcpy(&pNext_base_structure, pNext, sizeof(VkBaseInStructure));
+                if (pNext_base_structure.sType == VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_COMPATIBILITY_EXT) {
+                    // First must find the present mode that is being queried
+                    VkPresentModeKHR present_mode = VK_PRESENT_MODE_MAX_ENUM_KHR;
+                    const void* pSurfaceInfo_pNext = pSurfaceInfo->pNext;
+                    while (pSurfaceInfo_pNext) {
+                        VkBaseInStructure pSurfaceInfo_pNext_base_structure{};
+                        std::memcpy(&pSurfaceInfo_pNext_base_structure, pSurfaceInfo_pNext, sizeof(VkBaseInStructure));
+                        if (pSurfaceInfo_pNext_base_structure.sType == VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT) {
+                            present_mode = reinterpret_cast<const VkSurfacePresentModeEXT*>(pSurfaceInfo_pNext)->presentMode;
+                        }
+                        pSurfaceInfo_pNext = pSurfaceInfo_pNext_base_structure.pNext;
+                    }
+
+                    VkSurfacePresentModeCompatibilityEXT* present_mode_compatibility =
+                        reinterpret_cast<VkSurfacePresentModeCompatibilityEXT*>(pNext);
+                    if (present_mode == VK_PRESENT_MODE_MAX_ENUM_KHR) {
+                        present_mode_compatibility->presentModeCount = 0;
+                    } else {
+                        auto it =
+                            std::find(phys_dev.surface_present_modes.begin(), phys_dev.surface_present_modes.end(), present_mode);
+                        if (it != phys_dev.surface_present_modes.end()) {
+                            size_t index = it - phys_dev.surface_present_modes.begin();
+                            present_mode_compatibility->presentModeCount =
+                                static_cast<uint32_t>(phys_dev.surface_present_mode_compatibility[index].size());
+                            if (present_mode_compatibility->pPresentModes) {
+                                for (size_t i = 0; i < phys_dev.surface_present_mode_compatibility[index].size(); i++) {
+                                    present_mode_compatibility->pPresentModes[i] =
+                                        phys_dev.surface_present_mode_compatibility[index][i];
+                                }
+                            }
+                        }
+                    }
+                } else if (pNext_base_structure.sType == VK_STRUCTURE_TYPE_SURFACE_PRESENT_SCALING_CAPABILITIES_EXT) {
+                    VkSurfacePresentScalingCapabilitiesEXT* present_scaling_capabilities =
+                        reinterpret_cast<VkSurfacePresentScalingCapabilitiesEXT*>(pNext);
+                    present_scaling_capabilities->minScaledImageExtent =
+                        phys_dev.surface_present_scaling_capabilities.minScaledImageExtent;
+                    present_scaling_capabilities->maxScaledImageExtent =
+                        phys_dev.surface_present_scaling_capabilities.maxScaledImageExtent;
+                    present_scaling_capabilities->supportedPresentScaling =
+                        phys_dev.surface_present_scaling_capabilities.supportedPresentScaling;
+                    present_scaling_capabilities->supportedPresentGravityX =
+                        phys_dev.surface_present_scaling_capabilities.supportedPresentGravityX;
+                    present_scaling_capabilities->supportedPresentGravityY =
+                        phys_dev.surface_present_scaling_capabilities.supportedPresentGravityY;
+                }
+                pNext = pNext_base_structure.pNext;
+            }
+        }
         return test_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, pSurfaceInfo->surface,
                                                               &pSurfaceCapabilities->surfaceCapabilities);
     }

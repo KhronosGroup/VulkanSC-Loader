@@ -99,7 +99,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved) {
     (void)hinst;
     switch (reason) {
         case DLL_PROCESS_ATTACH:
-            loader_initialize();
+            // Only initialize necessary sync primitives
+            loader_platform_thread_create_mutex(&loader_lock);
+            loader_platform_thread_create_mutex(&loader_preload_icd_lock);
+            loader_platform_thread_create_mutex(&loader_global_instance_list_lock);
+            init_global_loader_settings();
             break;
         case DLL_PROCESS_DETACH:
             if (NULL == reserved) {
@@ -967,20 +971,6 @@ VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint
             continue;
         }
 
-        if (icd_phys_devs_array_size <= i) {
-            uint32_t old_size = icd_phys_devs_array_size * sizeof(struct loader_icd_physical_devices);
-            *icd_phys_devs_array = loader_instance_heap_realloc(inst, *icd_phys_devs_array, old_size, 2 * old_size,
-                                                                VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
-            if (*icd_phys_devs_array == NULL) {
-                adapter->lpVtbl->Release(adapter);
-                res = VK_ERROR_OUT_OF_HOST_MEMORY;
-                goto out;
-            }
-            icd_phys_devs_array_size *= 2;
-        }
-        (*icd_phys_devs_array)[*icd_phys_devs_array_count].device_count = 0;
-        (*icd_phys_devs_array)[*icd_phys_devs_array_count].physical_devices = NULL;
-
         icd_term = inst->icd_terms;
 #ifndef VULKANSC
         while (NULL != icd_term) {
@@ -989,6 +979,20 @@ VkResult windows_read_sorted_physical_devices(struct loader_instance *inst, uint
                 icd_term = icd_term->next;
                 continue;
             }
+
+            if (icd_phys_devs_array_size <= *icd_phys_devs_array_count) {
+                uint32_t old_size = icd_phys_devs_array_size * sizeof(struct loader_icd_physical_devices);
+                *icd_phys_devs_array = loader_instance_heap_realloc(inst, *icd_phys_devs_array, old_size, 2 * old_size,
+                                                                    VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
+                if (*icd_phys_devs_array == NULL) {
+                    adapter->lpVtbl->Release(adapter);
+                    res = VK_ERROR_OUT_OF_HOST_MEMORY;
+                    goto out;
+                }
+                icd_phys_devs_array_size *= 2;
+            }
+            (*icd_phys_devs_array)[*icd_phys_devs_array_count].device_count = 0;
+            (*icd_phys_devs_array)[*icd_phys_devs_array_count].physical_devices = NULL;
 
             res = enumerate_adapter_physical_devices(inst, icd_term, description.AdapterLuid, icd_phys_devs_array_count,
                                                      *icd_phys_devs_array);
@@ -1200,12 +1204,15 @@ VkResult get_settings_path_if_exists_in_registry_key(const struct loader_instanc
             }
         }
 
-        // Make sure the path exists first
-        if (*out_path && !loader_platform_file_exists(name)) {
-            return VK_ERROR_INITIALIZATION_FAILED;
-        }
-
         if (strcmp(VK_LOADER_SETTINGS_FILENAME, &(name[start_of_path_filename])) == 0) {
+            // Make sure the path exists first
+            if (!loader_platform_file_exists(name)) {
+                loader_log(
+                    inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                    "Registry contained entry to vk_loader_settings.json but the corresponding file does not exist, ignoring");
+                return VK_ERROR_INITIALIZATION_FAILED;
+            }
+
             *out_path = loader_instance_heap_calloc(inst, name_size + 1, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
             if (*out_path == NULL) {
                 return VK_ERROR_OUT_OF_HOST_MEMORY;

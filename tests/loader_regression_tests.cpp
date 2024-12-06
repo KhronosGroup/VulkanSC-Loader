@@ -435,7 +435,7 @@ TEST(EnumerateDeviceExtensionProperties, ZeroPhysicalDeviceExtensions) {
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.set_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
-    inst.CheckCreate(VK_SUCCESS);
+    inst.CheckCreate();
 
     auto phys_dev = inst.GetPhysDev();
     DeviceWrapper dev{inst};
@@ -851,7 +851,7 @@ TEST(EnumeratePhysicalDevices, ZeroPhysicalDevices) {
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2));
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.set_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
-    inst.CheckCreate(VK_SUCCESS);
+    inst.CheckCreate();
 
     uint32_t count = 0;
     ASSERT_EQ(VK_ERROR_INITIALIZATION_FAILED, env.vulkan_functions.vkEnumeratePhysicalDevices(inst, &count, nullptr));
@@ -1510,7 +1510,7 @@ TEST(TryLoadWrongBinaries, WrongImplicit) {
 
     // We don't want to return VK_ERROR_LAYER_NOT_PRESENT for missing implicit layers because it's not the
     // application asking for them.
-    inst.CheckCreate(VK_SUCCESS);
+    inst.CheckCreate();
 
 #if !defined(__APPLE__)
     // Should get an info message for the bad implicit layer
@@ -1643,7 +1643,7 @@ TEST(TryLoadWrongBinaries, BadImplicit) {
 
     // We don't want to return VK_ERROR_LAYER_NOT_PRESENT for missing implicit layers because it's not the
     // application asking for them.
-    inst.CheckCreate(VK_SUCCESS);
+    inst.CheckCreate();
 
     // Should get an info message for the bad implicit
     ASSERT_TRUE(log.find(std::string("Requested layer \"") + std::string(layer_name) + std::string("\" failed to load.")));
@@ -4543,6 +4543,28 @@ TEST(EnumerateAdapterPhysicalDevices, WrongErrorCodes) {
     // TestICD fails in EnumPhysDevs, should return VK_ERROR_INCOMPATIBLE_DRIVER
     env.get_test_icd().set_enum_physical_devices_return_code(VK_ERROR_SURFACE_LOST_KHR);
     check_icds();
+}
+
+TEST(EnumerateAdapterPhysicalDevices, ManyAdapters) {
+    FrameworkEnvironment env;
+
+    uint32_t icd_count = 10;
+    for (uint32_t i = 0; i < icd_count; i++) {
+        // Add 2 separate physical devices with the same luid
+        LUID luid{10U + i, static_cast<LONG>(100U + i)};
+        add_dxgi_adapter(env, std::string("physical_device_") + std::to_string(i), luid, 2);
+        add_dxgi_adapter(env, std::string("physical_device_") + std::to_string(i + icd_count), luid, 2);
+    }
+    uint32_t device_count = icd_count * 2;
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.setup_WSI().set_api_version(VK_API_VERSION_1_1);
+    inst.CheckCreate();
+
+    auto physical_devices = inst.GetPhysDevs(device_count);
+    for (auto physical_device : physical_devices) {
+        DeviceWrapper dev{inst};
+        dev.CheckCreate(physical_device);
+    }
 }
 #endif  // defined(WIN32)
 #endif  // VULKANSC

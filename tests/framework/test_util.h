@@ -46,14 +46,10 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
-#include <fstream>
 #include <ostream>
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <utility>
-#include <memory>
-#include <functional>
 #include <filesystem>
 
 #include <cassert>
@@ -274,7 +270,13 @@ inline loader_platform_dl_handle loader_platform_open_library(const char* libPat
 inline void loader_platform_open_library_print_error(std::filesystem::path const& libPath) {
     std::wcerr << "Unable to open library: " << libPath << " due to: " << dlerror() << "\n";
 }
-inline void loader_platform_close_library(loader_platform_dl_handle library) { dlclose(library); }
+inline void loader_platform_close_library(loader_platform_dl_handle library) {
+    char* loader_disable_dynamic_library_unloading_env_var = getenv("VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING");
+    if (NULL == loader_disable_dynamic_library_unloading_env_var ||
+        0 != strncmp(loader_disable_dynamic_library_unloading_env_var, "1", 2)) {
+    }
+    dlclose(library);
+}
 inline void* loader_platform_get_proc_address(loader_platform_dl_handle library, const char* name) {
     assert(library);
     assert(name);
@@ -829,6 +831,15 @@ inline bool operator==(const VkSurfaceCapabilitiesKHR& props1, const VkSurfaceCa
            props1.currentTransform == props2.currentTransform && props1.supportedCompositeAlpha == props2.supportedCompositeAlpha &&
            props1.supportedUsageFlags == props2.supportedUsageFlags;
 }
+inline bool operator==(const VkSurfacePresentScalingCapabilitiesEXT& caps1, const VkSurfacePresentScalingCapabilitiesEXT& caps2) {
+    return caps1.supportedPresentScaling == caps2.supportedPresentScaling &&
+           caps1.supportedPresentGravityX == caps2.supportedPresentGravityX &&
+           caps1.supportedPresentGravityY == caps2.supportedPresentGravityY &&
+           caps1.minScaledImageExtent.width == caps2.minScaledImageExtent.width &&
+           caps1.minScaledImageExtent.height == caps2.minScaledImageExtent.height &&
+           caps1.maxScaledImageExtent.width == caps2.maxScaledImageExtent.width &&
+           caps1.maxScaledImageExtent.height == caps2.maxScaledImageExtent.height;
+}
 inline bool operator==(const VkSurfaceFormatKHR& format1, const VkSurfaceFormatKHR& format2) {
     return format1.format == format2.format && format1.colorSpace == format2.colorSpace;
 }
@@ -875,6 +886,9 @@ inline bool operator==(const VkDisplayPlanePropertiesKHR& props1, const VkDispla
 }
 inline bool operator==(const VkDisplayPlanePropertiesKHR& props1, const VkDisplayPlaneProperties2KHR& props2) {
     return props1 == props2.displayPlaneProperties;
+}
+inline bool operator==(const VkExtent2D& ext1, const VkExtent2D& ext2) {
+    return ext1.height == ext2.height && ext1.width == ext2.width;
 }
 // Allow comparison of vectors of different types as long as their elements are comparable (just has to make sure to only apply when
 // T != U)
