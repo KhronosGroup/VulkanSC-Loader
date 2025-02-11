@@ -493,11 +493,13 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     table->ReleaseFullScreenExclusiveModeEXT =
         (PFN_vkReleaseFullScreenExclusiveModeEXT)gpa(device, "vkReleaseFullScreenExclusiveModeEXT");
-#endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif            // VK_USE_PLATFORM_WIN32_KHR
+#ifndef VULKANSC  // VK_EXT_full_screen_exclusive is unsupported in Vulkan SC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     table->GetDeviceGroupSurfacePresentModes2EXT =
         (PFN_vkGetDeviceGroupSurfacePresentModes2EXT)gpa(device, "vkGetDeviceGroupSurfacePresentModes2EXT");
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
     table->CmdSetLineStippleEXT = (PFN_vkCmdSetLineStippleEXT)gpa(device, "vkCmdSetLineStippleEXT");
     table->ResetQueryPoolEXT = (PFN_vkResetQueryPoolEXT)gpa(device, "vkResetQueryPoolEXT");
     table->CmdSetCullModeEXT = (PFN_vkCmdSetCullModeEXT)gpa(device, "vkCmdSetCullModeEXT");

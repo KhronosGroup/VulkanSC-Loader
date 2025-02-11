@@ -1565,9 +1565,11 @@ VkResult loader_add_direct_driver(const struct loader_instance *inst, uint32_t i
     PFN_vkEnumerateInstanceExtensionProperties fp_get_inst_ext_props = NULL;
     PFN_GetPhysicalDeviceProcAddr fp_get_phys_dev_proc_addr = NULL;
     PFN_vkNegotiateLoaderICDInterfaceVersion fp_negotiate_icd_version = NULL;
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     PFN_vk_icdEnumerateAdapterPhysicalDevices fp_enum_dxgi_adapter_phys_devs = NULL;
 #endif
+#endif  // VULKANSC
     struct loader_scanned_icd *new_scanned_icd;
     uint32_t interface_version = 0;
 
@@ -1624,12 +1626,14 @@ VkResult loader_add_direct_driver(const struct loader_instance *inst, uint32_t i
 
     fp_get_phys_dev_proc_addr =
         (PFN_vk_icdGetPhysicalDeviceProcAddr)pDriver->pfnGetInstanceProcAddr(NULL, "vk_icdGetPhysicalDeviceProcAddr");
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     // Query "vk_icdEnumerateAdapterPhysicalDevices" with vk_icdGetInstanceProcAddr if the library reports interface version
     // 7 or greater, otherwise fallback to loading it from the platform dynamic linker
     fp_enum_dxgi_adapter_phys_devs =
         (PFN_vk_icdEnumerateAdapterPhysicalDevices)pDriver->pfnGetInstanceProcAddr(NULL, "vk_icdEnumerateAdapterPhysicalDevices");
 #endif
+#endif  // VULKANSC
 
     // check for enough capacity
     if ((icd_tramp_list->count * sizeof(struct loader_scanned_icd)) >= icd_tramp_list->capacity) {
@@ -1665,9 +1669,11 @@ VkResult loader_add_direct_driver(const struct loader_instance *inst, uint32_t i
     new_scanned_icd->GetPhysicalDeviceProcAddr = fp_get_phys_dev_proc_addr;
     new_scanned_icd->EnumerateInstanceExtensionProperties = fp_get_inst_ext_props;
     new_scanned_icd->CreateInstance = fp_create_inst;
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     new_scanned_icd->EnumerateAdapterPhysicalDevices = fp_enum_dxgi_adapter_phys_devs;
 #endif
+#endif  // VULKANSC
     new_scanned_icd->interface_version = interface_version;
 
     new_scanned_icd->lib_name = NULL;
@@ -1773,9 +1779,11 @@ VkResult loader_scanned_icd_add(const struct loader_instance *inst, struct loade
     PFN_vkGetInstanceProcAddr fp_get_proc_addr = NULL;
     PFN_GetPhysicalDeviceProcAddr fp_get_phys_dev_proc_addr = NULL;
     PFN_vkNegotiateLoaderICDInterfaceVersion fp_negotiate_icd_version = NULL;
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     PFN_vk_icdEnumerateAdapterPhysicalDevices fp_enum_dxgi_adapter_phys_devs = NULL;
 #endif
+#endif  // VULKANSC
     struct loader_scanned_icd *new_scanned_icd = NULL;
     uint32_t interface_vers;
     VkResult res = VK_SUCCESS;
@@ -1909,6 +1917,7 @@ VkResult loader_scanned_icd_add(const struct loader_instance *inst, struct loade
         if (NULL == fp_get_phys_dev_proc_addr && interface_vers >= 3) {
             fp_get_phys_dev_proc_addr = loader_platform_get_proc_address(handle, "vk_icdGetPhysicalDeviceProcAddr");
         }
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
         // Query "vk_icdEnumerateAdapterPhysicalDevices" with vk_icdGetInstanceProcAddr if the library reports interface version
         // 7 or greater, otherwise fallback to loading it from the platform dynamic linker
@@ -1920,6 +1929,7 @@ VkResult loader_scanned_icd_add(const struct loader_instance *inst, struct loade
             fp_enum_dxgi_adapter_phys_devs = loader_platform_get_proc_address(handle, "vk_icdEnumerateAdapterPhysicalDevices");
         }
 #endif
+#endif  // VULKANSC
     }
 
     // check for enough capacity
@@ -1955,9 +1965,11 @@ VkResult loader_scanned_icd_add(const struct loader_instance *inst, struct loade
     new_scanned_icd->GetPhysicalDeviceProcAddr = fp_get_phys_dev_proc_addr;
     new_scanned_icd->EnumerateInstanceExtensionProperties = fp_get_inst_ext_props;
     new_scanned_icd->CreateInstance = fp_create_inst;
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     new_scanned_icd->EnumerateAdapterPhysicalDevices = fp_enum_dxgi_adapter_phys_devs;
 #endif
+#endif  // VULKANSC
     new_scanned_icd->interface_version = interface_vers;
 
 #ifdef VULKANSC

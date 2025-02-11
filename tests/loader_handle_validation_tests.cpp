@@ -344,6 +344,7 @@ TEST(LoaderHandleValidTests, BadInstCreateWaylandSurf) {
 }
 #endif  // VK_USE_PLATFORM_WAYLAND_KHR
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateWin32Surf) {
     FrameworkEnvironment env{};
@@ -364,6 +365,7 @@ TEST(LoaderHandleValidTests, BadInstCreateWin32Surf) {
     // TODO: Look for "invalid instance" in stderr log to make sure correct error is thrown
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateXCBSurf) {
@@ -942,6 +944,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWaylandPresentSupportKHR) {
 }
 #endif  // VK_USE_PLATFORM_WAYLAND_KHR
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWin32PresentSupportKHR) {
     FrameworkEnvironment env{};
@@ -957,6 +960,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWin32PresentSupportKHR) {
                  "\\[VUID-vkGetPhysicalDeviceWin32PresentationSupportKHR-physicalDevice-parameter\\]");
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetXCBPresentSupportKHR) {
@@ -1284,6 +1288,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetRandROutputDisplayEXT) {
 }
 #endif  // VK_USE_PLATFORM_XLIB_XRANDR_EXT
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfacePresentModes2EXT) {
     FrameworkEnvironment env{};
@@ -1304,6 +1309,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfacePresentModes2EXT) {
                  "\\[VUID-vkGetPhysicalDeviceSurfacePresentModes2EXT-physicalDevice-parameter\\]");
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevToolPropertiesEXT) {
@@ -1600,6 +1606,7 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingWaylandSurf) {
 }
 #endif  // VK_USE_PLATFORM_WAYLAND_KHR
 
+#ifndef VULKANSC  // VK_KHR_win32_surface is not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingWin32Surf) {
     FrameworkEnvironment env{};
@@ -1627,6 +1634,7 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingWin32Surf) {
     pfn_DestroySurface(instance, created_surface, nullptr);
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingXCBSurf) {

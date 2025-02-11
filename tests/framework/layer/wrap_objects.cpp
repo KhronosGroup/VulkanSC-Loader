@@ -283,6 +283,7 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkCreateAndroidSurfaceKHR(VkInstance instanc
 }
 #endif
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 VKAPI_ATTR VkResult VKAPI_CALL wrap_vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo,
                                                             const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface) {
@@ -292,6 +293,7 @@ VKAPI_ATTR VkResult VKAPI_CALL wrap_vkCreateWin32SurfaceKHR(VkInstance instance,
     return pDisp->CreateWin32SurfaceKHR(vk_inst, pCreateInfo, pAllocator, pSurface);
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
 VKAPI_ATTR VkResult VKAPI_CALL wrap_vkCreateWaylandSurfaceKHR(VkInstance instance, const VkWaylandSurfaceCreateInfoKHR *pCreateInfo,
@@ -755,9 +757,11 @@ PFN_vkVoidFunction layer_intercept_instance_proc(wrapped_inst_obj *inst, const c
     if (!strcmp(name, "CreateAndroidSurfaceKHR")) return (PFN_vkVoidFunction)wrap_vkCreateAndroidSurfaceKHR;
 #endif  // VK_USE_PLATFORM_ANDROID_KHR
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     if (!strcmp(name, "CreateWin32SurfaceKHR")) return (PFN_vkVoidFunction)wrap_vkCreateWin32SurfaceKHR;
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
     if (!strcmp(name, "CreateWaylandSurfaceKHR")) return (PFN_vkVoidFunction)wrap_vkCreateWaylandSurfaceKHR;
@@ -906,12 +910,14 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateAndroidSurfaceKHR(VkInstance instanc
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo,
                                                        const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface) {
     return wrap_objects::wrap_vkCreateWin32SurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
 }
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateWaylandSurfaceKHR(VkInstance instance, const VkWaylandSurfaceCreateInfoKHR *pCreateInfo,

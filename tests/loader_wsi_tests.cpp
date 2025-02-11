@@ -29,6 +29,7 @@
 
 class WsiTests : public ::testing::Test {};
 
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 
 // When ICD doesn't support the extension, create instance should fail
@@ -207,7 +208,8 @@ TEST(WsiTests, Win32GetPhysicalDeviceSurfaceSupportKHR) {
 
     env.vulkan_functions.vkDestroySurfaceKHR(instance.inst, surface, nullptr);
 }
-#endif
+#endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 // When ICD doesn't support the extension, create instance should fail

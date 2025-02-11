@@ -431,7 +431,7 @@ const char* get_platform_wsi_extension([[maybe_unused]] const char* api_selectio
 #if defined(VK_USE_PLATFORM_XCB_KHR)
     return "VK_KHR_xcb_surface";
 #endif
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)
+#elif defined(VK_USE_PLATFORM_WIN32_KHR) && !defined(VULKANSC)
     return "VK_KHR_win32_surface";
 #else
     return "VK_KHR_display";
