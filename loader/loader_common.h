@@ -387,6 +387,7 @@ struct loader_instance {
     bool portability_enumeration_extension_enabled;
 
     bool wsi_surface_enabled;
+#ifndef VULKANSC  // VK_KHR_<platform>_surface is not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     bool wsi_win32_surface_enabled;
 #endif
@@ -414,19 +415,24 @@ struct loader_instance {
 #if defined(VK_USE_PLATFORM_GGP)
     bool wsi_ggp_surface_enabled;
 #endif
+#endif  // VULKANSC
     bool wsi_headless_surface_enabled;
+#ifndef VULKANSC  // VK_KHR_<platform>_surface is not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_METAL_EXT)
     bool wsi_metal_surface_enabled;
 #endif
 #if defined(VK_USE_PLATFORM_FUCHSIA)
     bool wsi_imagepipe_surface_enabled;
 #endif
+#endif  // VULKANSC
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
     bool wsi_screen_surface_enabled;
 #endif
+#ifndef VULKANSC  // VK_KHR_<platform>_surface is not supported in Vulkan SC
 #if defined(VK_USE_PLATFORM_VI_NN)
     bool wsi_vi_surface_enabled;
 #endif
+#endif  // VULKANSC
     bool wsi_display_enabled;
     bool wsi_display_props2_enabled;
     bool create_terminator_invalid_extension;
@@ -513,9 +519,11 @@ struct loader_scanned_icd {
     PFN_GetPhysicalDeviceProcAddr GetPhysicalDeviceProcAddr;
     PFN_vkCreateInstance CreateInstance;
     PFN_vkEnumerateInstanceExtensionProperties EnumerateInstanceExtensionProperties;
+#ifndef VULKANSC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     PFN_vk_icdEnumerateAdapterPhysicalDevices EnumerateAdapterPhysicalDevices;
 #endif
+#endif  // VULKANSC
 };
 
 enum loader_data_files_type {

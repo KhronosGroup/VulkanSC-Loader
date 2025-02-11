@@ -252,6 +252,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetRandROutputDisplayEXT(VkPhysicalDev
 
 #endif  // VK_USE_PLATFORM_XLIB_XRANDR_EXT
 
+#ifndef VULKANSC  // VK_EXT_full_screen_exclusive is unsupported in Vulkan SC
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceSurfacePresentModes2EXT(VkPhysicalDevice physicalDevice,
                                                                         const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo,
@@ -341,6 +342,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetDeviceGroupSurfacePresentModes2EXT(
 }
 
 #endif  // VK_USE_PLATFORM_WIN32_KHR
+#endif  // VULKANSC
 
 // ---- VK_EXT_tooling_info extension trampoline/terminators
 

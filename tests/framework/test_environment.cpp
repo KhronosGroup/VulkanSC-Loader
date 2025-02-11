@@ -941,7 +941,7 @@ VkResult create_surface(VulkanFunctions* functions, VkInstance inst, VkSurfaceKH
                                                                                              "vkCreateScreenSurfaceQNX");
 #elif defined(VK_USE_PLATFORM_VI_NN)
     return create_surface_helper<PFN_vkCreateViSurfaceNN, VkViSurfaceCreateInfoNN>(functions, inst, surface, "vkCreateViSurfaceNN");
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)
+#elif defined(VK_USE_PLATFORM_WIN32_KHR) && !defined(VULKANSC)
     return create_surface_helper<PFN_vkCreateWin32SurfaceKHR, VkWin32SurfaceCreateInfoKHR>(functions, inst, surface,
                                                                                            "vkCreateWin32SurfaceKHR");
 #elif defined(VK_USE_PLATFORM_XCB_KHR) || defined(VK_USE_PLATFORM_XLIB_KHR) || defined(VK_USE_PLATFORM_WAYLAND_KHR)
