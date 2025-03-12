@@ -42,7 +42,7 @@ jobs:
             matrix:
                 compiler: [ {cc: gcc, cxx: g++}, {cc: clang, cxx: clang++} ]
                 config: [ Debug, Release ]
-                os: [ ubuntu-20.04, ubuntu-22.04 ]
+                os: [ ubuntu-22.04, ubuntu-24.04 ]
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-python@v5
@@ -54,10 +54,10 @@ jobs:
               # practice to try and support them so they don't have to install
               # the CMake tarball. Ideally the minimum we use matches what the default
               # package provided by Ubuntu via APT.
-              if: ${{ matrix.os == 'ubuntu-20.04' }}
+              if: ${{ matrix.os == 'ubuntu-22.04' }}
               uses: lukka/get-cmake@latest
               with:
-                cmakeVersion: 3.17.2
+                cmakeVersion: 3.22.1
             - run: sudo apt update
             - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
             # This is to combat a bug when using 6.6 linux kernels with thread/address sanitizer
@@ -85,7 +85,7 @@ jobs:
 
     linux-no-asm:
         needs: codegen
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
             - run: sudo apt update
@@ -105,7 +105,7 @@ jobs:
 
     linux-32:
         needs: codegen
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-24.04
         strategy:
             matrix:
                 config: [ Debug, Release ]
@@ -116,7 +116,7 @@ jobs:
                 python-version: '3.11'
             - uses: lukka/get-cmake@latest
               with:
-                cmakeVersion: 3.17.2
+                cmakeVersion: 3.22.1
             - name: Enable 32 bit
               run: sudo dpkg --add-architecture i386
             - run: sudo apt-get update
@@ -131,20 +131,19 @@ jobs:
                 -D UPDATE_DEPS=ON \
                 -D BUILD_WERROR=ON \
                 -D SYSCONFDIR=/etc/not_vulkan \
+                -D CMAKE_CXX_FLAGS=-m32 \
+                -D CMAKE_C_FLAGS=-m32 \
                 -G Ninja
               env:
-                CFLAGS: -m32
-                CXXFLAGS: -m32
-                LDFLAGS: -m32
-                ASFLAGS: --32
+                # https://gitlab.kitware.com/cmake/cmake/-/issues/25317
+                PKG_CONFIG_PATH: /usr/lib/i386-linux-gnu/pkgconfig
             - run: cmake --build build
             - run: cmake --install build --prefix /tmp
-            - run: ctest --output-on-failure
-              working-directory: build/
+            - run: ctest --output-on-failure --test-dir build/
 
     linux-32-no-asm:
         needs: codegen
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-python@v5
@@ -152,7 +151,7 @@ jobs:
                 python-version: '3.11'
             - uses: lukka/get-cmake@latest
               with:
-                cmakeVersion: 3.17.2
+                cmakeVersion: 3.22.1
             - name: Enable 32 bit
               run: sudo dpkg --add-architecture i386
             - run: sudo apt-get update
@@ -167,15 +166,14 @@ jobs:
                 -D UPDATE_DEPS=ON \
                 -D BUILD_WERROR=ON \
                 -D USE_GAS=OFF \
+                -D CMAKE_CXX_FLAGS=-m32 \
+                -D CMAKE_C_FLAGS=-m32 \
                 -G Ninja
               env:
-                CFLAGS: -m32
-                CXXFLAGS: -m32
-                LDFLAGS: -m32
-                ASFLAGS: --32
+                # https://gitlab.kitware.com/cmake/cmake/-/issues/25317
+                PKG_CONFIG_PATH: /usr/lib/i386-linux-gnu/pkgconfig
             - run: cmake --build build
-            - run: ctest --output-on-failure -E UnknownFunction
-              working-directory: build/
+            - run: ctest --output-on-failure -E UnknownFunction --test-dir build/
 
     windows_vs:
         # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well

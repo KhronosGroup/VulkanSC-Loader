@@ -711,7 +711,6 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalFenceProperties(
 #endif  // VULKANSC
 }
 
-#ifndef VULKANSC
 // 1.3 Core terminators
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceToolProperties(VkPhysicalDevice physicalDevice, uint32_t *pToolCount,
@@ -738,4 +737,3 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceToolProperties(VkPhys
     *pToolCount = 0;
     return VK_SUCCESS;
 }
-#endif  // VULKANSC

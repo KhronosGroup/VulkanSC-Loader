@@ -86,6 +86,8 @@ set(NORMAL_LOADER_SRCS
     loader.h
     log.c
     log.h
+    loader_json.c
+    loader_json.h
     settings.c
     settings.h
     terminator.c
@@ -524,6 +526,10 @@ add_library(Vulkan::Loader ALIAS vulkan)
 if (UNKNOWN_FUNCTIONS_SUPPORTED)
     target_compile_definitions(vulkan PRIVATE UNKNOWN_FUNCTIONS_SUPPORTED)
     add_dependencies(vulkan loader_asm_gen_files)
+endif()
+
+if (BUILD_TESTS)
+    target_compile_definitions(vulkan PRIVATE SHOULD_EXPORT_TEST_FUNCTIONS)
 endif()
 
 if (APPLE_STATIC_LOADER)

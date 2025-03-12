@@ -77,15 +77,31 @@ config("vulkan_loader_config") {
     "LOADER_USE_UNSAFE_FILE_SEARCH=1",
   ]
 
+  cflags = []
   if (is_win) {
-    cflags = [ "/wd4201" ]
+    cflags += [ "/wd4201" ]
   }
   if (is_linux || is_chromeos) {
-    # assume secure_getenv() is available
     defines += [
+      # Enables `readlink()` and `strtok_r()`.
+      "_GNU_SOURCE",
+
+      # assume secure_getenv() is available
       "HAVE_SECURE_GETENV",
       "LOADER_ENABLE_LINUX_SORT",
     ]
+  }
+  if (is_clang) {
+    # Vulkan-Hpp uses `vk::PFN_...` function pointer types, which are different
+    # from the C-styled `PFN_...` function pointers.
+    # 
+    # These types are guaranteed to be identical during Vulkan-Hpp compile time.
+    # However, UBsan's function sanitizer treats them as different types and
+    # triggers a runtime error when these functions are called.
+    #
+    # Thus, we need to disable the function sanitizer so that Vulkan
+    # applications created using Vulkan-Hpp can run correctly.
+    cflags += [ "-fno-sanitize=function" ]
   }
 }
 
@@ -144,6 +160,23 @@ if (!is_android) {
     }
   }
 
+  if (is_win) {
+    action("gen_loader_rc") {
+      script = "scripts/generate_loader_rc.py"
+      inputs = [
+        "loader/loader.rc",
+      ]
+      args = [
+        rebase_path("loader/loader.rc", root_build_dir),
+        rebase_path("$target_gen_dir/loader.rc", root_build_dir),
+      ]
+      if (is_official_build) {
+        args += [ "--is_official" ]
+      }
+      outputs = [ "$target_gen_dir/loader.rc" ]
+    }
+  }
+
   target(library_type, "libvulkan") {
     sources = [
       "loader/adapters.h",
@@ -167,6 +200,8 @@ if (!is_android) {
       "loader/loader_environment.h",
       "loader/loader.c",
       "loader/loader.h",
+      "loader/loader_json.c",
+      "loader/loader_json.h",
       "loader/log.c",
       "loader/log.h",
       # Should only be linked when assembler is used
@@ -199,13 +234,14 @@ if (!is_android) {
       }
     }
 
+    deps = []
     if (is_win) {
       sources += [
         "loader/dirent_on_windows.c",
         "loader/dirent_on_windows.h",
         "loader/loader_windows.c",
         "loader/loader_windows.h",
-        "loader/loader.rc",
+        "$target_gen_dir/loader.rc",
         "loader/vulkan-1.def",
       ]
       if (!is_clang) {
@@ -228,6 +264,7 @@ if (!is_android) {
         cflags = [ "-Wno-incompatible-pointer-types" ]
       }
       libs = [ "Cfgmgr32.lib" ]
+      deps += [ ":gen_loader_rc" ]
     }
     if (is_linux || is_chromeos) {
       sources += [
@@ -239,8 +276,10 @@ if (!is_android) {
       frameworks = [ "CoreFoundation.framework" ]
     }
     public_deps = [ "$vulkan_headers_dir:vulkan_headers" ]
-    configs -= [ "//build/config/compiler:chromium_code" ]
-    configs += [ "//build/config/compiler:no_chromium_code" ]
+    if (build_with_chromium) {
+      configs -= [ "//build/config/compiler:chromium_code" ]
+      configs += [ "//build/config/compiler:no_chromium_code" ]
+    }
     configs += [ ":vulkan_internal_config" ]
     public_configs = [ ":vulkan_loader_config" ]
     configs -= vulkan_undefine_configs
@@ -252,7 +291,7 @@ if (!is_android) {
       # which can be obtained separately from the loader implementation itself.
       no_headers = true
 
-      deps = [
+      deps += [
         ":dlopen_fuchsia",
         "//sdk/lib/fdio",
       ]

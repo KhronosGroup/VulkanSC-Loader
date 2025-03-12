@@ -106,7 +106,10 @@ class MemoryTracker {
     void free(void* pMemory) {
         if (pMemory == nullptr) return;
         auto elem = allocations.find(pMemory);
-        if (elem == allocations.end()) return;
+        if (elem == allocations.end()) {
+            assert(false && "Should never be freeing memory that wasn't allocated by the MemoryTracker!");
+            return;
+        }
         allocations.erase(elem);
         assert(allocation_count != 0 && "Cant free when there are no valid allocations");
         allocation_count--;
@@ -747,14 +750,9 @@ TEST(Allocation, CreateInstanceDeviceIntentionalAllocFail) {
                                                              .set_disable_environment("DISABLE_ENV")),
                                "test_layer_" + std::to_string(i) + ".json");
     }
-    std::fstream custom_json_file{COMPLEX_JSON_FILE, std::ios_base::in};
-    ASSERT_TRUE(custom_json_file.is_open());
-    std::stringstream custom_json_file_contents;
-    custom_json_file_contents << custom_json_file.rdbuf();
-
-    std::filesystem::path new_path = env.get_folder(ManifestLocation::explicit_layer)
-                                         .write_manifest("VK_LAYER_complex_file.json", custom_json_file_contents.str());
-    env.platform_shim->add_manifest(ManifestCategory::explicit_layer, new_path);
+    // Throw in a complex json file to flex the json allocation routines
+    env.write_file_from_source(COMPLEX_JSON_FILE, ManifestCategory::explicit_layer, ManifestLocation::explicit_layer,
+                               "VK_LAYER_complex_file.json");
 
     size_t fail_index = 0;
     VkResult result = VK_ERROR_OUT_OF_HOST_MEMORY;
