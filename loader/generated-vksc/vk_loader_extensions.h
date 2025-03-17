@@ -212,7 +212,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceToolProperties(
 // ICD function pointer dispatch table
 struct loader_icd_term_dispatch {
 
-    // ---- Core Vulkan 1.0 commands
+    // ---- Core Vulkan SC 1.0 commands
     PFN_vkCreateInstance CreateInstance;
     PFN_vkDestroyInstance DestroyInstance;
     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
@@ -227,8 +227,6 @@ struct loader_icd_term_dispatch {
     PFN_vkEnumerateInstanceExtensionProperties EnumerateInstanceExtensionProperties;
     PFN_vkEnumerateDeviceExtensionProperties EnumerateDeviceExtensionProperties;
     PFN_vkEnumerateInstanceLayerProperties EnumerateInstanceLayerProperties;
-
-    // ---- Core Vulkan 1.1 commands
     PFN_vkEnumerateInstanceVersion EnumerateInstanceVersion;
     PFN_vkEnumeratePhysicalDeviceGroups EnumeratePhysicalDeviceGroups;
     PFN_vkGetPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures2;
