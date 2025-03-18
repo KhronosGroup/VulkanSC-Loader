@@ -2,9 +2,9 @@
 // See loader_extension_generator.py for modifications
 
 /*
- * Copyright (c) 2015-2022 The Khronos Group Inc.
- * Copyright (c) 2015-2022 Valve Corporation
- * Copyright (c) 2015-2022 LunarG, Inc.
+ * Copyright (c) 2015-2025 The Khronos Group Inc.
+ * Copyright (c) 2015-2025 Valve Corporation
+ * Copyright (c) 2015-2025 LunarG, Inc.
  * Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * Copyright (c) 2023-2023 RasterGrid Kft.
  *
@@ -22,6 +22,7 @@
  *
  * Author: Mark Lobodzinski <mark@lunarg.com>
  * Author: Mark Young <marky@lunarg.com>
+ * Author: Charles Giessen <charles@lunarg.com>
  */
 
 // clang-format off
@@ -203,6 +204,10 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceExternalSemaphoreProperti
     VkPhysicalDevice                            physicalDevice,
     const VkPhysicalDeviceExternalSemaphoreInfo* pExternalSemaphoreInfo,
     VkExternalSemaphoreProperties*              pExternalSemaphoreProperties);
+VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceToolProperties(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t*                                   pToolCount,
+    VkPhysicalDeviceToolProperties*             pToolProperties);
 
 // ICD function pointer dispatch table
 struct loader_icd_term_dispatch {
@@ -233,6 +238,9 @@ struct loader_icd_term_dispatch {
     PFN_vkGetPhysicalDeviceExternalBufferProperties GetPhysicalDeviceExternalBufferProperties;
     PFN_vkGetPhysicalDeviceExternalFenceProperties GetPhysicalDeviceExternalFenceProperties;
     PFN_vkGetPhysicalDeviceExternalSemaphoreProperties GetPhysicalDeviceExternalSemaphoreProperties;
+
+    // ---- Core Vulkan 1.3 commands
+    PFN_vkGetPhysicalDeviceToolProperties GetPhysicalDeviceToolProperties;
 
     // ---- VK_KHR_surface extension commands
     PFN_vkDestroySurfaceKHR DestroySurfaceKHR;
@@ -324,11 +332,14 @@ struct loader_instance_extension_enables {
 // Functions that required a terminator need to have a separate dispatch table which contains their corresponding
 // device function. This is used in the terminators themselves.
 struct loader_device_terminator_dispatch {
+
     // ---- VK_KHR_swapchain extension commands
     PFN_vkCreateSwapchainKHR CreateSwapchainKHR;
     PFN_vkGetDeviceGroupSurfacePresentModesKHR GetDeviceGroupSurfacePresentModesKHR;
+
     // ---- VK_KHR_display_swapchain extension commands
     PFN_vkCreateSharedSwapchainsKHR CreateSharedSwapchainsKHR;
+
     // ---- VK_EXT_debug_utils extension commands
     PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT;
     PFN_vkSetDebugUtilsObjectTagEXT SetDebugUtilsObjectTagEXT;

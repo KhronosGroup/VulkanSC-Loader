@@ -2,9 +2,9 @@
 // See loader_extension_generator.py for modifications
 
 /*
- * Copyright (c) 2015-2022 The Khronos Group Inc.
- * Copyright (c) 2015-2022 Valve Corporation
- * Copyright (c) 2015-2022 LunarG, Inc.
+ * Copyright (c) 2015-2025 The Khronos Group Inc.
+ * Copyright (c) 2015-2025 Valve Corporation
+ * Copyright (c) 2015-2025 LunarG, Inc.
  * Copyright (c) 2021-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * Copyright (c) 2023-2023 RasterGrid Kft.
  *
@@ -22,6 +22,7 @@
  *
  * Author: Mark Lobodzinski <mark@lunarg.com>
  * Author: Mark Young <marky@lunarg.com>
+ * Author: Charles Giessen <charles@lunarg.com>
  */
 
 // clang-format off
@@ -65,6 +66,9 @@ typedef struct VkLayerInstanceDispatchTable_ {
     PFN_vkGetPhysicalDeviceExternalBufferProperties GetPhysicalDeviceExternalBufferProperties;
     PFN_vkGetPhysicalDeviceExternalFenceProperties GetPhysicalDeviceExternalFenceProperties;
     PFN_vkGetPhysicalDeviceExternalSemaphoreProperties GetPhysicalDeviceExternalSemaphoreProperties;
+
+    // ---- Core Vulkan 1.3 commands
+    PFN_vkGetPhysicalDeviceToolProperties GetPhysicalDeviceToolProperties;
 
     // ---- VK_KHR_surface extension commands
     PFN_vkDestroySurfaceKHR DestroySurfaceKHR;
@@ -288,10 +292,67 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkGetBufferDeviceAddress GetBufferDeviceAddress;
     PFN_vkGetBufferOpaqueCaptureAddress GetBufferOpaqueCaptureAddress;
     PFN_vkGetDeviceMemoryOpaqueCaptureAddress GetDeviceMemoryOpaqueCaptureAddress;
+
+    // ---- Core Vulkan 1.3 commands
+    PFN_vkCreatePrivateDataSlot CreatePrivateDataSlot;
+    PFN_vkDestroyPrivateDataSlot DestroyPrivateDataSlot;
+    PFN_vkSetPrivateData SetPrivateData;
+    PFN_vkGetPrivateData GetPrivateData;
+    PFN_vkCmdSetEvent2 CmdSetEvent2;
+    PFN_vkCmdResetEvent2 CmdResetEvent2;
+    PFN_vkCmdWaitEvents2 CmdWaitEvents2;
+    PFN_vkCmdPipelineBarrier2 CmdPipelineBarrier2;
+    PFN_vkCmdWriteTimestamp2 CmdWriteTimestamp2;
+    PFN_vkQueueSubmit2 QueueSubmit2;
+    PFN_vkCmdCopyBuffer2 CmdCopyBuffer2;
+    PFN_vkCmdCopyImage2 CmdCopyImage2;
+    PFN_vkCmdCopyBufferToImage2 CmdCopyBufferToImage2;
+    PFN_vkCmdCopyImageToBuffer2 CmdCopyImageToBuffer2;
+    PFN_vkCmdBlitImage2 CmdBlitImage2;
+    PFN_vkCmdResolveImage2 CmdResolveImage2;
+    PFN_vkCmdBeginRendering CmdBeginRendering;
+    PFN_vkCmdEndRendering CmdEndRendering;
+    PFN_vkCmdSetCullMode CmdSetCullMode;
+    PFN_vkCmdSetFrontFace CmdSetFrontFace;
+    PFN_vkCmdSetPrimitiveTopology CmdSetPrimitiveTopology;
+    PFN_vkCmdSetViewportWithCount CmdSetViewportWithCount;
+    PFN_vkCmdSetScissorWithCount CmdSetScissorWithCount;
+    PFN_vkCmdBindVertexBuffers2 CmdBindVertexBuffers2;
+    PFN_vkCmdSetDepthTestEnable CmdSetDepthTestEnable;
+    PFN_vkCmdSetDepthWriteEnable CmdSetDepthWriteEnable;
+    PFN_vkCmdSetDepthCompareOp CmdSetDepthCompareOp;
+    PFN_vkCmdSetDepthBoundsTestEnable CmdSetDepthBoundsTestEnable;
+    PFN_vkCmdSetStencilTestEnable CmdSetStencilTestEnable;
+    PFN_vkCmdSetStencilOp CmdSetStencilOp;
+    PFN_vkCmdSetRasterizerDiscardEnable CmdSetRasterizerDiscardEnable;
+    PFN_vkCmdSetDepthBiasEnable CmdSetDepthBiasEnable;
+    PFN_vkCmdSetPrimitiveRestartEnable CmdSetPrimitiveRestartEnable;
+    PFN_vkGetDeviceBufferMemoryRequirements GetDeviceBufferMemoryRequirements;
+    PFN_vkGetDeviceImageMemoryRequirements GetDeviceImageMemoryRequirements;
+    PFN_vkGetDeviceImageSparseMemoryRequirements GetDeviceImageSparseMemoryRequirements;
+
+    // ---- Core Vulkan 1.4 commands
+    PFN_vkCmdSetLineStipple CmdSetLineStipple;
+    PFN_vkMapMemory2 MapMemory2;
+    PFN_vkUnmapMemory2 UnmapMemory2;
+    PFN_vkCmdBindIndexBuffer2 CmdBindIndexBuffer2;
+    PFN_vkGetRenderingAreaGranularity GetRenderingAreaGranularity;
+    PFN_vkGetDeviceImageSubresourceLayout GetDeviceImageSubresourceLayout;
+    PFN_vkGetImageSubresourceLayout2 GetImageSubresourceLayout2;
+    PFN_vkCmdPushDescriptorSet CmdPushDescriptorSet;
+    PFN_vkCmdSetRenderingAttachmentLocations CmdSetRenderingAttachmentLocations;
+    PFN_vkCmdSetRenderingInputAttachmentIndices CmdSetRenderingInputAttachmentIndices;
+    PFN_vkCmdBindDescriptorSets2 CmdBindDescriptorSets2;
+    PFN_vkCmdPushConstants2 CmdPushConstants2;
+    PFN_vkCmdPushDescriptorSet2 CmdPushDescriptorSet2;
+    PFN_vkCopyMemoryToImage CopyMemoryToImage;
+    PFN_vkCopyImageToMemory CopyImageToMemory;
+    PFN_vkCopyImageToImage CopyImageToImage;
+    PFN_vkTransitionImageLayout TransitionImageLayout;
+
+    // ---- Core Vulkan SC 1.0 commands
     PFN_vkGetCommandPoolMemoryConsumption GetCommandPoolMemoryConsumption;
     PFN_vkGetFaultData GetFaultData;
-
-    // ---- VK_KHR_swapchain extension commands
     PFN_vkCreateSwapchainKHR CreateSwapchainKHR;
     PFN_vkGetSwapchainImagesKHR GetSwapchainImagesKHR;
     PFN_vkAcquireNextImageKHR AcquireNextImageKHR;
@@ -299,72 +360,40 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkGetDeviceGroupPresentCapabilitiesKHR GetDeviceGroupPresentCapabilitiesKHR;
     PFN_vkGetDeviceGroupSurfacePresentModesKHR GetDeviceGroupSurfacePresentModesKHR;
     PFN_vkAcquireNextImage2KHR AcquireNextImage2KHR;
-
-    // ---- VK_KHR_display_swapchain extension commands
     PFN_vkCreateSharedSwapchainsKHR CreateSharedSwapchainsKHR;
-
-    // ---- VK_KHR_external_memory_fd extension commands
     PFN_vkGetMemoryFdKHR GetMemoryFdKHR;
     PFN_vkGetMemoryFdPropertiesKHR GetMemoryFdPropertiesKHR;
-
-    // ---- VK_KHR_external_semaphore_fd extension commands
     PFN_vkImportSemaphoreFdKHR ImportSemaphoreFdKHR;
     PFN_vkGetSemaphoreFdKHR GetSemaphoreFdKHR;
-
-    // ---- VK_KHR_shared_presentable_image extension commands
     PFN_vkGetSwapchainStatusKHR GetSwapchainStatusKHR;
-
-    // ---- VK_KHR_external_fence_fd extension commands
     PFN_vkImportFenceFdKHR ImportFenceFdKHR;
     PFN_vkGetFenceFdKHR GetFenceFdKHR;
-
-    // ---- VK_KHR_performance_query extension commands
     PFN_vkAcquireProfilingLockKHR AcquireProfilingLockKHR;
     PFN_vkReleaseProfilingLockKHR ReleaseProfilingLockKHR;
-
-    // ---- VK_KHR_fragment_shading_rate extension commands
     PFN_vkCmdSetFragmentShadingRateKHR CmdSetFragmentShadingRateKHR;
-
-    // ---- VK_KHR_object_refresh extension commands
     PFN_vkCmdRefreshObjectsKHR CmdRefreshObjectsKHR;
-
-    // ---- VK_KHR_synchronization2 extension commands
     PFN_vkCmdSetEvent2KHR CmdSetEvent2KHR;
     PFN_vkCmdResetEvent2KHR CmdResetEvent2KHR;
     PFN_vkCmdWaitEvents2KHR CmdWaitEvents2KHR;
     PFN_vkCmdPipelineBarrier2KHR CmdPipelineBarrier2KHR;
     PFN_vkCmdWriteTimestamp2KHR CmdWriteTimestamp2KHR;
     PFN_vkQueueSubmit2KHR QueueSubmit2KHR;
-
-    // ---- VK_KHR_copy_commands2 extension commands
     PFN_vkCmdCopyBuffer2KHR CmdCopyBuffer2KHR;
     PFN_vkCmdCopyImage2KHR CmdCopyImage2KHR;
     PFN_vkCmdCopyBufferToImage2KHR CmdCopyBufferToImage2KHR;
     PFN_vkCmdCopyImageToBuffer2KHR CmdCopyImageToBuffer2KHR;
     PFN_vkCmdBlitImage2KHR CmdBlitImage2KHR;
     PFN_vkCmdResolveImage2KHR CmdResolveImage2KHR;
-
-    // ---- VK_KHR_line_rasterization extension commands
     PFN_vkCmdSetLineStippleKHR CmdSetLineStippleKHR;
-
-    // ---- VK_KHR_calibrated_timestamps extension commands
     PFN_vkGetCalibratedTimestampsKHR GetCalibratedTimestampsKHR;
-
-    // ---- VK_EXT_display_control extension commands
     PFN_vkDisplayPowerControlEXT DisplayPowerControlEXT;
     PFN_vkRegisterDeviceEventEXT RegisterDeviceEventEXT;
     PFN_vkRegisterDisplayEventEXT RegisterDisplayEventEXT;
     PFN_vkGetSwapchainCounterEXT GetSwapchainCounterEXT;
-
-    // ---- VK_EXT_discard_rectangles extension commands
     PFN_vkCmdSetDiscardRectangleEXT CmdSetDiscardRectangleEXT;
     PFN_vkCmdSetDiscardRectangleEnableEXT CmdSetDiscardRectangleEnableEXT;
     PFN_vkCmdSetDiscardRectangleModeEXT CmdSetDiscardRectangleModeEXT;
-
-    // ---- VK_EXT_hdr_metadata extension commands
     PFN_vkSetHdrMetadataEXT SetHdrMetadataEXT;
-
-    // ---- VK_EXT_debug_utils extension commands
     PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT;
     PFN_vkSetDebugUtilsObjectTagEXT SetDebugUtilsObjectTagEXT;
     PFN_vkQueueBeginDebugUtilsLabelEXT QueueBeginDebugUtilsLabelEXT;
@@ -373,20 +402,10 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdBeginDebugUtilsLabelEXT CmdBeginDebugUtilsLabelEXT;
     PFN_vkCmdEndDebugUtilsLabelEXT CmdEndDebugUtilsLabelEXT;
     PFN_vkCmdInsertDebugUtilsLabelEXT CmdInsertDebugUtilsLabelEXT;
-
-    // ---- VK_EXT_sample_locations extension commands
     PFN_vkCmdSetSampleLocationsEXT CmdSetSampleLocationsEXT;
-
-    // ---- VK_EXT_image_drm_format_modifier extension commands
     PFN_vkGetImageDrmFormatModifierPropertiesEXT GetImageDrmFormatModifierPropertiesEXT;
-
-    // ---- VK_EXT_external_memory_host extension commands
     PFN_vkGetMemoryHostPointerPropertiesEXT GetMemoryHostPointerPropertiesEXT;
-
-    // ---- VK_EXT_line_rasterization extension commands
     PFN_vkCmdSetLineStippleEXT CmdSetLineStippleEXT;
-
-    // ---- VK_EXT_extended_dynamic_state extension commands
     PFN_vkCmdSetCullModeEXT CmdSetCullModeEXT;
     PFN_vkCmdSetFrontFaceEXT CmdSetFrontFaceEXT;
     PFN_vkCmdSetPrimitiveTopologyEXT CmdSetPrimitiveTopologyEXT;
@@ -399,11 +418,7 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdSetDepthBoundsTestEnableEXT CmdSetDepthBoundsTestEnableEXT;
     PFN_vkCmdSetStencilTestEnableEXT CmdSetStencilTestEnableEXT;
     PFN_vkCmdSetStencilOpEXT CmdSetStencilOpEXT;
-
-    // ---- VK_EXT_vertex_input_dynamic_state extension commands
     PFN_vkCmdSetVertexInputEXT CmdSetVertexInputEXT;
-
-    // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
     PFN_vkGetFenceSciSyncFenceNV GetFenceSciSyncFenceNV;
 #endif // VK_USE_PLATFORM_SCI
@@ -422,28 +437,18 @@ typedef struct VkLayerDispatchTable_ {
 #if defined(VK_USE_PLATFORM_SCI)
     PFN_vkImportSemaphoreSciSyncObjNV ImportSemaphoreSciSyncObjNV;
 #endif // VK_USE_PLATFORM_SCI
-
-    // ---- VK_NV_external_memory_sci_buf extension commands
 #if defined(VK_USE_PLATFORM_SCI)
     PFN_vkGetMemorySciBufNV GetMemorySciBufNV;
 #endif // VK_USE_PLATFORM_SCI
-
-    // ---- VK_EXT_extended_dynamic_state2 extension commands
     PFN_vkCmdSetPatchControlPointsEXT CmdSetPatchControlPointsEXT;
     PFN_vkCmdSetRasterizerDiscardEnableEXT CmdSetRasterizerDiscardEnableEXT;
     PFN_vkCmdSetDepthBiasEnableEXT CmdSetDepthBiasEnableEXT;
     PFN_vkCmdSetLogicOpEXT CmdSetLogicOpEXT;
     PFN_vkCmdSetPrimitiveRestartEnableEXT CmdSetPrimitiveRestartEnableEXT;
-
-    // ---- VK_EXT_color_write_enable extension commands
     PFN_vkCmdSetColorWriteEnableEXT CmdSetColorWriteEnableEXT;
-
-    // ---- VK_NV_external_sci_sync2 extension commands
 #if defined(VK_USE_PLATFORM_SCI)
     PFN_vkCreateSemaphoreSciSyncPoolNV CreateSemaphoreSciSyncPoolNV;
 #endif // VK_USE_PLATFORM_SCI
-
-    // ---- VK_QNX_external_memory_screen_buffer extension commands
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
     PFN_vkGetScreenBufferPropertiesQNX GetScreenBufferPropertiesQNX;
 #endif // VK_USE_PLATFORM_SCREEN_QNX

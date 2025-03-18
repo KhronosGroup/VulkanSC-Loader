@@ -100,6 +100,19 @@
 #define FRAMEWORK_EXPORT
 #endif
 
+// Define it here so that json_writer.h has access to these functions
+#if defined(WIN32)
+// Convert an UTF-16 wstring to an UTF-8 string
+std::string narrow(const std::wstring& utf16);
+// Convert an UTF-8 string to an UTF-16 wstring
+std::wstring widen(const std::string& utf8);
+#else
+// Do nothing passthrough for the sake of Windows & UTF-16
+std::string narrow(const std::string& utf16);
+// Do nothing passthrough for the sake of Windows & UTF-16
+std::string widen(const std::string& utf8);
+#endif
+
 #include "json_writer.h"
 
 // get_env_var() - returns a std::string of `name`. if report_failure is true, then it will log to stderr that it didn't find the
@@ -147,6 +160,15 @@ struct EnvVarWrapper {
         cur_value += list_item;
         set_env_var();
     }
+#if defined(WIN32)
+    void add_to_list(std::wstring const& list_item) {
+        if (!cur_value.empty()) {
+            cur_value += OS_ENV_VAR_LIST_SEPARATOR;
+        }
+        cur_value += narrow(list_item);
+        set_env_var();
+    }
+#endif
     void remove_value() const { remove_env_var(); }
     const char* get() const { return name.c_str(); }
     const char* value() const { return cur_value.c_str(); }
@@ -178,8 +200,6 @@ void print_error_message(LSTATUS status, const char* function_name, std::string 
 struct ManifestICD;    // forward declaration for FolderManager::write
 struct ManifestLayer;  // forward declaration for FolderManager::write
 
-std::string escape_backslashes_for_json(std::string const& in_path);
-std::string escape_backslashes_for_json(std::filesystem::path const& in_path);
 namespace fs {
 
 int create_folder(std::filesystem::path const& path);
@@ -224,38 +244,26 @@ class FolderManager {
 inline void copy_string_to_char_array(std::string const& src, char* dst, size_t size_dst) { dst[src.copy(dst, size_dst - 1)] = 0; }
 
 #if defined(WIN32)
-// Convert an UTF-16 wstring to an UTF-8 string
-std::string narrow(const std::wstring& utf16);
-// Convert an UTF-8 string to an UTF-16 wstring
-std::wstring widen(const std::string& utf8);
-#else
-// Do nothing passthrough for the sake of Windows & UTF-16
-std::string narrow(const std::string& utf16);
-// Do nothing passthrough for the sake of Windows & UTF-16
-std::string widen(const std::string& utf8);
-#endif
-
-#if defined(WIN32)
-typedef HMODULE loader_platform_dl_handle;
-inline loader_platform_dl_handle loader_platform_open_library(const wchar_t* lib_path) {
+typedef HMODULE test_platform_dl_handle;
+inline test_platform_dl_handle test_platform_open_library(const wchar_t* lib_path) {
     // Try loading the library the original way first.
-    loader_platform_dl_handle lib_handle = LoadLibraryW(lib_path);
+    test_platform_dl_handle lib_handle = LoadLibraryW(lib_path);
     if (lib_handle == nullptr && GetLastError() == ERROR_MOD_NOT_FOUND) {
         // If that failed, then try loading it with broader search folders.
         lib_handle = LoadLibraryExW(lib_path, nullptr, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR);
     }
     return lib_handle;
 }
-inline void loader_platform_open_library_print_error(std::filesystem::path const& libPath) {
+inline void test_platform_open_library_print_error(std::filesystem::path const& libPath) {
     std::wcerr << L"Unable to open library: " << libPath << L" due to: " << std::to_wstring(GetLastError()) << L"\n";
 }
-inline void loader_platform_close_library(loader_platform_dl_handle library) { FreeLibrary(library); }
-inline void* loader_platform_get_proc_address(loader_platform_dl_handle library, const char* name) {
+inline void test_platform_close_library(test_platform_dl_handle library) { FreeLibrary(library); }
+inline void* test_platform_get_proc_address(test_platform_dl_handle library, const char* name) {
     assert(library);
     assert(name);
     return reinterpret_cast<void*>(GetProcAddress(library, name));
 }
-inline char* loader_platform_get_proc_address_error(const char* name) {
+inline char* test_platform_get_proc_address_error(const char* name) {
     static char errorMsg[120];
     snprintf(errorMsg, 119, "Failed to find function \"%s\" in dynamic library", name);
     return errorMsg;
@@ -263,26 +271,24 @@ inline char* loader_platform_get_proc_address_error(const char* name) {
 
 #elif COMMON_UNIX_PLATFORMS
 
-typedef void* loader_platform_dl_handle;
-inline loader_platform_dl_handle loader_platform_open_library(const char* libPath) {
-    return dlopen(libPath, RTLD_LAZY | RTLD_LOCAL);
-}
-inline void loader_platform_open_library_print_error(std::filesystem::path const& libPath) {
+typedef void* test_platform_dl_handle;
+inline test_platform_dl_handle test_platform_open_library(const char* libPath) { return dlopen(libPath, RTLD_LAZY | RTLD_LOCAL); }
+inline void test_platform_open_library_print_error(std::filesystem::path const& libPath) {
     std::wcerr << "Unable to open library: " << libPath << " due to: " << dlerror() << "\n";
 }
-inline void loader_platform_close_library(loader_platform_dl_handle library) {
+inline void test_platform_close_library(test_platform_dl_handle library) {
     char* loader_disable_dynamic_library_unloading_env_var = getenv("VK_LOADER_DISABLE_DYNAMIC_LIBRARY_UNLOADING");
     if (NULL == loader_disable_dynamic_library_unloading_env_var ||
         0 != strncmp(loader_disable_dynamic_library_unloading_env_var, "1", 2)) {
+        dlclose(library);
     }
-    dlclose(library);
 }
-inline void* loader_platform_get_proc_address(loader_platform_dl_handle library, const char* name) {
+inline void* test_platform_get_proc_address(test_platform_dl_handle library, const char* name) {
     assert(library);
     assert(name);
     return dlsym(library, name);
 }
-inline const char* loader_platform_get_proc_address_error([[maybe_unused]] const char* name) { return dlerror(); }
+inline const char* test_platform_get_proc_address_error([[maybe_unused]] const char* name) { return dlerror(); }
 #endif
 
 class FromVoidStarFunc {
@@ -302,15 +308,15 @@ class FromVoidStarFunc {
 struct LibraryWrapper {
     explicit LibraryWrapper() noexcept {}
     explicit LibraryWrapper(std::filesystem::path const& lib_path) noexcept : lib_path(lib_path) {
-        lib_handle = loader_platform_open_library(lib_path.native().c_str());
+        lib_handle = test_platform_open_library(lib_path.native().c_str());
         if (lib_handle == nullptr) {
-            loader_platform_open_library_print_error(lib_path);
+            test_platform_open_library_print_error(lib_path);
             assert(lib_handle != nullptr && "Must be able to open library");
         }
     }
     ~LibraryWrapper() noexcept {
         if (lib_handle != nullptr) {
-            loader_platform_close_library(lib_handle);
+            test_platform_close_library(lib_handle);
             lib_handle = nullptr;
         }
     }
@@ -322,7 +328,7 @@ struct LibraryWrapper {
     LibraryWrapper& operator=(LibraryWrapper&& wrapper) noexcept {
         if (this != &wrapper) {
             if (lib_handle != nullptr) {
-                loader_platform_close_library(lib_handle);
+                test_platform_close_library(lib_handle);
             }
             lib_handle = wrapper.lib_handle;
             lib_path = wrapper.lib_path;
@@ -332,9 +338,9 @@ struct LibraryWrapper {
     }
     FromVoidStarFunc get_symbol(const char* symbol_name) const {
         assert(lib_handle != nullptr && "Cannot get symbol with null library handle");
-        void* symbol = loader_platform_get_proc_address(lib_handle, symbol_name);
+        void* symbol = test_platform_get_proc_address(lib_handle, symbol_name);
         if (symbol == nullptr) {
-            fprintf(stderr, "Unable to open symbol %s: %s\n", symbol_name, loader_platform_get_proc_address_error(symbol_name));
+            fprintf(stderr, "Unable to open symbol %s: %s\n", symbol_name, test_platform_get_proc_address_error(symbol_name));
             assert(symbol != nullptr && "Must be able to get symbol");
         }
         return FromVoidStarFunc(symbol);
@@ -342,7 +348,7 @@ struct LibraryWrapper {
 
     explicit operator bool() const noexcept { return lib_handle != nullptr; }
 
-    loader_platform_dl_handle lib_handle = nullptr;
+    test_platform_dl_handle lib_handle = nullptr;
     std::filesystem::path lib_path;
 };
 
@@ -516,44 +522,44 @@ inline std::string version_to_string(uint32_t version) {
 }
 
 // Macro to ease the definition of variables with builder member functions
-// class_name = class the member variable is apart of
 // type = type of the variable
 // name = name of the variable
 // default_value = value to default initialize, use {} if nothing else makes sense
-#define BUILDER_VALUE(class_name, type, name, default_value) \
-    type name = default_value;                               \
-    class_name& set_##name(type const& name) {               \
-        this->name = name;                                   \
-        return *this;                                        \
+#define BUILDER_VALUE_WITH_DEFAULT(type, name, default_value) \
+    type name = default_value;                                \
+    auto set_##name(type const& name)->decltype(*this) {      \
+        this->name = name;                                    \
+        return *this;                                         \
     }
 
+#define BUILDER_VALUE(type, name) BUILDER_VALUE_WITH_DEFAULT(type, name, {})
+
 // Macro to ease the definition of vectors with builder member functions
-// class_name = class the member variable is apart of
 // type = type of the variable
 // name = name of the variable
 // singular_name = used for the `add_singular_name` member function
-#define BUILDER_VECTOR(class_name, type, name, singular_name)                    \
-    std::vector<type> name;                                                      \
-    class_name& add_##singular_name(type const& singular_name) {                 \
-        this->name.push_back(singular_name);                                     \
-        return *this;                                                            \
-    }                                                                            \
-    class_name& add_##singular_name##s(std::vector<type> const& singular_name) { \
-        for (auto& elem : singular_name) this->name.push_back(elem);             \
-        return *this;                                                            \
+#define BUILDER_VECTOR(type, name, singular_name)                                          \
+    std::vector<type> name;                                                                \
+    auto add_##singular_name(type const& singular_name)->decltype(*this) {                 \
+        this->name.push_back(singular_name);                                               \
+        return *this;                                                                      \
+    }                                                                                      \
+    auto add_##singular_name##s(std::vector<type> const& singular_name)->decltype(*this) { \
+        for (auto& elem : singular_name) this->name.push_back(elem);                       \
+        return *this;                                                                      \
     }
 // Like BUILDER_VECTOR but for move only types - where passing in means giving up ownership
-#define BUILDER_VECTOR_MOVE_ONLY(class_name, type, name, singular_name) \
-    std::vector<type> name;                                             \
-    class_name& add_##singular_name(type&& singular_name) {             \
-        this->name.push_back(std::move(singular_name));                 \
-        return *this;                                                   \
+#define BUILDER_VECTOR_MOVE_ONLY(type, name, singular_name)           \
+    std::vector<type> name;                                           \
+    auto add_##singular_name(type&& singular_name)->decltype(*this) { \
+        this->name.push_back(std::move(singular_name));               \
+        return *this;                                                 \
     }
 
 struct ManifestVersion {
-    BUILDER_VALUE(ManifestVersion, uint32_t, major, 1)
-    BUILDER_VALUE(ManifestVersion, uint32_t, minor, 0)
-    BUILDER_VALUE(ManifestVersion, uint32_t, patch, 0)
+    BUILDER_VALUE_WITH_DEFAULT(uint32_t, major, 1)
+    BUILDER_VALUE_WITH_DEFAULT(uint32_t, minor, 0)
+    BUILDER_VALUE_WITH_DEFAULT(uint32_t, patch, 0)
 
     std::string get_version_str() const noexcept {
         return std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(patch);
@@ -562,11 +568,11 @@ struct ManifestVersion {
 
 // ManifestICD builder
 struct ManifestICD {
-    BUILDER_VALUE(ManifestICD, ManifestVersion, file_format_version, {})
-    BUILDER_VALUE(ManifestICD, uint32_t, api_version, 0)
-    BUILDER_VALUE(ManifestICD, std::filesystem::path, lib_path, {})
-    BUILDER_VALUE(ManifestICD, bool, is_portability_driver, false)
-    BUILDER_VALUE(ManifestICD, std::string, library_arch, "")
+    BUILDER_VALUE(ManifestVersion, file_format_version)
+    BUILDER_VALUE(uint32_t, api_version)
+    BUILDER_VALUE(std::filesystem::path, lib_path)
+    BUILDER_VALUE(bool, is_portability_driver)
+    BUILDER_VALUE(std::string, library_arch)
     std::string get_manifest_str() const;
 };
 
@@ -583,8 +589,8 @@ struct ManifestLayer {
                 return "INSTANCE";
         }
         struct FunctionOverride {
-            BUILDER_VALUE(FunctionOverride, std::string, vk_func, {})
-            BUILDER_VALUE(FunctionOverride, std::string, override_name, {})
+            BUILDER_VALUE(std::string, vk_func)
+            BUILDER_VALUE(std::string, override_name)
 
             void get_manifest_str(JsonWriter& writer) const { writer.AddKeyedString(vk_func, override_name); }
         };
@@ -597,36 +603,36 @@ struct ManifestLayer {
             std::vector<std::string> entrypoints;
             void get_manifest_str(JsonWriter& writer) const;
         };
-        BUILDER_VALUE(LayerDescription, std::string, name, {})
-        BUILDER_VALUE(LayerDescription, Type, type, Type::INSTANCE)
-        BUILDER_VALUE(LayerDescription, std::filesystem::path, lib_path, {})
-        BUILDER_VALUE(LayerDescription, uint32_t, api_version, VK_API_VERSION_1_0)
-        BUILDER_VALUE(LayerDescription, uint32_t, implementation_version, 0)
-        BUILDER_VALUE(LayerDescription, std::string, description, {})
-        BUILDER_VECTOR(LayerDescription, FunctionOverride, functions, function)
-        BUILDER_VECTOR(LayerDescription, Extension, instance_extensions, instance_extension)
-        BUILDER_VECTOR(LayerDescription, Extension, device_extensions, device_extension)
-        BUILDER_VALUE(LayerDescription, std::string, enable_environment, {})
-        BUILDER_VALUE(LayerDescription, std::string, disable_environment, {})
-        BUILDER_VECTOR(LayerDescription, std::string, component_layers, component_layer)
-        BUILDER_VECTOR(LayerDescription, std::string, blacklisted_layers, blacklisted_layer)
-        BUILDER_VECTOR(LayerDescription, std::filesystem::path, override_paths, override_path)
-        BUILDER_VECTOR(LayerDescription, FunctionOverride, pre_instance_functions, pre_instance_function)
-        BUILDER_VECTOR(LayerDescription, std::string, app_keys, app_key)
-        BUILDER_VALUE(LayerDescription, std::string, library_arch, "")
+        BUILDER_VALUE(std::string, name)
+        BUILDER_VALUE_WITH_DEFAULT(Type, type, Type::INSTANCE)
+        BUILDER_VALUE(std::filesystem::path, lib_path)
+        BUILDER_VALUE_WITH_DEFAULT(uint32_t, api_version, VK_API_VERSION_1_0)
+        BUILDER_VALUE(uint32_t, implementation_version)
+        BUILDER_VALUE(std::string, description)
+        BUILDER_VECTOR(FunctionOverride, functions, function)
+        BUILDER_VECTOR(Extension, instance_extensions, instance_extension)
+        BUILDER_VECTOR(Extension, device_extensions, device_extension)
+        BUILDER_VALUE(std::string, enable_environment)
+        BUILDER_VALUE(std::string, disable_environment)
+        BUILDER_VECTOR(std::string, component_layers, component_layer)
+        BUILDER_VECTOR(std::string, blacklisted_layers, blacklisted_layer)
+        BUILDER_VECTOR(std::filesystem::path, override_paths, override_path)
+        BUILDER_VECTOR(FunctionOverride, pre_instance_functions, pre_instance_function)
+        BUILDER_VECTOR(std::string, app_keys, app_key)
+        BUILDER_VALUE(std::string, library_arch)
 
         void get_manifest_str(JsonWriter& writer) const;
         VkLayerProperties get_layer_properties() const;
     };
-    BUILDER_VALUE(ManifestLayer, ManifestVersion, file_format_version, {})
-    BUILDER_VECTOR(ManifestLayer, LayerDescription, layers, layer)
+    BUILDER_VALUE(ManifestVersion, file_format_version)
+    BUILDER_VECTOR(LayerDescription, layers, layer)
 
     std::string get_manifest_str() const;
 };
 
 struct Extension {
-    BUILDER_VALUE(Extension, std::string, extensionName, {})
-    BUILDER_VALUE(Extension, uint32_t, specVersion, VK_API_VERSION_1_0)
+    BUILDER_VALUE(std::string, extensionName)
+    BUILDER_VALUE_WITH_DEFAULT(uint32_t, specVersion, VK_API_VERSION_1_0)
 
     Extension(const char* name, uint32_t specVersion = VK_API_VERSION_1_0) noexcept
         : extensionName(name), specVersion(specVersion) {}
@@ -642,20 +648,20 @@ struct Extension {
 };
 
 struct MockQueueFamilyProperties {
-    BUILDER_VALUE(MockQueueFamilyProperties, VkQueueFamilyProperties, properties, {})
-    BUILDER_VALUE(MockQueueFamilyProperties, bool, support_present, false)
+    BUILDER_VALUE(VkQueueFamilyProperties, properties)
+    BUILDER_VALUE(bool, support_present)
 
     VkQueueFamilyProperties get() const noexcept { return properties; }
 };
 
 struct InstanceCreateInfo {
-    BUILDER_VALUE(InstanceCreateInfo, VkInstanceCreateInfo, instance_info, {})
-    BUILDER_VALUE(InstanceCreateInfo, VkApplicationInfo, application_info, {})
-    BUILDER_VALUE(InstanceCreateInfo, std::string, app_name, {})
-    BUILDER_VALUE(InstanceCreateInfo, std::string, engine_name, {})
-    BUILDER_VALUE(InstanceCreateInfo, uint32_t, flags, 0)
-    BUILDER_VALUE(InstanceCreateInfo, uint32_t, app_version, 0)
-    BUILDER_VALUE(InstanceCreateInfo, uint32_t, engine_version, 0)
+    BUILDER_VALUE(VkInstanceCreateInfo, instance_info)
+    BUILDER_VALUE(VkApplicationInfo, application_info)
+    BUILDER_VALUE(std::string, app_name)
+    BUILDER_VALUE(std::string, engine_name)
+    BUILDER_VALUE(uint32_t, flags)
+    BUILDER_VALUE(uint32_t, app_version)
+    BUILDER_VALUE(uint32_t, engine_version)
 #ifdef VULKANSC
     uint32_t api_version = VKSC_API_VERSION_1_0;
     InstanceCreateInfo& set_api_version(uint32_t const& api_version) {
@@ -667,12 +673,12 @@ struct InstanceCreateInfo {
         return *this;
     }
 #else
-    BUILDER_VALUE(InstanceCreateInfo, uint32_t, api_version, VK_API_VERSION_1_0)
+    BUILDER_VALUE_WITH_DEFAULT(uint32_t, api_version, VK_API_VERSION_1_0)
 #endif  // VULKANSC
-    BUILDER_VECTOR(InstanceCreateInfo, const char*, enabled_layers, layer)
-    BUILDER_VECTOR(InstanceCreateInfo, const char*, enabled_extensions, extension)
+    BUILDER_VECTOR(const char*, enabled_layers, layer)
+    BUILDER_VECTOR(const char*, enabled_extensions, extension)
     // tell the get() function to not provide `application_info`
-    BUILDER_VALUE(InstanceCreateInfo, bool, fill_in_application_info, true)
+    BUILDER_VALUE_WITH_DEFAULT(bool, fill_in_application_info, true)
 
     InstanceCreateInfo();
 
@@ -687,8 +693,8 @@ struct DeviceQueueCreateInfo {
     DeviceQueueCreateInfo();
     DeviceQueueCreateInfo(const VkDeviceQueueCreateInfo* create_info);
 
-    BUILDER_VALUE(DeviceQueueCreateInfo, VkDeviceQueueCreateInfo, queue_create_info, {})
-    BUILDER_VECTOR(DeviceQueueCreateInfo, float, priorities, priority)
+    BUILDER_VALUE(VkDeviceQueueCreateInfo, queue_create_info)
+    BUILDER_VECTOR(float, priorities, priority)
 
     VkDeviceQueueCreateInfo get() noexcept;
 };
@@ -697,10 +703,10 @@ struct DeviceCreateInfo {
     DeviceCreateInfo() = default;
     DeviceCreateInfo(const VkDeviceCreateInfo* create_info);
 
-    BUILDER_VALUE(DeviceCreateInfo, VkDeviceCreateInfo, dev, {})
-    BUILDER_VECTOR(DeviceCreateInfo, const char*, enabled_extensions, extension)
-    BUILDER_VECTOR(DeviceCreateInfo, const char*, enabled_layers, layer)
-    BUILDER_VECTOR(DeviceCreateInfo, DeviceQueueCreateInfo, queue_info_details, device_queue)
+    BUILDER_VALUE(VkDeviceCreateInfo, dev)
+    BUILDER_VECTOR(const char*, enabled_extensions, extension)
+    BUILDER_VECTOR(const char*, enabled_layers, layer)
+    BUILDER_VECTOR(DeviceQueueCreateInfo, queue_info_details, device_queue)
 
     VkDeviceCreateInfo* get() noexcept;
 
@@ -1023,7 +1029,7 @@ inline std::string test_platform_executable_path() {
     if (ret > buffer.size()) return NULL;
     buffer.resize(ret);
     buffer[ret] = '\0';
-    return buffer;
+    return narrow(std::filesystem::path(buffer).native());
 }
 
 #endif

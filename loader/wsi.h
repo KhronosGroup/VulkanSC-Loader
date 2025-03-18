@@ -25,8 +25,71 @@
 #include "loader_common.h"
 
 typedef struct {
-    uint32_t surface_index;  // This surface's index into each drivers list of created surfaces
+    // This union holds the data that drivers which use ICD interface version 2 and before expect. This is so they can dereference
+    // VkSurfaceKHR to get this struct and access the creation parameters used in subsequent API calls, such as get surface formats
+    // & get surface present modes.
+    // Thus, these members need to stay here in order to preserve ABI compatibility.
+    union {
+#if defined(VK_USE_PLATFORM_WAYLAND_KHR)
+        VkIcdSurfaceWayland wayland_surf;
+#endif  // VK_USE_PLATFORM_WAYLAND_KHR
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+        VkIcdSurfaceWin32 win_surf;
+#endif  // VK_USE_PLATFORM_WIN32_KHR
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+        VkIcdSurfaceXcb xcb_surf;
+#endif  // VK_USE_PLATFORM_XCB_KHR
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+        VkIcdSurfaceXlib xlib_surf;
+#endif  // VK_USE_PLATFORM_XLIB_KHR
+#if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
+        VkIcdSurfaceDirectFB directfb_surf;
+#endif  // VK_USE_PLATFORM_DIRECTFB_EXT
+#if defined(VK_USE_PLATFORM_MACOS_MVK)
+        VkIcdSurfaceMacOS macos_surf;
+#endif  // VK_USE_PLATFORM_MACOS_MVK
+#if defined(VK_USE_PLATFORM_GGP)
+        VkIcdSurfaceGgp ggp_surf;
+#endif  // VK_USE_PLATFORM_GGP
+#if defined(VK_USE_PLATFORM_FUCHSIA)
+        VkIcdSurfaceImagePipe imagepipe_surf;
+#endif  // VK_USE_PLATFORM_FUCHSIA
+#if defined(VK_USE_PLATFORM_METAL_EXT)
+        VkIcdSurfaceMetal metal_surf;
+#endif  // VK_USE_PLATFORM_METAL_EXT
+#if defined(VK_USE_PLATFORM_SCREEN_QNX)
+        VkIcdSurfaceScreen screen_surf;
+#endif  // VK_USE_PLATFORM_SCREEN_QNX
+#if defined(VK_USE_PLATFORM_VI_NN)
+        VkIcdSurfaceVi vi_surf;
+#endif  // VK_USE_PLATFORM_VI_NN
+        VkIcdSurfaceDisplay display_surf;
+        VkIcdSurfaceHeadless headless_surf;
+
+        // All of the specific ICD surface structures start with the base structure
+        VkIcdSurfaceBase base;
+    };
+    uint32_t base_size;            // Size of VkIcdSurfaceBase
+    uint32_t platform_size;        // Size of corresponding VkIcdSurfaceXXX
+    uint32_t non_platform_offset;  // Start offset to base_size
+    uint32_t entire_size;          // Size of entire VkIcdSurface
+    uint32_t surface_index;        // This surface's index into each drivers list of created surfaces
+
+    bool callbacks_valid;             // Need to store if a VkAllocationCallbacks pointer was used.
+    VkAllocationCallbacks callbacks;  // Storage for the callbacks
+
+    // The create info parameters captured by the union in VkIcdSurface are insufficient, as they do not
+    // capture every single parameter from the create info (e.g. flags that did not have any flags defined
+    // at the time) and they also cannot capture extension structures, so we are including a separate
+    // pointer that will hold a copy of the original creation structure chain. This chain can only capture
+    // known extension structures and preferably should be auto-generated, but the list of extension
+    // structures is rather limited (there is only a single display surface creation structure extension
+    // at the time of writing).
+    uint8_t *create_info;
+
 } VkIcdSurface;
+
+VkResult wsi_unwrap_icd_surface(struct loader_icd_term *icd_term, VkSurfaceKHR *surface);
 
 bool wsi_swapchain_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr);
 
