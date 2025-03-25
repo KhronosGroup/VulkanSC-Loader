@@ -298,6 +298,11 @@ void *trampoline_get_proc_addr(struct loader_instance *inst, const char *funcNam
     if (!strcmp(funcName, "vkTransitionImageLayout")) return vkTransitionImageLayout;
 #endif  // VULKANSC
 
+#ifdef VULKANSC
+    if (!strcmp(funcName, "vkGetFaultData")) return vkGetFaultData;
+    if (!strcmp(funcName, "vkGetCommandPoolMemoryConsumption")) return vkGetCommandPoolMemoryConsumption;
+#endif  // VULKANSC
+
     // Instance extensions
     void *addr;
     if (debug_extensions_InstanceGpa(inst, funcName, &addr)) return addr;
