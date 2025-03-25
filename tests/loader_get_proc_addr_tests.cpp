@@ -192,6 +192,32 @@ TEST(GetProcAddr, GlobalFunctions) {
     }
 }
 
+#ifdef VULKANSC
+TEST(GetProcAddr, SCEntryPoints) {
+    FrameworkEnvironment env{};
+    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device("physical_device_0");
+
+    InstWrapper inst(env.vulkan_functions);
+    inst.create_info.api_version = VK_MAKE_API_VERSION(VKSC_API_VARIANT, 1, 0, 0);
+    ASSERT_NO_FATAL_FAILURE(inst.CheckCreate());
+
+    auto& gipa = env.vulkan_functions.vkGetInstanceProcAddr;
+    // global entry points with instance handle
+    {
+        auto GetFaultData = reinterpret_cast<PFN_vkGetFaultData>(gipa(inst, "vkGetFaultData"));
+        ASSERT_NE(nullptr, GetFaultData);
+
+        auto GetCommandPoolMemoryConsumption =
+            reinterpret_cast<PFN_vkGetCommandPoolMemoryConsumption>(gipa(inst, "vkGetCommandPoolMemoryConsumption"));
+        ASSERT_NE(nullptr, GetCommandPoolMemoryConsumption);
+
+        // Query 1.2 core in SC 1.0 core
+        auto CmdDrawIndirectCount = reinterpret_cast<PFN_vkCmdDrawIndirectCount>(gipa(inst, "vkCmdDrawIndirectCount"));
+        ASSERT_NE(nullptr, CmdDrawIndirectCount);
+    }
+}
+#endif  // VULKANSC
+
 TEST(GetProcAddr, Verify10FunctionsFailToLoadWithSingleDriver) {
     FrameworkEnvironment env{};
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device({}).set_can_query_GetPhysicalDeviceFuncs(false);
