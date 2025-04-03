@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2021-2023 The Khronos Group Inc.
+ * Copyright (c) 2021-2025 The Khronos Group Inc.
  * Copyright (c) 2021-2023 Valve Corporation
  * Copyright (c) 2021-2023 LunarG, Inc.
  * Copyright (c) 2021-2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
- * Copyright (c) 2023-2023 RasterGrid Kft.
+ * Copyright (c) 2023-2025 RasterGrid Kft.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and/or associated documentation files (the "Materials"), to

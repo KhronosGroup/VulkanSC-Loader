@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2015-2024 The Khronos Group Inc.
+ * Copyright (c) 2015-2025 The Khronos Group Inc.
  * Copyright (c) 2015-2024 Valve Corporation
  * Copyright (c) 2015-2024 LunarG, Inc.
  * Copyright (c) 2021-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
