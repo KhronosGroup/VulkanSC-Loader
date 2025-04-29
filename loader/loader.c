@@ -3239,9 +3239,11 @@ VkResult read_data_files_in_search_paths(const struct loader_instance *inst, enu
 #if COMMON_UNIX_PLATFORMS
             relative_location = VK_DRIVERS_INFO_RELATIVE_DIR;
 #endif
+#ifndef VULKANSC  // Ignore Microsoft API mapping layers
 #if defined(_WIN32)
             package_path = windows_get_app_package_manifest_path(inst);
 #endif
+#endif  // VULKANSC
             break;
         case LOADER_DATA_FILE_MANIFEST_IMPLICIT_LAYER:
             override_env = loader_secure_getenv(VK_IMPLICIT_LAYER_PATH_ENV_VAR, inst);
@@ -3249,9 +3251,11 @@ VkResult read_data_files_in_search_paths(const struct loader_instance *inst, enu
 #if COMMON_UNIX_PLATFORMS
             relative_location = VK_ILAYERS_INFO_RELATIVE_DIR;
 #endif
+#ifndef VULKANSC  // Ignore Microsoft API mapping layers
 #if defined(_WIN32)
             package_path = windows_get_app_package_manifest_path(inst);
 #endif
+#endif  // VULKANSC
             break;
         case LOADER_DATA_FILE_MANIFEST_EXPLICIT_LAYER:
             override_env = loader_secure_getenv(VK_EXPLICIT_LAYER_PATH_ENV_VAR, inst);
