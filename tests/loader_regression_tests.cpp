@@ -3861,6 +3861,7 @@ TEST(PortabilityICDConfiguration, PortabilityAndRegularICDPreInstanceFunctions) 
 #endif  // VULKANSC
 
 #if defined(_WIN32)
+#ifndef VULKANSC  // Microsoft API mapping layers are not supported for Vulkan SC
 TEST(AppPackageDiscovery, AppPackageDrivers) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails{TEST_ICD_PATH_VERSION_2}.set_discovery_type(ManifestDiscoveryType::windows_app_package))
@@ -3909,6 +3910,7 @@ TEST(AppPackageDiscovery, AppPackageICDAndLayers) {
     ASSERT_EQ(layers.size(), 1);
     ASSERT_TRUE(string_eq(layers.at(0).layerName, layer_name));
 }
+#endif  // VULKANSC
 
 // Make sure that stale layer manifests (path to nonexistant file) which have the same name as real manifests don't cause the real
 // manifests to be skipped. Stale registry entries happen when a registry is written on layer/driver installation but not cleaned up
