@@ -1701,7 +1701,7 @@ TEST(OverrideMetaLayer, BasicOverridePaths) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
 
-    fs::FolderManager override_layer_folder{FRAMEWORK_BUILD_DIRECTORY, "override_layer_folder"};
+    auto& override_layer_folder = env.get_folder(ManifestLocation::override_layer);
 
     const char* regular_layer_name = "VK_LAYER_TestLayer_1";
     override_layer_folder.write_manifest("regular_test_layer.json",
@@ -1732,7 +1732,7 @@ TEST(OverrideMetaLayer, BasicOverridePathsIgnoreOtherLayers) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
 
-    fs::FolderManager override_layer_folder{FRAMEWORK_BUILD_DIRECTORY, "override_layer_folder"};
+    auto& override_layer_folder = env.get_folder(ManifestLocation::override_layer);
 
     const char* regular_layer_name = "VK_LAYER_TestLayer";
     env.add_explicit_layer(
@@ -1821,7 +1821,8 @@ TEST(OverrideMetaLayer, OverridePathsInteractionWithVK_LAYER_PATH) {
 TEST(OverrideMetaLayer, OverridePathsEnableImplicitLayerInDefaultPaths) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
-    fs::FolderManager override_layer_folder{FRAMEWORK_BUILD_DIRECTORY, "override_layer_folder"};
+
+    auto& override_layer_folder = env.get_folder(ManifestLocation::override_layer);
 
     const char* implicit_layer_name = "VK_LAYER_ImplicitLayer";
     env.add_implicit_layer(
@@ -1861,7 +1862,8 @@ TEST(OverrideMetaLayer, OverridePathsEnableImplicitLayerInDefaultPaths) {
 TEST(OverrideMetaLayer, ManifestFileFormatVersionTooOld) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
-    fs::FolderManager override_layer_folder{FRAMEWORK_BUILD_DIRECTORY, "override_layer_folder"};
+
+    auto& override_layer_folder = env.get_folder(ManifestLocation::override_layer);
 
     const char* regular_layer_name = "VK_LAYER_TestLayer_1";
     override_layer_folder.write_manifest("regular_test_layer.json",
@@ -1957,7 +1959,7 @@ TEST(OverrideMetaLayer, RunningWithElevatedPrivilegesFromSecureLocation) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
 
-    fs::FolderManager override_layer_folder{FRAMEWORK_BUILD_DIRECTORY, "override_layer_folder"};
+    auto& override_layer_folder = env.get_folder(ManifestLocation::override_layer);
 
     const char* regular_layer_name = "VK_LAYER_TestLayer_1";
     override_layer_folder.write_manifest("regular_test_layer.json",
@@ -2012,7 +2014,7 @@ TEST(OverrideMetaLayer, RunningWithElevatedPrivilegesFromUnsecureLocation) {
     FrameworkEnvironment env;
     env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
 
-    fs::FolderManager override_layer_folder{FRAMEWORK_BUILD_DIRECTORY, "override_layer_folder"};
+    auto& override_layer_folder = env.get_folder(ManifestLocation::override_layer);
 
     const char* regular_layer_name = "VK_LAYER_TestLayer_1";
     override_layer_folder.write_manifest("regular_test_layer.json",

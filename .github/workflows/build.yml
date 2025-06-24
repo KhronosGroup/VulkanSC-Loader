@@ -60,9 +60,6 @@ jobs:
                 cmakeVersion: 3.22.1
             - run: sudo apt update
             - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
-            # This is to combat a bug when using 6.6 linux kernels with thread/address sanitizer
-            # https://github.com/google/sanitizers/issues/1716
-            - run: sudo sysctl vm.mmap_rnd_bits=28
             - run: |
                 cmake -S. -B build \
                 -D CMAKE_BUILD_TYPE=${{ matrix.config }} \
@@ -73,7 +70,7 @@ jobs:
                 -D CMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
                 -D CMAKE_C_COMPILER=${{ matrix.compiler.cc }}
             - run: cmake --build build
-            - run: ctest --output-on-failure --test-dir build/
+            - run: ctest --parallel --output-on-failure --test-dir build/
             - run: cmake --install build --prefix /tmp
 
     codegen:
@@ -101,7 +98,7 @@ jobs:
                 -D CMAKE_CXX_COMPILER=clang++
             - run: cmake --build build
             - run: cmake --install build --prefix /tmp
-            - run: ctest --output-on-failure -E UnknownFunction --test-dir build/
+            - run: ctest --parallel --output-on-failure -E UnknownFunction --test-dir build/
 
     linux-32:
         needs: codegen
@@ -139,7 +136,7 @@ jobs:
                 PKG_CONFIG_PATH: /usr/lib/i386-linux-gnu/pkgconfig
             - run: cmake --build build
             - run: cmake --install build --prefix /tmp
-            - run: ctest --output-on-failure --test-dir build/
+            - run: ctest --parallel --output-on-failure --test-dir build/
 
     linux-32-no-asm:
         needs: codegen
@@ -173,7 +170,7 @@ jobs:
                 # https://gitlab.kitware.com/cmake/cmake/-/issues/25317
                 PKG_CONFIG_PATH: /usr/lib/i386-linux-gnu/pkgconfig
             - run: cmake --build build
-            - run: ctest --output-on-failure -E UnknownFunction --test-dir build/
+            - run: ctest --parallel --output-on-failure -E UnknownFunction --test-dir build/
 
     windows_vs:
         # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
@@ -194,7 +191,7 @@ jobs:
                 -D BUILD_WERROR=ON
             - run: cmake --build build/ --config ${{matrix.config}}
             - run: cmake --install build --prefix build/install --config ${{matrix.config}}
-            - run: ctest --output-on-failure -C ${{matrix.config}} --test-dir build/
+            - run: ctest --parallel --output-on-failure -C ${{matrix.config}} --test-dir build/
 
     windows_vs-no-asm:
         # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
@@ -214,7 +211,7 @@ jobs:
                 -A ${{ matrix.arch }} `
                 -D BUILD_WERROR=ON
             - run: cmake --build build/ --config Release
-            - run: ctest --output-on-failure -C Release -E UnknownFunction --test-dir build/
+            - run: ctest --parallel --output-on-failure -C Release -E UnknownFunction --test-dir build/
 
     # Test both clang and clang-cl (Chromium project uses clang-cl)
     windows_clang:
@@ -238,11 +235,12 @@ jobs:
               -D BUILD_TESTS=ON `
               -G Ninja
           - run: cmake --build build/
-          - run: ctest --output-on-failure --test-dir build/
+          - run: ctest --parallel --output-on-failure --test-dir build/
           - run: cmake --install build --prefix build/install
 
     mingw:
       # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
+      if: false # Disabled due to issues with msys2 making CMake unable to find a working compiler
       needs: linux-no-asm
       runs-on: windows-2022
       defaults:
@@ -253,7 +251,6 @@ jobs:
         - uses: actions/setup-python@v5
           with:
             python-version: '3.11'
-        - uses: lukka/get-cmake@latest
         - name: Setup uasm
           run: |
             C:/msys64/usr/bin/pacman -Sy --noconfirm --needed mingw-w64-x86_64-uasm
@@ -281,7 +278,6 @@ jobs:
         - uses: actions/setup-python@v5
           with:
             python-version: '3.11'
-        - uses: lukka/get-cmake@latest
         - run: |
             cmake -S. -B build \
             -D UPDATE_DEPS=ON \
@@ -304,7 +300,6 @@ jobs:
         - uses: actions/setup-python@v5
           with:
             python-version: '3.11'
-        - uses: lukka/get-cmake@latest
         # Make sure this doesn't fail even without explicitly setting '-D USE_MASM=OFF' and without uasm
         - run: |
             cmake -S. -B build \
@@ -324,7 +319,6 @@ jobs:
           shell: bash
       steps:
         - uses: actions/checkout@v4
-        - uses: lukka/get-cmake@latest
         - run: |
             cmake -S. -B build \
             -D UPDATE_DEPS=ON \

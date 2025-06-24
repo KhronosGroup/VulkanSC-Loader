@@ -30,6 +30,7 @@
 #include <string.h>
 #include "vk_layer_dispatch_table.h"
 
+// clang-format off
 static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDispatchTable *table, PFN_vkGetDeviceProcAddr gpa) {
     memset(table, 0, sizeof(*table));
     table->magic = DEVICE_DISP_TABLE_MAGIC_NUMBER;
@@ -148,8 +149,7 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CmdExecuteCommands = (PFN_vkCmdExecuteCommands)gpa(device, "vkCmdExecuteCommands");
     table->BindBufferMemory2 = (PFN_vkBindBufferMemory2)gpa(device, "vkBindBufferMemory2");
     table->BindImageMemory2 = (PFN_vkBindImageMemory2)gpa(device, "vkBindImageMemory2");
-    table->GetDeviceGroupPeerMemoryFeatures =
-        (PFN_vkGetDeviceGroupPeerMemoryFeatures)gpa(device, "vkGetDeviceGroupPeerMemoryFeatures");
+    table->GetDeviceGroupPeerMemoryFeatures = (PFN_vkGetDeviceGroupPeerMemoryFeatures)gpa(device, "vkGetDeviceGroupPeerMemoryFeatures");
     table->CmdSetDeviceMask = (PFN_vkCmdSetDeviceMask)gpa(device, "vkCmdSetDeviceMask");
     table->CmdDispatchBase = (PFN_vkCmdDispatchBase)gpa(device, "vkCmdDispatchBase");
     table->GetImageMemoryRequirements2 = (PFN_vkGetImageMemoryRequirements2)gpa(device, "vkGetImageMemoryRequirements2");
@@ -170,8 +170,7 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->SignalSemaphore = (PFN_vkSignalSemaphore)gpa(device, "vkSignalSemaphore");
     table->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)gpa(device, "vkGetBufferDeviceAddress");
     table->GetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)gpa(device, "vkGetBufferOpaqueCaptureAddress");
-    table->GetDeviceMemoryOpaqueCaptureAddress =
-        (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)gpa(device, "vkGetDeviceMemoryOpaqueCaptureAddress");
+    table->GetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)gpa(device, "vkGetDeviceMemoryOpaqueCaptureAddress");
     table->CreatePrivateDataSlot = (PFN_vkCreatePrivateDataSlot)gpa(device, "vkCreatePrivateDataSlot");
     table->DestroyPrivateDataSlot = (PFN_vkDestroyPrivateDataSlot)gpa(device, "vkDestroyPrivateDataSlot");
     table->SetPrivateData = (PFN_vkSetPrivateData)gpa(device, "vkSetPrivateData");
@@ -205,25 +204,19 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CmdSetRasterizerDiscardEnable = (PFN_vkCmdSetRasterizerDiscardEnable)gpa(device, "vkCmdSetRasterizerDiscardEnable");
     table->CmdSetDepthBiasEnable = (PFN_vkCmdSetDepthBiasEnable)gpa(device, "vkCmdSetDepthBiasEnable");
     table->CmdSetPrimitiveRestartEnable = (PFN_vkCmdSetPrimitiveRestartEnable)gpa(device, "vkCmdSetPrimitiveRestartEnable");
-    table->GetDeviceBufferMemoryRequirements =
-        (PFN_vkGetDeviceBufferMemoryRequirements)gpa(device, "vkGetDeviceBufferMemoryRequirements");
-    table->GetDeviceImageMemoryRequirements =
-        (PFN_vkGetDeviceImageMemoryRequirements)gpa(device, "vkGetDeviceImageMemoryRequirements");
-    table->GetDeviceImageSparseMemoryRequirements =
-        (PFN_vkGetDeviceImageSparseMemoryRequirements)gpa(device, "vkGetDeviceImageSparseMemoryRequirements");
+    table->GetDeviceBufferMemoryRequirements = (PFN_vkGetDeviceBufferMemoryRequirements)gpa(device, "vkGetDeviceBufferMemoryRequirements");
+    table->GetDeviceImageMemoryRequirements = (PFN_vkGetDeviceImageMemoryRequirements)gpa(device, "vkGetDeviceImageMemoryRequirements");
+    table->GetDeviceImageSparseMemoryRequirements = (PFN_vkGetDeviceImageSparseMemoryRequirements)gpa(device, "vkGetDeviceImageSparseMemoryRequirements");
     table->CmdSetLineStipple = (PFN_vkCmdSetLineStipple)gpa(device, "vkCmdSetLineStipple");
     table->MapMemory2 = (PFN_vkMapMemory2)gpa(device, "vkMapMemory2");
     table->UnmapMemory2 = (PFN_vkUnmapMemory2)gpa(device, "vkUnmapMemory2");
     table->CmdBindIndexBuffer2 = (PFN_vkCmdBindIndexBuffer2)gpa(device, "vkCmdBindIndexBuffer2");
     table->GetRenderingAreaGranularity = (PFN_vkGetRenderingAreaGranularity)gpa(device, "vkGetRenderingAreaGranularity");
-    table->GetDeviceImageSubresourceLayout =
-        (PFN_vkGetDeviceImageSubresourceLayout)gpa(device, "vkGetDeviceImageSubresourceLayout");
+    table->GetDeviceImageSubresourceLayout = (PFN_vkGetDeviceImageSubresourceLayout)gpa(device, "vkGetDeviceImageSubresourceLayout");
     table->GetImageSubresourceLayout2 = (PFN_vkGetImageSubresourceLayout2)gpa(device, "vkGetImageSubresourceLayout2");
     table->CmdPushDescriptorSet = (PFN_vkCmdPushDescriptorSet)gpa(device, "vkCmdPushDescriptorSet");
-    table->CmdSetRenderingAttachmentLocations =
-        (PFN_vkCmdSetRenderingAttachmentLocations)gpa(device, "vkCmdSetRenderingAttachmentLocations");
-    table->CmdSetRenderingInputAttachmentIndices =
-        (PFN_vkCmdSetRenderingInputAttachmentIndices)gpa(device, "vkCmdSetRenderingInputAttachmentIndices");
+    table->CmdSetRenderingAttachmentLocations = (PFN_vkCmdSetRenderingAttachmentLocations)gpa(device, "vkCmdSetRenderingAttachmentLocations");
+    table->CmdSetRenderingInputAttachmentIndices = (PFN_vkCmdSetRenderingInputAttachmentIndices)gpa(device, "vkCmdSetRenderingInputAttachmentIndices");
     table->CmdBindDescriptorSets2 = (PFN_vkCmdBindDescriptorSets2)gpa(device, "vkCmdBindDescriptorSets2");
     table->CmdPushConstants2 = (PFN_vkCmdPushConstants2)gpa(device, "vkCmdPushConstants2");
     table->CmdPushDescriptorSet2 = (PFN_vkCmdPushDescriptorSet2)gpa(device, "vkCmdPushDescriptorSet2");
@@ -231,17 +224,14 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CopyImageToMemory = (PFN_vkCopyImageToMemory)gpa(device, "vkCopyImageToMemory");
     table->CopyImageToImage = (PFN_vkCopyImageToImage)gpa(device, "vkCopyImageToImage");
     table->TransitionImageLayout = (PFN_vkTransitionImageLayout)gpa(device, "vkTransitionImageLayout");
-    table->GetCommandPoolMemoryConsumption =
-        (PFN_vkGetCommandPoolMemoryConsumption)gpa(device, "vkGetCommandPoolMemoryConsumption");
+    table->GetCommandPoolMemoryConsumption = (PFN_vkGetCommandPoolMemoryConsumption)gpa(device, "vkGetCommandPoolMemoryConsumption");
     table->GetFaultData = (PFN_vkGetFaultData)gpa(device, "vkGetFaultData");
     table->CreateSwapchainKHR = (PFN_vkCreateSwapchainKHR)gpa(device, "vkCreateSwapchainKHR");
     table->GetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR)gpa(device, "vkGetSwapchainImagesKHR");
     table->AcquireNextImageKHR = (PFN_vkAcquireNextImageKHR)gpa(device, "vkAcquireNextImageKHR");
     table->QueuePresentKHR = (PFN_vkQueuePresentKHR)gpa(device, "vkQueuePresentKHR");
-    table->GetDeviceGroupPresentCapabilitiesKHR =
-        (PFN_vkGetDeviceGroupPresentCapabilitiesKHR)gpa(device, "vkGetDeviceGroupPresentCapabilitiesKHR");
-    table->GetDeviceGroupSurfacePresentModesKHR =
-        (PFN_vkGetDeviceGroupSurfacePresentModesKHR)gpa(device, "vkGetDeviceGroupSurfacePresentModesKHR");
+    table->GetDeviceGroupPresentCapabilitiesKHR = (PFN_vkGetDeviceGroupPresentCapabilitiesKHR)gpa(device, "vkGetDeviceGroupPresentCapabilitiesKHR");
+    table->GetDeviceGroupSurfacePresentModesKHR = (PFN_vkGetDeviceGroupSurfacePresentModesKHR)gpa(device, "vkGetDeviceGroupSurfacePresentModesKHR");
     table->AcquireNextImage2KHR = (PFN_vkAcquireNextImage2KHR)gpa(device, "vkAcquireNextImage2KHR");
     table->CreateSharedSwapchainsKHR = (PFN_vkCreateSharedSwapchainsKHR)gpa(device, "vkCreateSharedSwapchainsKHR");
     table->GetMemoryFdKHR = (PFN_vkGetMemoryFdKHR)gpa(device, "vkGetMemoryFdKHR");
@@ -274,8 +264,7 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->RegisterDisplayEventEXT = (PFN_vkRegisterDisplayEventEXT)gpa(device, "vkRegisterDisplayEventEXT");
     table->GetSwapchainCounterEXT = (PFN_vkGetSwapchainCounterEXT)gpa(device, "vkGetSwapchainCounterEXT");
     table->CmdSetDiscardRectangleEXT = (PFN_vkCmdSetDiscardRectangleEXT)gpa(device, "vkCmdSetDiscardRectangleEXT");
-    table->CmdSetDiscardRectangleEnableEXT =
-        (PFN_vkCmdSetDiscardRectangleEnableEXT)gpa(device, "vkCmdSetDiscardRectangleEnableEXT");
+    table->CmdSetDiscardRectangleEnableEXT = (PFN_vkCmdSetDiscardRectangleEnableEXT)gpa(device, "vkCmdSetDiscardRectangleEnableEXT");
     table->CmdSetDiscardRectangleModeEXT = (PFN_vkCmdSetDiscardRectangleModeEXT)gpa(device, "vkCmdSetDiscardRectangleModeEXT");
     table->SetHdrMetadataEXT = (PFN_vkSetHdrMetadataEXT)gpa(device, "vkSetHdrMetadataEXT");
     table->SetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)gpa(device, "vkSetDebugUtilsObjectNameEXT");
@@ -287,10 +276,8 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)gpa(device, "vkCmdEndDebugUtilsLabelEXT");
     table->CmdInsertDebugUtilsLabelEXT = (PFN_vkCmdInsertDebugUtilsLabelEXT)gpa(device, "vkCmdInsertDebugUtilsLabelEXT");
     table->CmdSetSampleLocationsEXT = (PFN_vkCmdSetSampleLocationsEXT)gpa(device, "vkCmdSetSampleLocationsEXT");
-    table->GetImageDrmFormatModifierPropertiesEXT =
-        (PFN_vkGetImageDrmFormatModifierPropertiesEXT)gpa(device, "vkGetImageDrmFormatModifierPropertiesEXT");
-    table->GetMemoryHostPointerPropertiesEXT =
-        (PFN_vkGetMemoryHostPointerPropertiesEXT)gpa(device, "vkGetMemoryHostPointerPropertiesEXT");
+    table->GetImageDrmFormatModifierPropertiesEXT = (PFN_vkGetImageDrmFormatModifierPropertiesEXT)gpa(device, "vkGetImageDrmFormatModifierPropertiesEXT");
+    table->GetMemoryHostPointerPropertiesEXT = (PFN_vkGetMemoryHostPointerPropertiesEXT)gpa(device, "vkGetMemoryHostPointerPropertiesEXT");
     table->CmdSetLineStippleEXT = (PFN_vkCmdSetLineStippleEXT)gpa(device, "vkCmdSetLineStippleEXT");
     table->CmdSetCullModeEXT = (PFN_vkCmdSetCullModeEXT)gpa(device, "vkCmdSetCullModeEXT");
     table->CmdSetFrontFaceEXT = (PFN_vkCmdSetFrontFaceEXT)gpa(device, "vkCmdSetFrontFaceEXT");
@@ -327,12 +314,10 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->GetMemorySciBufNV = (PFN_vkGetMemorySciBufNV)gpa(device, "vkGetMemorySciBufNV");
 #endif  // VK_USE_PLATFORM_SCI
     table->CmdSetPatchControlPointsEXT = (PFN_vkCmdSetPatchControlPointsEXT)gpa(device, "vkCmdSetPatchControlPointsEXT");
-    table->CmdSetRasterizerDiscardEnableEXT =
-        (PFN_vkCmdSetRasterizerDiscardEnableEXT)gpa(device, "vkCmdSetRasterizerDiscardEnableEXT");
+    table->CmdSetRasterizerDiscardEnableEXT = (PFN_vkCmdSetRasterizerDiscardEnableEXT)gpa(device, "vkCmdSetRasterizerDiscardEnableEXT");
     table->CmdSetDepthBiasEnableEXT = (PFN_vkCmdSetDepthBiasEnableEXT)gpa(device, "vkCmdSetDepthBiasEnableEXT");
     table->CmdSetLogicOpEXT = (PFN_vkCmdSetLogicOpEXT)gpa(device, "vkCmdSetLogicOpEXT");
-    table->CmdSetPrimitiveRestartEnableEXT =
-        (PFN_vkCmdSetPrimitiveRestartEnableEXT)gpa(device, "vkCmdSetPrimitiveRestartEnableEXT");
+    table->CmdSetPrimitiveRestartEnableEXT = (PFN_vkCmdSetPrimitiveRestartEnableEXT)gpa(device, "vkCmdSetPrimitiveRestartEnableEXT");
     table->CmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)gpa(device, "vkCmdSetColorWriteEnableEXT");
 #if defined(VK_USE_PLATFORM_SCI)
     table->CreateSemaphoreSciSyncPoolNV = (PFN_vkCreateSemaphoreSciSyncPoolNV)gpa(device, "vkCreateSemaphoreSciSyncPoolNV");
@@ -340,10 +325,11 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
     table->GetScreenBufferPropertiesQNX = (PFN_vkGetScreenBufferPropertiesQNX)gpa(device, "vkGetScreenBufferPropertiesQNX");
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
+    // clang-format on
 }
 
-static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLayerInstanceDispatchTable *table,
-                                                      PFN_vkGetInstanceProcAddr gpa) {
+// clang-format off
+static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLayerInstanceDispatchTable *table, PFN_vkGetInstanceProcAddr gpa) {
     memset(table, 0, sizeof(*table));
 
     // Instance function pointers
@@ -351,95 +337,59 @@ static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLay
     table->DestroyInstance = (PFN_vkDestroyInstance)gpa(instance, "vkDestroyInstance");
     table->EnumeratePhysicalDevices = (PFN_vkEnumeratePhysicalDevices)gpa(instance, "vkEnumeratePhysicalDevices");
     table->GetPhysicalDeviceFeatures = (PFN_vkGetPhysicalDeviceFeatures)gpa(instance, "vkGetPhysicalDeviceFeatures");
-    table->GetPhysicalDeviceFormatProperties =
-        (PFN_vkGetPhysicalDeviceFormatProperties)gpa(instance, "vkGetPhysicalDeviceFormatProperties");
-    table->GetPhysicalDeviceImageFormatProperties =
-        (PFN_vkGetPhysicalDeviceImageFormatProperties)gpa(instance, "vkGetPhysicalDeviceImageFormatProperties");
+    table->GetPhysicalDeviceFormatProperties = (PFN_vkGetPhysicalDeviceFormatProperties)gpa(instance, "vkGetPhysicalDeviceFormatProperties");
+    table->GetPhysicalDeviceImageFormatProperties = (PFN_vkGetPhysicalDeviceImageFormatProperties)gpa(instance, "vkGetPhysicalDeviceImageFormatProperties");
     table->GetPhysicalDeviceProperties = (PFN_vkGetPhysicalDeviceProperties)gpa(instance, "vkGetPhysicalDeviceProperties");
-    table->GetPhysicalDeviceQueueFamilyProperties =
-        (PFN_vkGetPhysicalDeviceQueueFamilyProperties)gpa(instance, "vkGetPhysicalDeviceQueueFamilyProperties");
-    table->GetPhysicalDeviceMemoryProperties =
-        (PFN_vkGetPhysicalDeviceMemoryProperties)gpa(instance, "vkGetPhysicalDeviceMemoryProperties");
+    table->GetPhysicalDeviceQueueFamilyProperties = (PFN_vkGetPhysicalDeviceQueueFamilyProperties)gpa(instance, "vkGetPhysicalDeviceQueueFamilyProperties");
+    table->GetPhysicalDeviceMemoryProperties = (PFN_vkGetPhysicalDeviceMemoryProperties)gpa(instance, "vkGetPhysicalDeviceMemoryProperties");
     table->GetInstanceProcAddr = gpa;
     table->CreateDevice = (PFN_vkCreateDevice)gpa(instance, "vkCreateDevice");
-    table->EnumerateInstanceExtensionProperties =
-        (PFN_vkEnumerateInstanceExtensionProperties)gpa(instance, "vkEnumerateInstanceExtensionProperties");
-    table->EnumerateDeviceExtensionProperties =
-        (PFN_vkEnumerateDeviceExtensionProperties)gpa(instance, "vkEnumerateDeviceExtensionProperties");
-    table->EnumerateInstanceLayerProperties =
-        (PFN_vkEnumerateInstanceLayerProperties)gpa(instance, "vkEnumerateInstanceLayerProperties");
+    table->EnumerateInstanceExtensionProperties = (PFN_vkEnumerateInstanceExtensionProperties)gpa(instance, "vkEnumerateInstanceExtensionProperties");
+    table->EnumerateDeviceExtensionProperties = (PFN_vkEnumerateDeviceExtensionProperties)gpa(instance, "vkEnumerateDeviceExtensionProperties");
+    table->EnumerateInstanceLayerProperties = (PFN_vkEnumerateInstanceLayerProperties)gpa(instance, "vkEnumerateInstanceLayerProperties");
     table->EnumerateDeviceLayerProperties = (PFN_vkEnumerateDeviceLayerProperties)gpa(instance, "vkEnumerateDeviceLayerProperties");
     table->EnumerateInstanceVersion = (PFN_vkEnumerateInstanceVersion)gpa(instance, "vkEnumerateInstanceVersion");
     table->EnumeratePhysicalDeviceGroups = (PFN_vkEnumeratePhysicalDeviceGroups)gpa(instance, "vkEnumeratePhysicalDeviceGroups");
     table->GetPhysicalDeviceFeatures2 = (PFN_vkGetPhysicalDeviceFeatures2)gpa(instance, "vkGetPhysicalDeviceFeatures2");
     table->GetPhysicalDeviceProperties2 = (PFN_vkGetPhysicalDeviceProperties2)gpa(instance, "vkGetPhysicalDeviceProperties2");
-    table->GetPhysicalDeviceFormatProperties2 =
-        (PFN_vkGetPhysicalDeviceFormatProperties2)gpa(instance, "vkGetPhysicalDeviceFormatProperties2");
-    table->GetPhysicalDeviceImageFormatProperties2 =
-        (PFN_vkGetPhysicalDeviceImageFormatProperties2)gpa(instance, "vkGetPhysicalDeviceImageFormatProperties2");
-    table->GetPhysicalDeviceQueueFamilyProperties2 =
-        (PFN_vkGetPhysicalDeviceQueueFamilyProperties2)gpa(instance, "vkGetPhysicalDeviceQueueFamilyProperties2");
-    table->GetPhysicalDeviceMemoryProperties2 =
-        (PFN_vkGetPhysicalDeviceMemoryProperties2)gpa(instance, "vkGetPhysicalDeviceMemoryProperties2");
-    table->GetPhysicalDeviceExternalBufferProperties =
-        (PFN_vkGetPhysicalDeviceExternalBufferProperties)gpa(instance, "vkGetPhysicalDeviceExternalBufferProperties");
-    table->GetPhysicalDeviceExternalFenceProperties =
-        (PFN_vkGetPhysicalDeviceExternalFenceProperties)gpa(instance, "vkGetPhysicalDeviceExternalFenceProperties");
-    table->GetPhysicalDeviceExternalSemaphoreProperties =
-        (PFN_vkGetPhysicalDeviceExternalSemaphoreProperties)gpa(instance, "vkGetPhysicalDeviceExternalSemaphoreProperties");
-    table->GetPhysicalDeviceToolProperties =
-        (PFN_vkGetPhysicalDeviceToolProperties)gpa(instance, "vkGetPhysicalDeviceToolProperties");
+    table->GetPhysicalDeviceFormatProperties2 = (PFN_vkGetPhysicalDeviceFormatProperties2)gpa(instance, "vkGetPhysicalDeviceFormatProperties2");
+    table->GetPhysicalDeviceImageFormatProperties2 = (PFN_vkGetPhysicalDeviceImageFormatProperties2)gpa(instance, "vkGetPhysicalDeviceImageFormatProperties2");
+    table->GetPhysicalDeviceQueueFamilyProperties2 = (PFN_vkGetPhysicalDeviceQueueFamilyProperties2)gpa(instance, "vkGetPhysicalDeviceQueueFamilyProperties2");
+    table->GetPhysicalDeviceMemoryProperties2 = (PFN_vkGetPhysicalDeviceMemoryProperties2)gpa(instance, "vkGetPhysicalDeviceMemoryProperties2");
+    table->GetPhysicalDeviceExternalBufferProperties = (PFN_vkGetPhysicalDeviceExternalBufferProperties)gpa(instance, "vkGetPhysicalDeviceExternalBufferProperties");
+    table->GetPhysicalDeviceExternalFenceProperties = (PFN_vkGetPhysicalDeviceExternalFenceProperties)gpa(instance, "vkGetPhysicalDeviceExternalFenceProperties");
+    table->GetPhysicalDeviceExternalSemaphoreProperties = (PFN_vkGetPhysicalDeviceExternalSemaphoreProperties)gpa(instance, "vkGetPhysicalDeviceExternalSemaphoreProperties");
+    table->GetPhysicalDeviceToolProperties = (PFN_vkGetPhysicalDeviceToolProperties)gpa(instance, "vkGetPhysicalDeviceToolProperties");
     table->DestroySurfaceKHR = (PFN_vkDestroySurfaceKHR)gpa(instance, "vkDestroySurfaceKHR");
-    table->GetPhysicalDeviceSurfaceSupportKHR =
-        (PFN_vkGetPhysicalDeviceSurfaceSupportKHR)gpa(instance, "vkGetPhysicalDeviceSurfaceSupportKHR");
-    table->GetPhysicalDeviceSurfaceCapabilitiesKHR =
-        (PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)gpa(instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
-    table->GetPhysicalDeviceSurfaceFormatsKHR =
-        (PFN_vkGetPhysicalDeviceSurfaceFormatsKHR)gpa(instance, "vkGetPhysicalDeviceSurfaceFormatsKHR");
-    table->GetPhysicalDeviceSurfacePresentModesKHR =
-        (PFN_vkGetPhysicalDeviceSurfacePresentModesKHR)gpa(instance, "vkGetPhysicalDeviceSurfacePresentModesKHR");
-    table->GetPhysicalDevicePresentRectanglesKHR =
-        (PFN_vkGetPhysicalDevicePresentRectanglesKHR)gpa(instance, "vkGetPhysicalDevicePresentRectanglesKHR");
-    table->GetPhysicalDeviceDisplayPropertiesKHR =
-        (PFN_vkGetPhysicalDeviceDisplayPropertiesKHR)gpa(instance, "vkGetPhysicalDeviceDisplayPropertiesKHR");
-    table->GetPhysicalDeviceDisplayPlanePropertiesKHR =
-        (PFN_vkGetPhysicalDeviceDisplayPlanePropertiesKHR)gpa(instance, "vkGetPhysicalDeviceDisplayPlanePropertiesKHR");
-    table->GetDisplayPlaneSupportedDisplaysKHR =
-        (PFN_vkGetDisplayPlaneSupportedDisplaysKHR)gpa(instance, "vkGetDisplayPlaneSupportedDisplaysKHR");
+    table->GetPhysicalDeviceSurfaceSupportKHR = (PFN_vkGetPhysicalDeviceSurfaceSupportKHR)gpa(instance, "vkGetPhysicalDeviceSurfaceSupportKHR");
+    table->GetPhysicalDeviceSurfaceCapabilitiesKHR = (PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)gpa(instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+    table->GetPhysicalDeviceSurfaceFormatsKHR = (PFN_vkGetPhysicalDeviceSurfaceFormatsKHR)gpa(instance, "vkGetPhysicalDeviceSurfaceFormatsKHR");
+    table->GetPhysicalDeviceSurfacePresentModesKHR = (PFN_vkGetPhysicalDeviceSurfacePresentModesKHR)gpa(instance, "vkGetPhysicalDeviceSurfacePresentModesKHR");
+    table->GetPhysicalDevicePresentRectanglesKHR = (PFN_vkGetPhysicalDevicePresentRectanglesKHR)gpa(instance, "vkGetPhysicalDevicePresentRectanglesKHR");
+    table->GetPhysicalDeviceDisplayPropertiesKHR = (PFN_vkGetPhysicalDeviceDisplayPropertiesKHR)gpa(instance, "vkGetPhysicalDeviceDisplayPropertiesKHR");
+    table->GetPhysicalDeviceDisplayPlanePropertiesKHR = (PFN_vkGetPhysicalDeviceDisplayPlanePropertiesKHR)gpa(instance, "vkGetPhysicalDeviceDisplayPlanePropertiesKHR");
+    table->GetDisplayPlaneSupportedDisplaysKHR = (PFN_vkGetDisplayPlaneSupportedDisplaysKHR)gpa(instance, "vkGetDisplayPlaneSupportedDisplaysKHR");
     table->GetDisplayModePropertiesKHR = (PFN_vkGetDisplayModePropertiesKHR)gpa(instance, "vkGetDisplayModePropertiesKHR");
     table->CreateDisplayModeKHR = (PFN_vkCreateDisplayModeKHR)gpa(instance, "vkCreateDisplayModeKHR");
     table->GetDisplayPlaneCapabilitiesKHR = (PFN_vkGetDisplayPlaneCapabilitiesKHR)gpa(instance, "vkGetDisplayPlaneCapabilitiesKHR");
     table->CreateDisplayPlaneSurfaceKHR = (PFN_vkCreateDisplayPlaneSurfaceKHR)gpa(instance, "vkCreateDisplayPlaneSurfaceKHR");
-    table->EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR =
-        (PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR)gpa(
-            instance, "vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR");
-    table->GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR = (PFN_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR)gpa(
-        instance, "vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR");
-    table->GetPhysicalDeviceSurfaceCapabilities2KHR =
-        (PFN_vkGetPhysicalDeviceSurfaceCapabilities2KHR)gpa(instance, "vkGetPhysicalDeviceSurfaceCapabilities2KHR");
-    table->GetPhysicalDeviceSurfaceFormats2KHR =
-        (PFN_vkGetPhysicalDeviceSurfaceFormats2KHR)gpa(instance, "vkGetPhysicalDeviceSurfaceFormats2KHR");
-    table->GetPhysicalDeviceDisplayProperties2KHR =
-        (PFN_vkGetPhysicalDeviceDisplayProperties2KHR)gpa(instance, "vkGetPhysicalDeviceDisplayProperties2KHR");
-    table->GetPhysicalDeviceDisplayPlaneProperties2KHR =
-        (PFN_vkGetPhysicalDeviceDisplayPlaneProperties2KHR)gpa(instance, "vkGetPhysicalDeviceDisplayPlaneProperties2KHR");
+    table->EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR = (PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR)gpa(instance, "vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR");
+    table->GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR = (PFN_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR)gpa(instance, "vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR");
+    table->GetPhysicalDeviceSurfaceCapabilities2KHR = (PFN_vkGetPhysicalDeviceSurfaceCapabilities2KHR)gpa(instance, "vkGetPhysicalDeviceSurfaceCapabilities2KHR");
+    table->GetPhysicalDeviceSurfaceFormats2KHR = (PFN_vkGetPhysicalDeviceSurfaceFormats2KHR)gpa(instance, "vkGetPhysicalDeviceSurfaceFormats2KHR");
+    table->GetPhysicalDeviceDisplayProperties2KHR = (PFN_vkGetPhysicalDeviceDisplayProperties2KHR)gpa(instance, "vkGetPhysicalDeviceDisplayProperties2KHR");
+    table->GetPhysicalDeviceDisplayPlaneProperties2KHR = (PFN_vkGetPhysicalDeviceDisplayPlaneProperties2KHR)gpa(instance, "vkGetPhysicalDeviceDisplayPlaneProperties2KHR");
     table->GetDisplayModeProperties2KHR = (PFN_vkGetDisplayModeProperties2KHR)gpa(instance, "vkGetDisplayModeProperties2KHR");
-    table->GetDisplayPlaneCapabilities2KHR =
-        (PFN_vkGetDisplayPlaneCapabilities2KHR)gpa(instance, "vkGetDisplayPlaneCapabilities2KHR");
-    table->GetPhysicalDeviceFragmentShadingRatesKHR =
-        (PFN_vkGetPhysicalDeviceFragmentShadingRatesKHR)gpa(instance, "vkGetPhysicalDeviceFragmentShadingRatesKHR");
-    table->GetPhysicalDeviceRefreshableObjectTypesKHR =
-        (PFN_vkGetPhysicalDeviceRefreshableObjectTypesKHR)gpa(instance, "vkGetPhysicalDeviceRefreshableObjectTypesKHR");
-    table->GetPhysicalDeviceCalibrateableTimeDomainsKHR =
-        (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)gpa(instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR");
+    table->GetDisplayPlaneCapabilities2KHR = (PFN_vkGetDisplayPlaneCapabilities2KHR)gpa(instance, "vkGetDisplayPlaneCapabilities2KHR");
+    table->GetPhysicalDeviceFragmentShadingRatesKHR = (PFN_vkGetPhysicalDeviceFragmentShadingRatesKHR)gpa(instance, "vkGetPhysicalDeviceFragmentShadingRatesKHR");
+    table->GetPhysicalDeviceRefreshableObjectTypesKHR = (PFN_vkGetPhysicalDeviceRefreshableObjectTypesKHR)gpa(instance, "vkGetPhysicalDeviceRefreshableObjectTypesKHR");
+    table->GetPhysicalDeviceCalibrateableTimeDomainsKHR = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)gpa(instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR");
     table->ReleaseDisplayEXT = (PFN_vkReleaseDisplayEXT)gpa(instance, "vkReleaseDisplayEXT");
-    table->GetPhysicalDeviceSurfaceCapabilities2EXT =
-        (PFN_vkGetPhysicalDeviceSurfaceCapabilities2EXT)gpa(instance, "vkGetPhysicalDeviceSurfaceCapabilities2EXT");
+    table->GetPhysicalDeviceSurfaceCapabilities2EXT = (PFN_vkGetPhysicalDeviceSurfaceCapabilities2EXT)gpa(instance, "vkGetPhysicalDeviceSurfaceCapabilities2EXT");
     table->CreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)gpa(instance, "vkCreateDebugUtilsMessengerEXT");
     table->DestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)gpa(instance, "vkDestroyDebugUtilsMessengerEXT");
     table->SubmitDebugUtilsMessageEXT = (PFN_vkSubmitDebugUtilsMessageEXT)gpa(instance, "vkSubmitDebugUtilsMessageEXT");
-    table->GetPhysicalDeviceMultisamplePropertiesEXT =
-        (PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT)gpa(instance, "vkGetPhysicalDeviceMultisamplePropertiesEXT");
+    table->GetPhysicalDeviceMultisamplePropertiesEXT = (PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT)gpa(instance, "vkGetPhysicalDeviceMultisamplePropertiesEXT");
     table->CreateHeadlessSurfaceEXT = (PFN_vkCreateHeadlessSurfaceEXT)gpa(instance, "vkCreateHeadlessSurfaceEXT");
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
     table->AcquireWinrtDisplayNV = (PFN_vkAcquireWinrtDisplayNV)gpa(instance, "vkAcquireWinrtDisplayNV");
@@ -448,15 +398,13 @@ static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLay
     table->GetWinrtDisplayNV = (PFN_vkGetWinrtDisplayNV)gpa(instance, "vkGetWinrtDisplayNV");
 #endif  // VK_USE_PLATFORM_WIN32_KHR
 #if defined(VK_USE_PLATFORM_SCI)
-    table->GetPhysicalDeviceSciSyncAttributesNV =
-        (PFN_vkGetPhysicalDeviceSciSyncAttributesNV)gpa(instance, "vkGetPhysicalDeviceSciSyncAttributesNV");
+    table->GetPhysicalDeviceSciSyncAttributesNV = (PFN_vkGetPhysicalDeviceSciSyncAttributesNV)gpa(instance, "vkGetPhysicalDeviceSciSyncAttributesNV");
 #endif  // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    table->GetPhysicalDeviceExternalMemorySciBufPropertiesNV = (PFN_vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV)gpa(
-        instance, "vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV");
+    table->GetPhysicalDeviceExternalMemorySciBufPropertiesNV = (PFN_vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV)gpa(instance, "vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV");
 #endif  // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    table->GetPhysicalDeviceSciBufAttributesNV =
-        (PFN_vkGetPhysicalDeviceSciBufAttributesNV)gpa(instance, "vkGetPhysicalDeviceSciBufAttributesNV");
+    table->GetPhysicalDeviceSciBufAttributesNV = (PFN_vkGetPhysicalDeviceSciBufAttributesNV)gpa(instance, "vkGetPhysicalDeviceSciBufAttributesNV");
 #endif  // VK_USE_PLATFORM_SCI
+    // clang-format on
 }

@@ -3557,7 +3557,7 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
 
     // ---- VK_EXT_direct_mode_display extension commands
     if (!strcmp("vkReleaseDisplayEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_direct_mode_display == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_direct_mode_display == 1)
                      ? (void *)ReleaseDisplayEXT
                      : NULL;
         return true;
@@ -3565,7 +3565,7 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
 
     // ---- VK_EXT_display_surface_counter extension commands
     if (!strcmp("vkGetPhysicalDeviceSurfaceCapabilities2EXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_display_surface_counter == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_display_surface_counter == 1)
                      ? (void *)GetPhysicalDeviceSurfaceCapabilities2EXT
                      : NULL;
         return true;
@@ -3611,49 +3611,49 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
 
     // ---- VK_EXT_debug_utils extension commands
     if (!strcmp("vkSetDebugUtilsObjectNameEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)SetDebugUtilsObjectNameEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkSetDebugUtilsObjectTagEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)SetDebugUtilsObjectTagEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkQueueBeginDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)QueueBeginDebugUtilsLabelEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkQueueEndDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)QueueEndDebugUtilsLabelEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkQueueInsertDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)QueueInsertDebugUtilsLabelEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkCmdBeginDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)CmdBeginDebugUtilsLabelEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkCmdEndDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)CmdEndDebugUtilsLabelEXT
                      : NULL;
         return true;
     }
     if (!strcmp("vkCmdInsertDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_known_extensions.ext_debug_utils == 1)
+        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
                      ? (void *)CmdInsertDebugUtilsLabelEXT
                      : NULL;
         return true;
@@ -3867,22 +3867,45 @@ bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *na
     return false;
 }
 
-// A function that can be used to query enabled extensions during a vkCreateInstance call
-void extensions_create_instance(struct loader_instance *ptr_instance, const VkInstanceCreateInfo *pCreateInfo) {
-    for (uint32_t i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
+// Used to keep track of all enabled instance extensions
+void fill_out_enabled_instance_extensions(uint32_t extension_count, const char *const * extension_list, struct loader_instance_extension_enable_list* enables) {
+    for (uint32_t i = 0; i < extension_count; i++) {
+
+    // ---- VK_KHR_surface extension commands
+        if (0 == strcmp(extension_list[i], VK_KHR_SURFACE_EXTENSION_NAME)) { enables->khr_surface = 1; }
+
+    // ---- VK_KHR_display extension commands
+        else if (0 == strcmp(extension_list[i], VK_KHR_DISPLAY_EXTENSION_NAME)) { enables->khr_display = 1; }
+
+    // ---- VK_KHR_get_surface_capabilities2 extension commands
+        else if (0 == strcmp(extension_list[i], VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME)) { enables->khr_get_surface_capabilities2 = 1; }
+
+    // ---- VK_KHR_get_display_properties2 extension commands
+        else if (0 == strcmp(extension_list[i], VK_KHR_GET_DISPLAY_PROPERTIES_2_EXTENSION_NAME)) { enables->khr_get_display_properties2 = 1; }
 
     // ---- VK_EXT_direct_mode_display extension commands
-        if (0 == strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME)) {
-            ptr_instance->enabled_known_extensions.ext_direct_mode_display = 1;
+        else if (0 == strcmp(extension_list[i], VK_EXT_DIRECT_MODE_DISPLAY_EXTENSION_NAME)) { enables->ext_direct_mode_display = 1; }
 
     // ---- VK_EXT_display_surface_counter extension commands
-        } else if (0 == strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME)) {
-            ptr_instance->enabled_known_extensions.ext_display_surface_counter = 1;
+        else if (0 == strcmp(extension_list[i], VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME)) { enables->ext_display_surface_counter = 1; }
+
+    // ---- VK_EXT_swapchain_colorspace extension commands
+        else if (0 == strcmp(extension_list[i], VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME)) { enables->ext_swapchain_colorspace = 1; }
 
     // ---- VK_EXT_debug_utils extension commands
-        } else if (0 == strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) {
-            ptr_instance->enabled_known_extensions.ext_debug_utils = 1;
-        }
+        else if (0 == strcmp(extension_list[i], VK_EXT_DEBUG_UTILS_EXTENSION_NAME)) { enables->ext_debug_utils = 1; }
+
+    // ---- VK_EXT_validation_features extension commands
+        else if (0 == strcmp(extension_list[i], VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME)) { enables->ext_validation_features = 1; }
+
+    // ---- VK_EXT_headless_surface extension commands
+        else if (0 == strcmp(extension_list[i], VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME)) { enables->ext_headless_surface = 1; }
+
+    // ---- VK_EXT_application_parameters extension commands
+        else if (0 == strcmp(extension_list[i], VK_EXT_APPLICATION_PARAMETERS_EXTENSION_NAME)) { enables->ext_application_parameters = 1; }
+
+    // ---- VK_EXT_layer_settings extension commands
+        else if (0 == strcmp(extension_list[i], VK_EXT_LAYER_SETTINGS_EXTENSION_NAME)) { enables->ext_layer_settings = 1; }
     }
 }
 

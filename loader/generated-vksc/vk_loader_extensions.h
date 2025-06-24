@@ -47,10 +47,12 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev);
 // the appropriate information for any instance extensions we know about.
 bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr);
 
+struct loader_instance_extension_enable_list; // Forward declaration
+
 // Extension interception for vkCreateInstance function, so we can properly
 // detect and enable any instance extension information for extensions we know
 // about.
-void extensions_create_instance(struct loader_instance *ptr_instance, const VkInstanceCreateInfo *pCreateInfo);
+void fill_out_enabled_instance_extensions(uint32_t extension_count, const char *const * extension_list, struct loader_instance_extension_enable_list* enables);
 
 // Extension interception for vkGetDeviceProcAddr function, so we can return
 // an appropriate terminator if this is one of those few device commands requiring
@@ -323,10 +325,19 @@ struct loader_icd_term_dispatch {
 #endif // VK_USE_PLATFORM_SCI
 };
 
-struct loader_instance_extension_enables {
+struct loader_instance_extension_enable_list {
+    uint8_t khr_surface;
+    uint8_t khr_display;
+    uint8_t khr_get_surface_capabilities2;
+    uint8_t khr_get_display_properties2;
     uint8_t ext_direct_mode_display;
     uint8_t ext_display_surface_counter;
+    uint8_t ext_swapchain_colorspace;
     uint8_t ext_debug_utils;
+    uint8_t ext_validation_features;
+    uint8_t ext_headless_surface;
+    uint8_t ext_application_parameters;
+    uint8_t ext_layer_settings;
 };
 
 // Functions that required a terminator need to have a separate dispatch table which contains their corresponding

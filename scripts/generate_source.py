@@ -37,7 +37,7 @@ from xml.etree import ElementTree
 # the Registry has been imported. Yes this is awkward, but it was the least awkward way to make --verify work.
 generators = {}
 
-def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targetFilter: str, caching: bool):
+def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targetFilter: str, flatOutput: bool):
 
     try:
         common_codegen.RunShellCmd(f'clang-format --version')
@@ -63,9 +63,9 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
         sys.exit(1) # Return without call stack so easy to spot error
 
     from base_generator import BaseGeneratorOptions
-    from dispatch_table_helper_generator import DispatchTableHelperGenerator
-    from helper_file_generator import HelperFileGenerator
-    from loader_extension_generator import LoaderExtensionGenerator
+    from generators.dispatch_table_helper_generator import DispatchTableHelperGenerator
+    from generators.helper_file_generator import HelperFileGenerator
+    from generators.loader_extension_generator import LoaderExtensionGenerator
 
     # These set fields that are needed by both OutputGenerator and BaseGenerator,
     # but are uniform and don't need to be set at a per-generated file level
@@ -73,11 +73,8 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
     SetTargetApiName(api)
 
     # Generated directory and dispatch table helper file name may be API specific (e.g. Vulkan SC)
-    generated_directory = 'loader/generated'
+    generated_directory = 'loader/generated-vksc' if api == 'vulkansc' else 'loader/generated'
     dispatch_table_helper_filename = 'vk_dispatch_table_helper.h'
-    if api == 'vulkansc':
-        generated_directory = 'loader/generated-vksc'
-        dispatch_table_helper_filename = 'vksc_dispatch_table_helper.h'
 
     generators.update({
         'vk_layer_dispatch_table.h': {
@@ -103,7 +100,7 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
         f'{dispatch_table_helper_filename}': {
             'generator' : DispatchTableHelperGenerator,
             'genCombined': False,
-            'directory' : 'tests/framework/layer',
+            'directory' : 'tests/framework/layer/generated-vksc' if api == 'vulkansc' else 'tests/framework/layer/generated',
         }
     })
 
@@ -133,7 +130,12 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
         else:
             SetMergedApiNames(None)
 
-        outDirectory = os.path.abspath(os.path.join(directory, generators[target]['directory']))
+        # For people who want to generate all the files in a single director
+        if flatOutput:
+            outDirectory = os.path.abspath(os.path.join(directory))
+        else:
+            outDirectory = os.path.abspath(os.path.join(directory, generators[target]['directory']))
+
         options = BaseGeneratorOptions(
             customFileName  = target,
             customDirectory = outDirectory)
@@ -148,9 +150,6 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
         # Parse the specified registry XML into an ElementTree object
         tree = ElementTree.parse(registry)
 
-        # Filter out extensions that are not on the API list
-        [exts.remove(e) for exts in tree.findall('extensions') for e in exts.findall('extension') if (sup := e.get('supported')) is not None and all(api not in sup.split(',') for api in apiList)]
-
         # Load the XML tree into the registry object
         reg.loadElementTree(tree)
 
@@ -158,20 +157,14 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
         reg.apiGen()
 
         # Run clang-format on the file
-        if has_clang_format:
+        if has_clang_format and styleFile:
             common_codegen.RunShellCmd(f'clang-format -i --style=file:{styleFile} {os.path.join(outDirectory, target)}')
 
 
 def main(argv):
 
     # files to exclude from --verify check
-    verify_exclude = ['layer_util.h',
-                      'export_definitions',
-                      'test_layer.h',
-                      'test_layer.cpp',
-                      'wrap_objects.cpp',
-                      'CMakeLists.txt',
-                      ]
+    verify_exclude = [] # None currently
 
 
     parser = argparse.ArgumentParser(description='Generate source code for this repository')
@@ -185,7 +178,7 @@ def main(argv):
     group.add_argument('--target', nargs='+', help='only generate file names passed in')
     group.add_argument('-i', '--incremental', action='store_true', help='only update repo files that change')
     group.add_argument('-v', '--verify', action='store_true', help='verify repo files match generator output')
-    group.add_argument('--no-caching', action='store_true', help='Do not try to cache generator objects')
+    group.add_argument('-o', action='store', dest='directory', help='Create target and related files in specified directory')
     args = parser.parse_args(argv)
 
     repo_dir = common_codegen.repo_relative('.')
@@ -199,13 +192,6 @@ def main(argv):
 
     # Need pass style file incase running with --verify and it can't find the file automatically in the temp directory
     style_file = os.path.join(repo_dir, '.clang-format')
-    if common_codegen.IsGHA() and args.verify:
-        # Have found that sometimes (~5%) the 20.04 Ubuntu machines have clang-format v11 but we need v14 to
-        # use a dedicated style_file location. For these case there we can survive just skipping the verify check
-        stdout = subprocess.check_output(['clang-format', '--version']).decode("utf-8")
-        version = stdout[stdout.index('version') + 8:][:2]
-        if int(version) < 14:
-            return 0 # Success
 
     # get directory where generators will run
     if args.verify or args.incremental:
@@ -213,12 +199,13 @@ def main(argv):
         temp_obj = tempfile.TemporaryDirectory(prefix='loader_codegen_')
         temp_dir = temp_obj.name
         gen_dir = temp_dir
+    elif args.directory:
+        gen_dir = args.directory
     else:
         # generate directly in the repo
         gen_dir = repo_dir
 
-    caching = not args.no_caching
-    RunGenerators(api=args.api,registry=registry, directory=gen_dir, styleFile=style_file, targetFilter=args.target, caching=caching)
+    RunGenerators(api=args.api,registry=registry, directory=gen_dir, styleFile=style_file, targetFilter=args.target, flatOutput=False)
 
     # optional post-generation steps
     if args.verify:

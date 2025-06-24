@@ -24,7 +24,7 @@ set(VULKANSC ON CACHE BOOL "User defined variable for VULKANSC mode to be passed
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.18 LANGUAGES C)
 else()
-    project(VULKAN_LOADER VERSION 1.4.310 LANGUAGES C)
+    project(VULKAN_LOADER VERSION 1.4.319 LANGUAGES C)
 endif()
 
 option(CODE_COVERAGE "Enable Code Coverage" OFF)

@@ -30,9 +30,9 @@
 #include "test_layer.h"
 
 #ifdef VULKANSC
-#include "vksc_dispatch_table_helper.h"
+#include "generated-vksc/vk_dispatch_table_helper.h"
 #else
-#include "vk_dispatch_table_helper.h"
+#include "generated/vk_dispatch_table_helper.h"
 #endif  // VULKANSC
 
 // export the enumeration functions instance|device+layer|extension
