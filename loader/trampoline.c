@@ -487,8 +487,10 @@ LOADER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkCreateInstance(const VkInstanceCr
     VkInstance created_instance = VK_NULL_HANDLE;
     VkResult res = VK_ERROR_INITIALIZATION_FAILED;
     VkInstanceCreateInfo ici = {0};
+#ifndef VULKANSC
     bool portability_enumeration_flag_bit_set = false;
     bool portability_enumeration_extension_enabled = false;
+#endif  // VULKANSC
     struct loader_envvar_all_filters layer_filters = {0};
 
     LOADER_PLATFORM_THREAD_ONCE(&once_init, loader_initialize);
