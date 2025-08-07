@@ -125,6 +125,10 @@ For Vulkan SC, the `sc_main` branch or an appropriately tagged Vulkan SC version
 (e.g., `vksc1.0.13`) of the [Vulkan SC Headers repository](https://github.com/KhronosGroup/VulkanSC-Headers)
 repository must be checked out.
 
+The Vulkan SC Headers must be built with `-D GEN_VULKANSC_COMBINED=ON` to
+enable the generation of combined headers containing both Vulkan and Vulkan SC
+definitions.
+
 #### Test Dependencies
 
 The loader tests depend on the [Google Test](https://github.com/google/googletest) library and
