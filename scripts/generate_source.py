@@ -258,7 +258,7 @@ def main(argv):
         with open(common_codegen.repo_relative('CMakeLists.txt'), "r+") as f:
             data = f.read()
             f.seek(0)
-            f.write(re.sub("project.*VERSION.*", f"project(VULKAN_LOADER VERSION {args.generated_version} LANGUAGES C)", data))
+            f.write(re.sub(f"project.*VERSION.*# {args.api}", f"project(VULKAN_LOADER VERSION {args.generated_version} LANGUAGES C) # {args.api}", data))
             f.truncate()
 
         with open(common_codegen.repo_relative('loader/loader.rc.in'), "r") as rc_file:
@@ -268,7 +268,7 @@ def main(argv):
         rc_file_contents = rc_file_contents.replace('${LOADER_VER_FILE_DESCRIPTION_STR}', f'"{args.generated_version}.Dev Build"')
         rc_file_contents = rc_file_contents.replace('${LOADER_VER_FILE_VERSION_STR}', f'"Vulkan Loader - Dev Build"')
         rc_file_contents = rc_file_contents.replace('${LOADER_CUR_COPYRIGHT_YEAR}', f'{datetime.date.today().year}')
-        with open(common_codegen.repo_relative('loader/loader.rc'), "w") as rc_file_out:
+        with open(common_codegen.repo_relative('loader/loader.rc' if args.api == 'vulkan' else 'loader/loader_vksc.rc'), "w") as rc_file_out:
             rc_file_out.write(rc_file_contents)
             rc_file_out.close()
 

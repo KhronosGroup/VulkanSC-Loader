@@ -373,7 +373,11 @@ endif()
 
 if(WIN32)
     # If BUILD_DLL_VERSIONINFO was set, use the loader.rc in the build dir, otherwise use the checked in file
-    set(RC_FILE_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/loader.rc)
+    if(VULKANSC)
+        set(RC_FILE_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/loader_vksc.rc)
+    else()
+        set(RC_FILE_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/loader.rc)
+    endif()
     if (NOT "$CACHE{BUILD_DLL_VERSIONINFO}" STREQUAL "")
         set(RC_FILE_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/loader.rc)
     endif()
