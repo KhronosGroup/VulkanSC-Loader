@@ -44,7 +44,7 @@ jobs:
                 config: [ Debug, Release ]
                 os: [ ubuntu-22.04, ubuntu-24.04 ]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - uses: actions/setup-python@v5
               with:
                 python-version: '3.11'
@@ -76,7 +76,7 @@ jobs:
     codegen:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - run: scripts/update_deps.py --dir ext --no-build
         - run: scripts/generate_source.py --verify ext/Vulkan-Headers/registry/
 
@@ -84,7 +84,7 @@ jobs:
         needs: codegen
         runs-on: ubuntu-24.04
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - run: sudo apt update
             - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
             - run: |
@@ -107,7 +107,7 @@ jobs:
             matrix:
                 config: [ Debug, Release ]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - uses: actions/setup-python@v5
               with:
                 python-version: '3.11'
@@ -142,7 +142,7 @@ jobs:
         needs: codegen
         runs-on: ubuntu-24.04
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - uses: actions/setup-python@v5
               with:
                 python-version: '3.11'
@@ -181,7 +181,7 @@ jobs:
                 arch: [ Win32, x64 ]
                 config: [ Debug, Release ]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - run: |
                 cmake -S. -B build `
                 -D BUILD_TESTS=ON `
@@ -201,7 +201,7 @@ jobs:
             matrix:
                 arch: [ Win32, x64 ]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - run: |
                 cmake -S. -B build `
                 -D BUILD_TESTS=ON `
@@ -223,7 +223,7 @@ jobs:
             compiler: [ clang, clang-cl ]
             config: [ Debug, Release ]
       steps:
-          - uses: actions/checkout@v4
+          - uses: actions/checkout@v5
           - uses: ilammy/msvc-dev-cmd@v1
           - run: |
               cmake -S. -B build `
@@ -247,7 +247,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - uses: actions/setup-python@v5
           with:
             python-version: '3.11'
@@ -274,7 +274,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - uses: actions/setup-python@v5
           with:
             python-version: '3.11'
@@ -296,7 +296,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - uses: actions/setup-python@v5
           with:
             python-version: '3.11'
@@ -318,7 +318,7 @@ jobs:
         run:
           shell: bash
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - run: |
             cmake -S. -B build \
             -D UPDATE_DEPS=ON \
