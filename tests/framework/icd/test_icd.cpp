@@ -1248,6 +1248,10 @@ VKAPI_ATTR void VKAPI_CALL test_vkGetPhysicalDeviceProperties2(VkPhysicalDevice 
                 layered_driver_props->underlyingAPI = phys_dev.layered_driver_underlying_api;
             }
 #endif  // VULKANSC
+            if (pNext->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES) {
+                auto* device_driver_props = reinterpret_cast<VkPhysicalDeviceDriverProperties*>(pNext);
+                *device_driver_props = phys_dev.driver_properties;
+            }
             pNext = reinterpret_cast<VkBaseInStructure*>(const_cast<VkBaseInStructure*>(pNext->pNext));
         }
     }

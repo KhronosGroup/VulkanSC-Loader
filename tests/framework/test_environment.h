@@ -744,6 +744,9 @@ struct FrameworkEnvironment {
     EnvVarWrapper add_env_var_vk_layer_paths{"VK_ADD_LAYER_PATH"};
     EnvVarWrapper env_var_vk_implicit_layer_paths{"VK_IMPLICIT_LAYER_PATH"};
     EnvVarWrapper add_env_var_vk_implicit_layer_paths{"VK_ADD_IMPLICIT_LAYER_PATH"};
+    EnvVarWrapper env_var_vk_loader_device_id_filter{"VK_LOADER_DEVICE_ID_FILTER"};
+    EnvVarWrapper env_var_vk_loader_vendor_id_filter{"VK_LOADER_VENDOR_ID_FILTER"};
+    EnvVarWrapper env_var_vk_loader_driver_id_filter{"VK_LOADER_DRIVER_ID_FILTER"};
 
     LoaderSettings loader_settings;  // the current settings written to disk
    private:
