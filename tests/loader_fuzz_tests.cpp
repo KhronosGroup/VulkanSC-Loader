@@ -40,7 +40,7 @@ void execute_instance_enumerate_fuzzer(std::filesystem::path const& filename) {
     env.write_file_from_source((std::filesystem::path(CLUSTERFUZZ_TESTCASE_DIRECTORY) / filename).string().c_str(),
                                ManifestCategory::settings, ManifestLocation::settings_location, "vk_loader_settings.json");
 
-    uint32_t pPropertyCount;
+    uint32_t pPropertyCount = 1;
     VkExtensionProperties pProperties = {0};
 
     env.vulkan_functions.vkEnumerateInstanceExtensionProperties("test_auto", &pPropertyCount, &pProperties);
@@ -135,7 +135,9 @@ TEST(BadJsonInput, ClusterFuzzTestCase_6583684169269248) {
     // Nullptr dereference in loader_copy_to_new_str
     execute_instance_enumerate_fuzzer("clusterfuzz-testcase-minimized-instance_enumerate_fuzzer-6583684169269248");
 }
-
+TEST(BadJsonInput, ClusterFuzzTestCase_6470575830925312) {
+    execute_instance_enumerate_fuzzer("clusterfuzz-testcase-minimized-instance_enumerate_fuzzer-6470575830925312");
+}
 TEST(BadJsonInput, ClusterFuzzTestCase_5258042868105216) {
     // Doesn't crash with ASAN or UBSAN
     // Doesn't reproducibly crash - json_load_fuzzer: Abrt in loader_cJSON_Delete
@@ -212,6 +214,10 @@ TEST(BadJsonInput, ClusterFuzzTestCase_6465902356791296) {
     // Causes an integer overflow - instance_enumerate_fuzzer: Integer-overflow in parse_value
     execute_instance_enumerate_fuzzer("clusterfuzz-testcase-minimized-instance_enumerate_fuzzer-6465902356791296");
 }
+TEST(BadJsonInput, ClusterFuzzTestCase_6740380288876544) {
+    // Does crash with ASAN
+    execute_instance_enumerate_fuzzer("clusterfuzz-testcase-minimized-instance_enumerate_fuzzer-6740380288876544");
+}
 TEST(BadJsonInput, ClusterFuzzTestCase_4512865114259456) {
     // Does crash with UBSAN and ASAN
     // malloc(): invalid size (unsorted)
@@ -280,4 +286,7 @@ TEST(BadJsonInput, ClusterFuzzTestCase_5123849246867456) {
     // No leaks reported in main, 1.3.269, nor 1.3.250
     // Causes a leak - settings_fuzzer: Direct-leak in loader_append_layer_property
     execute_setting_fuzzer("clusterfuzz-testcase-minimized-settings_fuzzer-5123849246867456");
+}
+TEST(BadJsonInput, ClusterFuzzTestCase_4626669072875520) {
+    execute_setting_fuzzer("clusterfuzz-testcase-minimized-settings_fuzzer-4626669072875520");
 }

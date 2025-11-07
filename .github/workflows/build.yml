@@ -38,14 +38,15 @@ jobs:
     linux:
         needs: codegen
         runs-on: ${{matrix.os}}
+        timeout-minutes: 30
         strategy:
             matrix:
                 compiler: [ {cc: gcc, cxx: g++}, {cc: clang, cxx: clang++} ]
                 config: [ Debug, Release ]
                 os: [ ubuntu-22.04, ubuntu-24.04 ]
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
             - name: Test CMake min
@@ -75,16 +76,18 @@ jobs:
 
     codegen:
       runs-on: ubuntu-latest
+      timeout-minutes: 30
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v5
         - run: scripts/update_deps.py --dir ext --no-build
         - run: scripts/generate_source.py --verify ext/Vulkan-Headers/registry/
 
     linux-no-asm:
         needs: codegen
         runs-on: ubuntu-24.04
+        timeout-minutes: 30
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - run: sudo apt update
             - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
             - run: |
@@ -103,12 +106,13 @@ jobs:
     linux-32:
         needs: codegen
         runs-on: ubuntu-24.04
+        timeout-minutes: 30
         strategy:
             matrix:
                 config: [ Debug, Release ]
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
             - uses: lukka/get-cmake@latest
@@ -141,9 +145,10 @@ jobs:
     linux-32-no-asm:
         needs: codegen
         runs-on: ubuntu-24.04
+        timeout-minutes: 30
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
             - uses: lukka/get-cmake@latest
@@ -172,16 +177,43 @@ jobs:
             - run: cmake --build build
             - run: ctest --parallel --output-on-failure -E UnknownFunction --test-dir build/
 
+    linux-arm:
+        needs: codegen
+        runs-on: ubuntu-24.04-arm
+        timeout-minutes: 30
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
+              with:
+                python-version: '3.11'
+            - name: Test CMake min
+              uses: lukka/get-cmake@latest
+              with:
+                  cmakeVersion: 3.22.1
+            - run: sudo apt update
+            - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
+            - run: |
+                  cmake -S. -B build \
+                  -D CMAKE_BUILD_TYPE=Debug \
+                  -D BUILD_TESTS=ON \
+                  -D UPDATE_DEPS=ON \
+                  -D LOADER_ENABLE_ADDRESS_SANITIZER=ON \
+                  -D BUILD_WERROR=ON
+            - run: cmake --build build
+            - run: ctest --parallel --output-on-failure --test-dir build/
+            - run: cmake --install build --prefix /tmp
+
     windows_vs:
         # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
         needs: linux-no-asm
         runs-on: windows-latest
+        timeout-minutes: 30
         strategy:
             matrix:
                 arch: [ Win32, x64 ]
                 config: [ Debug, Release ]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - run: |
                 cmake -S. -B build `
                 -D BUILD_TESTS=ON `
@@ -197,11 +229,12 @@ jobs:
         # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
         needs: linux-no-asm
         runs-on: windows-latest
+        timeout-minutes: 30
         strategy:
             matrix:
                 arch: [ Win32, x64 ]
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - run: |
                 cmake -S. -B build `
                 -D BUILD_TESTS=ON `
@@ -216,14 +249,15 @@ jobs:
     # Test both clang and clang-cl (Chromium project uses clang-cl)
     windows_clang:
       # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
-      needs: linux-no-asm
-      runs-on: windows-2022
-      strategy:
-        matrix:
-            compiler: [ clang, clang-cl ]
-            config: [ Debug, Release ]
-      steps:
-          - uses: actions/checkout@v4
+        needs: linux-no-asm
+        runs-on: windows-2022
+        timeout-minutes: 30
+        strategy:
+            matrix:
+                compiler: [ clang, clang-cl ]
+                config: [ Debug, Release ]
+        steps:
+          - uses: actions/checkout@v5
           - uses: ilammy/msvc-dev-cmd@v1
           - run: |
               cmake -S. -B build `
@@ -239,92 +273,96 @@ jobs:
           - run: cmake --install build --prefix build/install
 
     mingw:
-      # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
-      if: false # Disabled due to issues with msys2 making CMake unable to find a working compiler
-      needs: linux-no-asm
-      runs-on: windows-2022
-      defaults:
-        run:
-          shell: bash
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-        - name: Setup uasm
-          run: |
-            C:/msys64/usr/bin/pacman -Sy --noconfirm --needed mingw-w64-x86_64-uasm
-            printf '%s\n' 'C:/msys64/mingw64/bin' >> $GITHUB_PATH
-        - name: UASM Check
-          run: uasm -?
-        - run: |
-            cmake -S. -B build \
-            -D UPDATE_DEPS=ON \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D BUILD_WERROR=ON \
-            -G Ninja
-        - run: cmake --build build
-        - run: cmake --install build --prefix /tmp
+        # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
+        needs: linux-no-asm
+        if: false # Disabled due to issues with msys2 making CMake unable to find a working compiler
+        runs-on: windows-2022
+        timeout-minutes: 30
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
+              with:
+                python-version: '3.11'
+            - name: Setup uasm
+              run: |
+                C:/msys64/usr/bin/pacman -Sy --noconfirm --needed mingw-w64-x86_64-uasm
+                printf '%s\n' 'C:/msys64/mingw64/bin' >> $GITHUB_PATH
+            - name: UASM Check
+              run: uasm -?
+            - run: |
+                cmake -S. -B build \
+                -D UPDATE_DEPS=ON \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D BUILD_WERROR=ON \
+                -G Ninja
+            - run: cmake --build build
+            - run: cmake --install build --prefix /tmp
 
     mingw-use-gas:
-      # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
-      needs: linux-no-asm
-      runs-on: windows-2022
-      defaults:
-        run:
-          shell: bash
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-        - run: |
-            cmake -S. -B build \
-            -D UPDATE_DEPS=ON \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D BUILD_WERROR=ON \
-            -D USE_GAS=ON \
-            -G Ninja
-        - run: cmake --build build
-        - run: cmake --install build --prefix /tmp
+        # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
+        needs: linux-no-asm
+        runs-on: windows-2022
+        timeout-minutes: 30
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
+              with:
+                python-version: '3.11'
+            - run: |
+                cmake -S. -B build \
+                -D UPDATE_DEPS=ON \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D BUILD_WERROR=ON \
+                -D USE_GAS=ON \
+                -G Ninja
+            - run: cmake --build build
+            - run: cmake --install build --prefix /tmp
 
     mingw-no-asm:
-      # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
-      needs: linux-no-asm
-      runs-on: windows-2022
-      defaults:
-        run:
-          shell: bash
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
-        # Make sure this doesn't fail even without explicitly setting '-D USE_MASM=OFF' and without uasm
-        - run: |
-            cmake -S. -B build \
-            -D UPDATE_DEPS=ON \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D BUILD_WERROR=ON \
-            -G Ninja
-        - run: cmake --build build
-        - run: cmake --install build --prefix /tmp
+        # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
+        needs: linux-no-asm
+        runs-on: windows-2022
+        timeout-minutes: 30
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
+              with:
+                python-version: '3.11'
+            # Make sure this doesn't fail even without explicitly setting '-D USE_MASM=OFF' and without uasm
+            - run: |
+                cmake -S. -B build \
+                -D UPDATE_DEPS=ON \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D BUILD_WERROR=ON \
+                -G Ninja
+            - run: cmake --build build
+            - run: cmake --install build --prefix /tmp
 
     mingw-no-asm-explicit:
-      # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
-      needs: linux-no-asm
-      runs-on: windows-2022
-      defaults:
-        run:
-          shell: bash
-      steps:
-        - uses: actions/checkout@v4
-        - run: |
-            cmake -S. -B build \
-            -D UPDATE_DEPS=ON \
-            -D CMAKE_BUILD_TYPE=Release \
-            -D BUILD_WERROR=ON \
-            -D USE_MASM=OFF \
-            -G Ninja
-        - run: cmake --build build
-        - run: cmake --install build --prefix /tmp
+        # windows is 2x expensive to run on GitHub machines, so only run if we know something else simple passed as well
+        needs: linux-no-asm
+        runs-on: windows-2022
+        timeout-minutes: 30
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - uses: actions/checkout@v5
+            - run: |
+                cmake -S. -B build \
+                -D UPDATE_DEPS=ON \
+                -D CMAKE_BUILD_TYPE=Release \
+                -D BUILD_WERROR=ON \
+                -D USE_MASM=OFF \
+                -G Ninja
+            - run: cmake --build build
+            - run: cmake --install build --prefix /tmp

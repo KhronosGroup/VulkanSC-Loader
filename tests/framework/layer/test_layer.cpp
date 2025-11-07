@@ -29,6 +29,13 @@
 
 #include "test_layer.h"
 
+#include <assert.h>
+
+#include <vulkan/vk_layer.h>
+
+#include "util/test_defines.h"
+#include "util/equality_helpers.h"
+
 #ifdef VULKANSC
 #include "generated-vksc/vk_dispatch_table_helper.h"
 #else
@@ -253,7 +260,7 @@ VKAPI_ATTR VkResult VKAPI_CALL test_vkCreateInstance(const VkInstanceCreateInfo*
     VkLayerInstanceCreateInfo* chain_info = get_chain_info(pCreateInfo, VK_LAYER_LINK_INFO);
 
     PFN_vkGetInstanceProcAddr fpGetInstanceProcAddr = chain_info->u.pLayerInfo->pfnNextGetInstanceProcAddr;
-    PFN_vk_icdGetPhysicalDeviceProcAddr fpGetPhysicalDeviceProcAddr = chain_info->u.pLayerInfo->pfnNextGetPhysicalDeviceProcAddr;
+    PFN_GetPhysicalDeviceProcAddr fpGetPhysicalDeviceProcAddr = chain_info->u.pLayerInfo->pfnNextGetPhysicalDeviceProcAddr;
     PFN_vkCreateInstance fpCreateInstance = (PFN_vkCreateInstance)fpGetInstanceProcAddr(NULL, "vkCreateInstance");
     if (fpCreateInstance == NULL) {
         return VK_ERROR_INITIALIZATION_FAILED;

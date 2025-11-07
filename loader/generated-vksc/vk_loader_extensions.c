@@ -208,25 +208,44 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->WaitForFences = (PFN_vkWaitForFences)gpa(dev, "vkWaitForFences");
     table->CreateSemaphore = (PFN_vkCreateSemaphore)gpa(dev, "vkCreateSemaphore");
     table->DestroySemaphore = (PFN_vkDestroySemaphore)gpa(dev, "vkDestroySemaphore");
-    table->CreateEvent = (PFN_vkCreateEvent)gpa(dev, "vkCreateEvent");
-    table->DestroyEvent = (PFN_vkDestroyEvent)gpa(dev, "vkDestroyEvent");
-    table->GetEventStatus = (PFN_vkGetEventStatus)gpa(dev, "vkGetEventStatus");
-    table->SetEvent = (PFN_vkSetEvent)gpa(dev, "vkSetEvent");
-    table->ResetEvent = (PFN_vkResetEvent)gpa(dev, "vkResetEvent");
     table->CreateQueryPool = (PFN_vkCreateQueryPool)gpa(dev, "vkCreateQueryPool");
     table->GetQueryPoolResults = (PFN_vkGetQueryPoolResults)gpa(dev, "vkGetQueryPoolResults");
     table->CreateBuffer = (PFN_vkCreateBuffer)gpa(dev, "vkCreateBuffer");
     table->DestroyBuffer = (PFN_vkDestroyBuffer)gpa(dev, "vkDestroyBuffer");
-    table->CreateBufferView = (PFN_vkCreateBufferView)gpa(dev, "vkCreateBufferView");
-    table->DestroyBufferView = (PFN_vkDestroyBufferView)gpa(dev, "vkDestroyBufferView");
     table->CreateImage = (PFN_vkCreateImage)gpa(dev, "vkCreateImage");
     table->DestroyImage = (PFN_vkDestroyImage)gpa(dev, "vkDestroyImage");
     table->GetImageSubresourceLayout = (PFN_vkGetImageSubresourceLayout)gpa(dev, "vkGetImageSubresourceLayout");
     table->CreateImageView = (PFN_vkCreateImageView)gpa(dev, "vkCreateImageView");
     table->DestroyImageView = (PFN_vkDestroyImageView)gpa(dev, "vkDestroyImageView");
+    table->CreateCommandPool = (PFN_vkCreateCommandPool)gpa(dev, "vkCreateCommandPool");
+    table->ResetCommandPool = (PFN_vkResetCommandPool)gpa(dev, "vkResetCommandPool");
+    table->AllocateCommandBuffers = (PFN_vkAllocateCommandBuffers)gpa(dev, "vkAllocateCommandBuffers");
+    table->FreeCommandBuffers = (PFN_vkFreeCommandBuffers)gpa(dev, "vkFreeCommandBuffers");
+    table->BeginCommandBuffer = (PFN_vkBeginCommandBuffer)gpa(dev, "vkBeginCommandBuffer");
+    table->EndCommandBuffer = (PFN_vkEndCommandBuffer)gpa(dev, "vkEndCommandBuffer");
+    table->ResetCommandBuffer = (PFN_vkResetCommandBuffer)gpa(dev, "vkResetCommandBuffer");
+    table->CmdCopyBuffer = (PFN_vkCmdCopyBuffer)gpa(dev, "vkCmdCopyBuffer");
+    table->CmdCopyImage = (PFN_vkCmdCopyImage)gpa(dev, "vkCmdCopyImage");
+    table->CmdCopyBufferToImage = (PFN_vkCmdCopyBufferToImage)gpa(dev, "vkCmdCopyBufferToImage");
+    table->CmdCopyImageToBuffer = (PFN_vkCmdCopyImageToBuffer)gpa(dev, "vkCmdCopyImageToBuffer");
+    table->CmdUpdateBuffer = (PFN_vkCmdUpdateBuffer)gpa(dev, "vkCmdUpdateBuffer");
+    table->CmdFillBuffer = (PFN_vkCmdFillBuffer)gpa(dev, "vkCmdFillBuffer");
+    table->CmdPipelineBarrier = (PFN_vkCmdPipelineBarrier)gpa(dev, "vkCmdPipelineBarrier");
+    table->CmdBeginQuery = (PFN_vkCmdBeginQuery)gpa(dev, "vkCmdBeginQuery");
+    table->CmdEndQuery = (PFN_vkCmdEndQuery)gpa(dev, "vkCmdEndQuery");
+    table->CmdResetQueryPool = (PFN_vkCmdResetQueryPool)gpa(dev, "vkCmdResetQueryPool");
+    table->CmdWriteTimestamp = (PFN_vkCmdWriteTimestamp)gpa(dev, "vkCmdWriteTimestamp");
+    table->CmdCopyQueryPoolResults = (PFN_vkCmdCopyQueryPoolResults)gpa(dev, "vkCmdCopyQueryPoolResults");
+    table->CmdExecuteCommands = (PFN_vkCmdExecuteCommands)gpa(dev, "vkCmdExecuteCommands");
+    table->CreateEvent = (PFN_vkCreateEvent)gpa(dev, "vkCreateEvent");
+    table->DestroyEvent = (PFN_vkDestroyEvent)gpa(dev, "vkDestroyEvent");
+    table->GetEventStatus = (PFN_vkGetEventStatus)gpa(dev, "vkGetEventStatus");
+    table->SetEvent = (PFN_vkSetEvent)gpa(dev, "vkSetEvent");
+    table->ResetEvent = (PFN_vkResetEvent)gpa(dev, "vkResetEvent");
+    table->CreateBufferView = (PFN_vkCreateBufferView)gpa(dev, "vkCreateBufferView");
+    table->DestroyBufferView = (PFN_vkDestroyBufferView)gpa(dev, "vkDestroyBufferView");
     table->CreatePipelineCache = (PFN_vkCreatePipelineCache)gpa(dev, "vkCreatePipelineCache");
     table->DestroyPipelineCache = (PFN_vkDestroyPipelineCache)gpa(dev, "vkDestroyPipelineCache");
-    table->CreateGraphicsPipelines = (PFN_vkCreateGraphicsPipelines)gpa(dev, "vkCreateGraphicsPipelines");
     table->CreateComputePipelines = (PFN_vkCreateComputePipelines)gpa(dev, "vkCreateComputePipelines");
     table->DestroyPipeline = (PFN_vkDestroyPipeline)gpa(dev, "vkDestroyPipeline");
     table->CreatePipelineLayout = (PFN_vkCreatePipelineLayout)gpa(dev, "vkCreatePipelineLayout");
@@ -240,19 +259,21 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->AllocateDescriptorSets = (PFN_vkAllocateDescriptorSets)gpa(dev, "vkAllocateDescriptorSets");
     table->FreeDescriptorSets = (PFN_vkFreeDescriptorSets)gpa(dev, "vkFreeDescriptorSets");
     table->UpdateDescriptorSets = (PFN_vkUpdateDescriptorSets)gpa(dev, "vkUpdateDescriptorSets");
+    table->CmdBindPipeline = (PFN_vkCmdBindPipeline)gpa(dev, "vkCmdBindPipeline");
+    table->CmdBindDescriptorSets = (PFN_vkCmdBindDescriptorSets)gpa(dev, "vkCmdBindDescriptorSets");
+    table->CmdClearColorImage = (PFN_vkCmdClearColorImage)gpa(dev, "vkCmdClearColorImage");
+    table->CmdDispatch = (PFN_vkCmdDispatch)gpa(dev, "vkCmdDispatch");
+    table->CmdDispatchIndirect = (PFN_vkCmdDispatchIndirect)gpa(dev, "vkCmdDispatchIndirect");
+    table->CmdSetEvent = (PFN_vkCmdSetEvent)gpa(dev, "vkCmdSetEvent");
+    table->CmdResetEvent = (PFN_vkCmdResetEvent)gpa(dev, "vkCmdResetEvent");
+    table->CmdWaitEvents = (PFN_vkCmdWaitEvents)gpa(dev, "vkCmdWaitEvents");
+    table->CmdPushConstants = (PFN_vkCmdPushConstants)gpa(dev, "vkCmdPushConstants");
+    table->CreateGraphicsPipelines = (PFN_vkCreateGraphicsPipelines)gpa(dev, "vkCreateGraphicsPipelines");
     table->CreateFramebuffer = (PFN_vkCreateFramebuffer)gpa(dev, "vkCreateFramebuffer");
     table->DestroyFramebuffer = (PFN_vkDestroyFramebuffer)gpa(dev, "vkDestroyFramebuffer");
     table->CreateRenderPass = (PFN_vkCreateRenderPass)gpa(dev, "vkCreateRenderPass");
     table->DestroyRenderPass = (PFN_vkDestroyRenderPass)gpa(dev, "vkDestroyRenderPass");
     table->GetRenderAreaGranularity = (PFN_vkGetRenderAreaGranularity)gpa(dev, "vkGetRenderAreaGranularity");
-    table->CreateCommandPool = (PFN_vkCreateCommandPool)gpa(dev, "vkCreateCommandPool");
-    table->ResetCommandPool = (PFN_vkResetCommandPool)gpa(dev, "vkResetCommandPool");
-    table->AllocateCommandBuffers = (PFN_vkAllocateCommandBuffers)gpa(dev, "vkAllocateCommandBuffers");
-    table->FreeCommandBuffers = (PFN_vkFreeCommandBuffers)gpa(dev, "vkFreeCommandBuffers");
-    table->BeginCommandBuffer = (PFN_vkBeginCommandBuffer)gpa(dev, "vkBeginCommandBuffer");
-    table->EndCommandBuffer = (PFN_vkEndCommandBuffer)gpa(dev, "vkEndCommandBuffer");
-    table->ResetCommandBuffer = (PFN_vkResetCommandBuffer)gpa(dev, "vkResetCommandBuffer");
-    table->CmdBindPipeline = (PFN_vkCmdBindPipeline)gpa(dev, "vkCmdBindPipeline");
     table->CmdSetViewport = (PFN_vkCmdSetViewport)gpa(dev, "vkCmdSetViewport");
     table->CmdSetScissor = (PFN_vkCmdSetScissor)gpa(dev, "vkCmdSetScissor");
     table->CmdSetLineWidth = (PFN_vkCmdSetLineWidth)gpa(dev, "vkCmdSetLineWidth");
@@ -262,57 +283,30 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->CmdSetStencilCompareMask = (PFN_vkCmdSetStencilCompareMask)gpa(dev, "vkCmdSetStencilCompareMask");
     table->CmdSetStencilWriteMask = (PFN_vkCmdSetStencilWriteMask)gpa(dev, "vkCmdSetStencilWriteMask");
     table->CmdSetStencilReference = (PFN_vkCmdSetStencilReference)gpa(dev, "vkCmdSetStencilReference");
-    table->CmdBindDescriptorSets = (PFN_vkCmdBindDescriptorSets)gpa(dev, "vkCmdBindDescriptorSets");
     table->CmdBindIndexBuffer = (PFN_vkCmdBindIndexBuffer)gpa(dev, "vkCmdBindIndexBuffer");
     table->CmdBindVertexBuffers = (PFN_vkCmdBindVertexBuffers)gpa(dev, "vkCmdBindVertexBuffers");
     table->CmdDraw = (PFN_vkCmdDraw)gpa(dev, "vkCmdDraw");
     table->CmdDrawIndexed = (PFN_vkCmdDrawIndexed)gpa(dev, "vkCmdDrawIndexed");
     table->CmdDrawIndirect = (PFN_vkCmdDrawIndirect)gpa(dev, "vkCmdDrawIndirect");
     table->CmdDrawIndexedIndirect = (PFN_vkCmdDrawIndexedIndirect)gpa(dev, "vkCmdDrawIndexedIndirect");
-    table->CmdDispatch = (PFN_vkCmdDispatch)gpa(dev, "vkCmdDispatch");
-    table->CmdDispatchIndirect = (PFN_vkCmdDispatchIndirect)gpa(dev, "vkCmdDispatchIndirect");
-    table->CmdCopyBuffer = (PFN_vkCmdCopyBuffer)gpa(dev, "vkCmdCopyBuffer");
-    table->CmdCopyImage = (PFN_vkCmdCopyImage)gpa(dev, "vkCmdCopyImage");
     table->CmdBlitImage = (PFN_vkCmdBlitImage)gpa(dev, "vkCmdBlitImage");
-    table->CmdCopyBufferToImage = (PFN_vkCmdCopyBufferToImage)gpa(dev, "vkCmdCopyBufferToImage");
-    table->CmdCopyImageToBuffer = (PFN_vkCmdCopyImageToBuffer)gpa(dev, "vkCmdCopyImageToBuffer");
-    table->CmdUpdateBuffer = (PFN_vkCmdUpdateBuffer)gpa(dev, "vkCmdUpdateBuffer");
-    table->CmdFillBuffer = (PFN_vkCmdFillBuffer)gpa(dev, "vkCmdFillBuffer");
-    table->CmdClearColorImage = (PFN_vkCmdClearColorImage)gpa(dev, "vkCmdClearColorImage");
     table->CmdClearDepthStencilImage = (PFN_vkCmdClearDepthStencilImage)gpa(dev, "vkCmdClearDepthStencilImage");
     table->CmdClearAttachments = (PFN_vkCmdClearAttachments)gpa(dev, "vkCmdClearAttachments");
     table->CmdResolveImage = (PFN_vkCmdResolveImage)gpa(dev, "vkCmdResolveImage");
-    table->CmdSetEvent = (PFN_vkCmdSetEvent)gpa(dev, "vkCmdSetEvent");
-    table->CmdResetEvent = (PFN_vkCmdResetEvent)gpa(dev, "vkCmdResetEvent");
-    table->CmdWaitEvents = (PFN_vkCmdWaitEvents)gpa(dev, "vkCmdWaitEvents");
-    table->CmdPipelineBarrier = (PFN_vkCmdPipelineBarrier)gpa(dev, "vkCmdPipelineBarrier");
-    table->CmdBeginQuery = (PFN_vkCmdBeginQuery)gpa(dev, "vkCmdBeginQuery");
-    table->CmdEndQuery = (PFN_vkCmdEndQuery)gpa(dev, "vkCmdEndQuery");
-    table->CmdResetQueryPool = (PFN_vkCmdResetQueryPool)gpa(dev, "vkCmdResetQueryPool");
-    table->CmdWriteTimestamp = (PFN_vkCmdWriteTimestamp)gpa(dev, "vkCmdWriteTimestamp");
-    table->CmdCopyQueryPoolResults = (PFN_vkCmdCopyQueryPoolResults)gpa(dev, "vkCmdCopyQueryPoolResults");
-    table->CmdPushConstants = (PFN_vkCmdPushConstants)gpa(dev, "vkCmdPushConstants");
     table->CmdBeginRenderPass = (PFN_vkCmdBeginRenderPass)gpa(dev, "vkCmdBeginRenderPass");
     table->CmdNextSubpass = (PFN_vkCmdNextSubpass)gpa(dev, "vkCmdNextSubpass");
     table->CmdEndRenderPass = (PFN_vkCmdEndRenderPass)gpa(dev, "vkCmdEndRenderPass");
-    table->CmdExecuteCommands = (PFN_vkCmdExecuteCommands)gpa(dev, "vkCmdExecuteCommands");
     table->BindBufferMemory2 = (PFN_vkBindBufferMemory2)gpa(dev, "vkBindBufferMemory2");
     table->BindImageMemory2 = (PFN_vkBindImageMemory2)gpa(dev, "vkBindImageMemory2");
     table->GetDeviceGroupPeerMemoryFeatures = (PFN_vkGetDeviceGroupPeerMemoryFeatures)gpa(dev, "vkGetDeviceGroupPeerMemoryFeatures");
     table->CmdSetDeviceMask = (PFN_vkCmdSetDeviceMask)gpa(dev, "vkCmdSetDeviceMask");
-    table->CmdDispatchBase = (PFN_vkCmdDispatchBase)gpa(dev, "vkCmdDispatchBase");
     table->GetImageMemoryRequirements2 = (PFN_vkGetImageMemoryRequirements2)gpa(dev, "vkGetImageMemoryRequirements2");
     table->GetBufferMemoryRequirements2 = (PFN_vkGetBufferMemoryRequirements2)gpa(dev, "vkGetBufferMemoryRequirements2");
     table->GetDeviceQueue2 = (PFN_vkGetDeviceQueue2)gpa(dev, "vkGetDeviceQueue2");
+    table->CmdDispatchBase = (PFN_vkCmdDispatchBase)gpa(dev, "vkCmdDispatchBase");
+    table->GetDescriptorSetLayoutSupport = (PFN_vkGetDescriptorSetLayoutSupport)gpa(dev, "vkGetDescriptorSetLayoutSupport");
     table->CreateSamplerYcbcrConversion = (PFN_vkCreateSamplerYcbcrConversion)gpa(dev, "vkCreateSamplerYcbcrConversion");
     table->DestroySamplerYcbcrConversion = (PFN_vkDestroySamplerYcbcrConversion)gpa(dev, "vkDestroySamplerYcbcrConversion");
-    table->GetDescriptorSetLayoutSupport = (PFN_vkGetDescriptorSetLayoutSupport)gpa(dev, "vkGetDescriptorSetLayoutSupport");
-    table->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)gpa(dev, "vkCmdDrawIndirectCount");
-    table->CmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)gpa(dev, "vkCmdDrawIndexedIndirectCount");
-    table->CreateRenderPass2 = (PFN_vkCreateRenderPass2)gpa(dev, "vkCreateRenderPass2");
-    table->CmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)gpa(dev, "vkCmdBeginRenderPass2");
-    table->CmdNextSubpass2 = (PFN_vkCmdNextSubpass2)gpa(dev, "vkCmdNextSubpass2");
-    table->CmdEndRenderPass2 = (PFN_vkCmdEndRenderPass2)gpa(dev, "vkCmdEndRenderPass2");
     table->ResetQueryPool = (PFN_vkResetQueryPool)gpa(dev, "vkResetQueryPool");
     table->GetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)gpa(dev, "vkGetSemaphoreCounterValue");
     table->WaitSemaphores = (PFN_vkWaitSemaphores)gpa(dev, "vkWaitSemaphores");
@@ -320,15 +314,18 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)gpa(dev, "vkGetBufferDeviceAddress");
     table->GetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)gpa(dev, "vkGetBufferOpaqueCaptureAddress");
     table->GetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)gpa(dev, "vkGetDeviceMemoryOpaqueCaptureAddress");
+    table->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)gpa(dev, "vkCmdDrawIndirectCount");
+    table->CmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)gpa(dev, "vkCmdDrawIndexedIndirectCount");
+    table->CreateRenderPass2 = (PFN_vkCreateRenderPass2)gpa(dev, "vkCreateRenderPass2");
+    table->CmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)gpa(dev, "vkCmdBeginRenderPass2");
+    table->CmdNextSubpass2 = (PFN_vkCmdNextSubpass2)gpa(dev, "vkCmdNextSubpass2");
+    table->CmdEndRenderPass2 = (PFN_vkCmdEndRenderPass2)gpa(dev, "vkCmdEndRenderPass2");
 
     // ---- Core Vulkan 1.3 commands
     table->CreatePrivateDataSlot = (PFN_vkCreatePrivateDataSlot)gpa(dev, "vkCreatePrivateDataSlot");
     table->DestroyPrivateDataSlot = (PFN_vkDestroyPrivateDataSlot)gpa(dev, "vkDestroyPrivateDataSlot");
     table->SetPrivateData = (PFN_vkSetPrivateData)gpa(dev, "vkSetPrivateData");
     table->GetPrivateData = (PFN_vkGetPrivateData)gpa(dev, "vkGetPrivateData");
-    table->CmdSetEvent2 = (PFN_vkCmdSetEvent2)gpa(dev, "vkCmdSetEvent2");
-    table->CmdResetEvent2 = (PFN_vkCmdResetEvent2)gpa(dev, "vkCmdResetEvent2");
-    table->CmdWaitEvents2 = (PFN_vkCmdWaitEvents2)gpa(dev, "vkCmdWaitEvents2");
     table->CmdPipelineBarrier2 = (PFN_vkCmdPipelineBarrier2)gpa(dev, "vkCmdPipelineBarrier2");
     table->CmdWriteTimestamp2 = (PFN_vkCmdWriteTimestamp2)gpa(dev, "vkCmdWriteTimestamp2");
     table->QueueSubmit2 = (PFN_vkQueueSubmit2)gpa(dev, "vkQueueSubmit2");
@@ -336,6 +333,12 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->CmdCopyImage2 = (PFN_vkCmdCopyImage2)gpa(dev, "vkCmdCopyImage2");
     table->CmdCopyBufferToImage2 = (PFN_vkCmdCopyBufferToImage2)gpa(dev, "vkCmdCopyBufferToImage2");
     table->CmdCopyImageToBuffer2 = (PFN_vkCmdCopyImageToBuffer2)gpa(dev, "vkCmdCopyImageToBuffer2");
+    table->GetDeviceBufferMemoryRequirements = (PFN_vkGetDeviceBufferMemoryRequirements)gpa(dev, "vkGetDeviceBufferMemoryRequirements");
+    table->GetDeviceImageMemoryRequirements = (PFN_vkGetDeviceImageMemoryRequirements)gpa(dev, "vkGetDeviceImageMemoryRequirements");
+    table->GetDeviceImageSparseMemoryRequirements = (PFN_vkGetDeviceImageSparseMemoryRequirements)gpa(dev, "vkGetDeviceImageSparseMemoryRequirements");
+    table->CmdSetEvent2 = (PFN_vkCmdSetEvent2)gpa(dev, "vkCmdSetEvent2");
+    table->CmdResetEvent2 = (PFN_vkCmdResetEvent2)gpa(dev, "vkCmdResetEvent2");
+    table->CmdWaitEvents2 = (PFN_vkCmdWaitEvents2)gpa(dev, "vkCmdWaitEvents2");
     table->CmdBlitImage2 = (PFN_vkCmdBlitImage2)gpa(dev, "vkCmdBlitImage2");
     table->CmdResolveImage2 = (PFN_vkCmdResolveImage2)gpa(dev, "vkCmdResolveImage2");
     table->CmdBeginRendering = (PFN_vkCmdBeginRendering)gpa(dev, "vkCmdBeginRendering");
@@ -355,28 +358,25 @@ VKAPI_ATTR void VKAPI_CALL loader_init_device_dispatch_table(struct loader_dev_d
     table->CmdSetRasterizerDiscardEnable = (PFN_vkCmdSetRasterizerDiscardEnable)gpa(dev, "vkCmdSetRasterizerDiscardEnable");
     table->CmdSetDepthBiasEnable = (PFN_vkCmdSetDepthBiasEnable)gpa(dev, "vkCmdSetDepthBiasEnable");
     table->CmdSetPrimitiveRestartEnable = (PFN_vkCmdSetPrimitiveRestartEnable)gpa(dev, "vkCmdSetPrimitiveRestartEnable");
-    table->GetDeviceBufferMemoryRequirements = (PFN_vkGetDeviceBufferMemoryRequirements)gpa(dev, "vkGetDeviceBufferMemoryRequirements");
-    table->GetDeviceImageMemoryRequirements = (PFN_vkGetDeviceImageMemoryRequirements)gpa(dev, "vkGetDeviceImageMemoryRequirements");
-    table->GetDeviceImageSparseMemoryRequirements = (PFN_vkGetDeviceImageSparseMemoryRequirements)gpa(dev, "vkGetDeviceImageSparseMemoryRequirements");
 
     // ---- Core Vulkan 1.4 commands
-    table->CmdSetLineStipple = (PFN_vkCmdSetLineStipple)gpa(dev, "vkCmdSetLineStipple");
     table->MapMemory2 = (PFN_vkMapMemory2)gpa(dev, "vkMapMemory2");
     table->UnmapMemory2 = (PFN_vkUnmapMemory2)gpa(dev, "vkUnmapMemory2");
-    table->CmdBindIndexBuffer2 = (PFN_vkCmdBindIndexBuffer2)gpa(dev, "vkCmdBindIndexBuffer2");
-    table->GetRenderingAreaGranularity = (PFN_vkGetRenderingAreaGranularity)gpa(dev, "vkGetRenderingAreaGranularity");
     table->GetDeviceImageSubresourceLayout = (PFN_vkGetDeviceImageSubresourceLayout)gpa(dev, "vkGetDeviceImageSubresourceLayout");
     table->GetImageSubresourceLayout2 = (PFN_vkGetImageSubresourceLayout2)gpa(dev, "vkGetImageSubresourceLayout2");
-    table->CmdPushDescriptorSet = (PFN_vkCmdPushDescriptorSet)gpa(dev, "vkCmdPushDescriptorSet");
-    table->CmdSetRenderingAttachmentLocations = (PFN_vkCmdSetRenderingAttachmentLocations)gpa(dev, "vkCmdSetRenderingAttachmentLocations");
-    table->CmdSetRenderingInputAttachmentIndices = (PFN_vkCmdSetRenderingInputAttachmentIndices)gpa(dev, "vkCmdSetRenderingInputAttachmentIndices");
-    table->CmdBindDescriptorSets2 = (PFN_vkCmdBindDescriptorSets2)gpa(dev, "vkCmdBindDescriptorSets2");
-    table->CmdPushConstants2 = (PFN_vkCmdPushConstants2)gpa(dev, "vkCmdPushConstants2");
-    table->CmdPushDescriptorSet2 = (PFN_vkCmdPushDescriptorSet2)gpa(dev, "vkCmdPushDescriptorSet2");
     table->CopyMemoryToImage = (PFN_vkCopyMemoryToImage)gpa(dev, "vkCopyMemoryToImage");
     table->CopyImageToMemory = (PFN_vkCopyImageToMemory)gpa(dev, "vkCopyImageToMemory");
     table->CopyImageToImage = (PFN_vkCopyImageToImage)gpa(dev, "vkCopyImageToImage");
     table->TransitionImageLayout = (PFN_vkTransitionImageLayout)gpa(dev, "vkTransitionImageLayout");
+    table->CmdPushDescriptorSet = (PFN_vkCmdPushDescriptorSet)gpa(dev, "vkCmdPushDescriptorSet");
+    table->CmdBindDescriptorSets2 = (PFN_vkCmdBindDescriptorSets2)gpa(dev, "vkCmdBindDescriptorSets2");
+    table->CmdPushConstants2 = (PFN_vkCmdPushConstants2)gpa(dev, "vkCmdPushConstants2");
+    table->CmdPushDescriptorSet2 = (PFN_vkCmdPushDescriptorSet2)gpa(dev, "vkCmdPushDescriptorSet2");
+    table->CmdSetLineStipple = (PFN_vkCmdSetLineStipple)gpa(dev, "vkCmdSetLineStipple");
+    table->CmdBindIndexBuffer2 = (PFN_vkCmdBindIndexBuffer2)gpa(dev, "vkCmdBindIndexBuffer2");
+    table->GetRenderingAreaGranularity = (PFN_vkGetRenderingAreaGranularity)gpa(dev, "vkGetRenderingAreaGranularity");
+    table->CmdSetRenderingAttachmentLocations = (PFN_vkCmdSetRenderingAttachmentLocations)gpa(dev, "vkCmdSetRenderingAttachmentLocations");
+    table->CmdSetRenderingInputAttachmentIndices = (PFN_vkCmdSetRenderingInputAttachmentIndices)gpa(dev, "vkCmdSetRenderingInputAttachmentIndices");
 
     // ---- Core Vulkan SC 1.0 commands
     table->GetCommandPoolMemoryConsumption = (PFN_vkGetCommandPoolMemoryConsumption)gpa(dev, "vkGetCommandPoolMemoryConsumption");
@@ -819,26 +819,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->DestroySemaphore;
     }
-    if (!strcmp(name, "CreateEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateEvent;
-    }
-    if (!strcmp(name, "DestroyEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyEvent;
-    }
-    if (!strcmp(name, "GetEventStatus")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetEventStatus;
-    }
-    if (!strcmp(name, "SetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->SetEvent;
-    }
-    if (!strcmp(name, "ResetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetEvent;
-    }
     if (!strcmp(name, "CreateQueryPool")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CreateQueryPool;
@@ -854,14 +834,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "DestroyBuffer")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->DestroyBuffer;
-    }
-    if (!strcmp(name, "CreateBufferView")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateBufferView;
-    }
-    if (!strcmp(name, "DestroyBufferView")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyBufferView;
     }
     if (!strcmp(name, "CreateImage")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
@@ -883,6 +855,114 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->DestroyImageView;
     }
+    if (!strcmp(name, "CreateCommandPool")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CreateCommandPool;
+    }
+    if (!strcmp(name, "ResetCommandPool")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->ResetCommandPool;
+    }
+    if (!strcmp(name, "AllocateCommandBuffers")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->AllocateCommandBuffers;
+    }
+    if (!strcmp(name, "FreeCommandBuffers")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->FreeCommandBuffers;
+    }
+    if (!strcmp(name, "BeginCommandBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->BeginCommandBuffer;
+    }
+    if (!strcmp(name, "EndCommandBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->EndCommandBuffer;
+    }
+    if (!strcmp(name, "ResetCommandBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->ResetCommandBuffer;
+    }
+    if (!strcmp(name, "CmdCopyBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdCopyBuffer;
+    }
+    if (!strcmp(name, "CmdCopyImage")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdCopyImage;
+    }
+    if (!strcmp(name, "CmdCopyBufferToImage")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdCopyBufferToImage;
+    }
+    if (!strcmp(name, "CmdCopyImageToBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdCopyImageToBuffer;
+    }
+    if (!strcmp(name, "CmdUpdateBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdUpdateBuffer;
+    }
+    if (!strcmp(name, "CmdFillBuffer")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdFillBuffer;
+    }
+    if (!strcmp(name, "CmdPipelineBarrier")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdPipelineBarrier;
+    }
+    if (!strcmp(name, "CmdBeginQuery")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdBeginQuery;
+    }
+    if (!strcmp(name, "CmdEndQuery")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdEndQuery;
+    }
+    if (!strcmp(name, "CmdResetQueryPool")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdResetQueryPool;
+    }
+    if (!strcmp(name, "CmdWriteTimestamp")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdWriteTimestamp;
+    }
+    if (!strcmp(name, "CmdCopyQueryPoolResults")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdCopyQueryPoolResults;
+    }
+    if (!strcmp(name, "CmdExecuteCommands")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdExecuteCommands;
+    }
+    if (!strcmp(name, "CreateEvent")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CreateEvent;
+    }
+    if (!strcmp(name, "DestroyEvent")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->DestroyEvent;
+    }
+    if (!strcmp(name, "GetEventStatus")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->GetEventStatus;
+    }
+    if (!strcmp(name, "SetEvent")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->SetEvent;
+    }
+    if (!strcmp(name, "ResetEvent")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->ResetEvent;
+    }
+    if (!strcmp(name, "CreateBufferView")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CreateBufferView;
+    }
+    if (!strcmp(name, "DestroyBufferView")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->DestroyBufferView;
+    }
     if (!strcmp(name, "CreatePipelineCache")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CreatePipelineCache;
@@ -890,10 +970,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "DestroyPipelineCache")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->DestroyPipelineCache;
-    }
-    if (!strcmp(name, "CreateGraphicsPipelines")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateGraphicsPipelines;
     }
     if (!strcmp(name, "CreateComputePipelines")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
@@ -947,6 +1023,46 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->UpdateDescriptorSets;
     }
+    if (!strcmp(name, "CmdBindPipeline")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdBindPipeline;
+    }
+    if (!strcmp(name, "CmdBindDescriptorSets")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdBindDescriptorSets;
+    }
+    if (!strcmp(name, "CmdClearColorImage")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdClearColorImage;
+    }
+    if (!strcmp(name, "CmdDispatch")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdDispatch;
+    }
+    if (!strcmp(name, "CmdDispatchIndirect")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdDispatchIndirect;
+    }
+    if (!strcmp(name, "CmdSetEvent")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdSetEvent;
+    }
+    if (!strcmp(name, "CmdResetEvent")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdResetEvent;
+    }
+    if (!strcmp(name, "CmdWaitEvents")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdWaitEvents;
+    }
+    if (!strcmp(name, "CmdPushConstants")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdPushConstants;
+    }
+    if (!strcmp(name, "CreateGraphicsPipelines")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CreateGraphicsPipelines;
+    }
     if (!strcmp(name, "CreateFramebuffer")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CreateFramebuffer;
@@ -966,38 +1082,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "GetRenderAreaGranularity")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->GetRenderAreaGranularity;
-    }
-    if (!strcmp(name, "CreateCommandPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateCommandPool;
-    }
-    if (!strcmp(name, "ResetCommandPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetCommandPool;
-    }
-    if (!strcmp(name, "AllocateCommandBuffers")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->AllocateCommandBuffers;
-    }
-    if (!strcmp(name, "FreeCommandBuffers")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->FreeCommandBuffers;
-    }
-    if (!strcmp(name, "BeginCommandBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->BeginCommandBuffer;
-    }
-    if (!strcmp(name, "EndCommandBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->EndCommandBuffer;
-    }
-    if (!strcmp(name, "ResetCommandBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetCommandBuffer;
-    }
-    if (!strcmp(name, "CmdBindPipeline")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBindPipeline;
     }
     if (!strcmp(name, "CmdSetViewport")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
@@ -1035,10 +1119,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdSetStencilReference;
     }
-    if (!strcmp(name, "CmdBindDescriptorSets")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBindDescriptorSets;
-    }
     if (!strcmp(name, "CmdBindIndexBuffer")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdBindIndexBuffer;
@@ -1063,45 +1143,9 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdDrawIndexedIndirect;
     }
-    if (!strcmp(name, "CmdDispatch")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDispatch;
-    }
-    if (!strcmp(name, "CmdDispatchIndirect")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDispatchIndirect;
-    }
-    if (!strcmp(name, "CmdCopyBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyBuffer;
-    }
-    if (!strcmp(name, "CmdCopyImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyImage;
-    }
     if (!strcmp(name, "CmdBlitImage")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdBlitImage;
-    }
-    if (!strcmp(name, "CmdCopyBufferToImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyBufferToImage;
-    }
-    if (!strcmp(name, "CmdCopyImageToBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyImageToBuffer;
-    }
-    if (!strcmp(name, "CmdUpdateBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdUpdateBuffer;
-    }
-    if (!strcmp(name, "CmdFillBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdFillBuffer;
-    }
-    if (!strcmp(name, "CmdClearColorImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdClearColorImage;
     }
     if (!strcmp(name, "CmdClearDepthStencilImage")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
@@ -1115,46 +1159,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdResolveImage;
     }
-    if (!strcmp(name, "CmdSetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetEvent;
-    }
-    if (!strcmp(name, "CmdResetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdResetEvent;
-    }
-    if (!strcmp(name, "CmdWaitEvents")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdWaitEvents;
-    }
-    if (!strcmp(name, "CmdPipelineBarrier")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdPipelineBarrier;
-    }
-    if (!strcmp(name, "CmdBeginQuery")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBeginQuery;
-    }
-    if (!strcmp(name, "CmdEndQuery")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdEndQuery;
-    }
-    if (!strcmp(name, "CmdResetQueryPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdResetQueryPool;
-    }
-    if (!strcmp(name, "CmdWriteTimestamp")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdWriteTimestamp;
-    }
-    if (!strcmp(name, "CmdCopyQueryPoolResults")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyQueryPoolResults;
-    }
-    if (!strcmp(name, "CmdPushConstants")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdPushConstants;
-    }
     if (!strcmp(name, "CmdBeginRenderPass")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdBeginRenderPass;
@@ -1166,10 +1170,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "CmdEndRenderPass")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdEndRenderPass;
-    }
-    if (!strcmp(name, "CmdExecuteCommands")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdExecuteCommands;
     }
     if (!strcmp(name, "BindBufferMemory2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
@@ -1187,10 +1187,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CmdSetDeviceMask;
     }
-    if (!strcmp(name, "CmdDispatchBase")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDispatchBase;
-    }
     if (!strcmp(name, "GetImageMemoryRequirements2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->GetImageMemoryRequirements2;
@@ -1203,6 +1199,14 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->GetDeviceQueue2;
     }
+    if (!strcmp(name, "CmdDispatchBase")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdDispatchBase;
+    }
+    if (!strcmp(name, "GetDescriptorSetLayoutSupport")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->GetDescriptorSetLayoutSupport;
+    }
     if (!strcmp(name, "CreateSamplerYcbcrConversion")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->CreateSamplerYcbcrConversion;
@@ -1210,34 +1214,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "DestroySamplerYcbcrConversion")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->DestroySamplerYcbcrConversion;
-    }
-    if (!strcmp(name, "GetDescriptorSetLayoutSupport")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDescriptorSetLayoutSupport;
-    }
-    if (!strcmp(name, "CmdDrawIndirectCount")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndirectCount;
-    }
-    if (!strcmp(name, "CmdDrawIndexedIndirectCount")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndexedIndirectCount;
-    }
-    if (!strcmp(name, "CreateRenderPass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateRenderPass2;
-    }
-    if (!strcmp(name, "CmdBeginRenderPass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBeginRenderPass2;
-    }
-    if (!strcmp(name, "CmdNextSubpass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdNextSubpass2;
-    }
-    if (!strcmp(name, "CmdEndRenderPass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdEndRenderPass2;
     }
     if (!strcmp(name, "ResetQueryPool")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
@@ -1267,6 +1243,30 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
         return (void *)table->GetDeviceMemoryOpaqueCaptureAddress;
     }
+    if (!strcmp(name, "CmdDrawIndirectCount")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdDrawIndirectCount;
+    }
+    if (!strcmp(name, "CmdDrawIndexedIndirectCount")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdDrawIndexedIndirectCount;
+    }
+    if (!strcmp(name, "CreateRenderPass2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CreateRenderPass2;
+    }
+    if (!strcmp(name, "CmdBeginRenderPass2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdBeginRenderPass2;
+    }
+    if (!strcmp(name, "CmdNextSubpass2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdNextSubpass2;
+    }
+    if (!strcmp(name, "CmdEndRenderPass2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+        return (void *)table->CmdEndRenderPass2;
+    }
 
     // ---- Core Vulkan 1.3 commands
     if (!strcmp(name, "CreatePrivateDataSlot")) {
@@ -1284,18 +1284,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "GetPrivateData")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
         return (void *)table->GetPrivateData;
-    }
-    if (!strcmp(name, "CmdSetEvent2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetEvent2;
-    }
-    if (!strcmp(name, "CmdResetEvent2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdResetEvent2;
-    }
-    if (!strcmp(name, "CmdWaitEvents2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdWaitEvents2;
     }
     if (!strcmp(name, "CmdPipelineBarrier2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
@@ -1324,6 +1312,30 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "CmdCopyImageToBuffer2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
         return (void *)table->CmdCopyImageToBuffer2;
+    }
+    if (!strcmp(name, "GetDeviceBufferMemoryRequirements")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+        return (void *)table->GetDeviceBufferMemoryRequirements;
+    }
+    if (!strcmp(name, "GetDeviceImageMemoryRequirements")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+        return (void *)table->GetDeviceImageMemoryRequirements;
+    }
+    if (!strcmp(name, "GetDeviceImageSparseMemoryRequirements")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+        return (void *)table->GetDeviceImageSparseMemoryRequirements;
+    }
+    if (!strcmp(name, "CmdSetEvent2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+        return (void *)table->CmdSetEvent2;
+    }
+    if (!strcmp(name, "CmdResetEvent2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+        return (void *)table->CmdResetEvent2;
+    }
+    if (!strcmp(name, "CmdWaitEvents2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+        return (void *)table->CmdWaitEvents2;
     }
     if (!strcmp(name, "CmdBlitImage2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
@@ -1401,24 +1413,8 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
         return (void *)table->CmdSetPrimitiveRestartEnable;
     }
-    if (!strcmp(name, "GetDeviceBufferMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetDeviceBufferMemoryRequirements;
-    }
-    if (!strcmp(name, "GetDeviceImageMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetDeviceImageMemoryRequirements;
-    }
-    if (!strcmp(name, "GetDeviceImageSparseMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetDeviceImageSparseMemoryRequirements;
-    }
 
     // ---- Core Vulkan 1.4 commands
-    if (!strcmp(name, "CmdSetLineStipple")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdSetLineStipple;
-    }
     if (!strcmp(name, "MapMemory2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
         return (void *)table->MapMemory2;
@@ -1427,14 +1423,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
         return (void *)table->UnmapMemory2;
     }
-    if (!strcmp(name, "CmdBindIndexBuffer2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdBindIndexBuffer2;
-    }
-    if (!strcmp(name, "GetRenderingAreaGranularity")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->GetRenderingAreaGranularity;
-    }
     if (!strcmp(name, "GetDeviceImageSubresourceLayout")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
         return (void *)table->GetDeviceImageSubresourceLayout;
@@ -1442,30 +1430,6 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "GetImageSubresourceLayout2")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
         return (void *)table->GetImageSubresourceLayout2;
-    }
-    if (!strcmp(name, "CmdPushDescriptorSet")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdPushDescriptorSet;
-    }
-    if (!strcmp(name, "CmdSetRenderingAttachmentLocations")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdSetRenderingAttachmentLocations;
-    }
-    if (!strcmp(name, "CmdSetRenderingInputAttachmentIndices")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdSetRenderingInputAttachmentIndices;
-    }
-    if (!strcmp(name, "CmdBindDescriptorSets2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdBindDescriptorSets2;
-    }
-    if (!strcmp(name, "CmdPushConstants2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdPushConstants2;
-    }
-    if (!strcmp(name, "CmdPushDescriptorSet2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdPushDescriptorSet2;
     }
     if (!strcmp(name, "CopyMemoryToImage")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
@@ -1482,6 +1446,42 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     if (!strcmp(name, "TransitionImageLayout")) {
         if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
         return (void *)table->TransitionImageLayout;
+    }
+    if (!strcmp(name, "CmdPushDescriptorSet")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdPushDescriptorSet;
+    }
+    if (!strcmp(name, "CmdBindDescriptorSets2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdBindDescriptorSets2;
+    }
+    if (!strcmp(name, "CmdPushConstants2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdPushConstants2;
+    }
+    if (!strcmp(name, "CmdPushDescriptorSet2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdPushDescriptorSet2;
+    }
+    if (!strcmp(name, "CmdSetLineStipple")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdSetLineStipple;
+    }
+    if (!strcmp(name, "CmdBindIndexBuffer2")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdBindIndexBuffer2;
+    }
+    if (!strcmp(name, "GetRenderingAreaGranularity")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->GetRenderingAreaGranularity;
+    }
+    if (!strcmp(name, "CmdSetRenderingAttachmentLocations")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdSetRenderingAttachmentLocations;
+    }
+    if (!strcmp(name, "CmdSetRenderingInputAttachmentIndices")) {
+        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+        return (void *)table->CmdSetRenderingInputAttachmentIndices;
     }
 
     // ---- Core Vulkan SC 1.0 commands

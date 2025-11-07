@@ -32,6 +32,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -305,14 +306,13 @@ VkResult create_string_list(const struct loader_instance *inst, uint32_t allocat
     return VK_SUCCESS;
 }
 
-VkResult append_str_to_string_list(const struct loader_instance *inst, struct loader_string_list *string_list, char *str) {
-    assert(string_list && str);
+VkResult increase_str_capacity_by_at_least_one(const struct loader_instance *inst, struct loader_string_list *string_list) {
+    assert(string_list);
     if (string_list->allocated_count == 0) {
         string_list->allocated_count = 32;
         string_list->list =
             loader_instance_heap_calloc(inst, sizeof(char *) * string_list->allocated_count, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
         if (NULL == string_list->list) {
-            loader_instance_heap_free(inst, str);  // Must clean up in case of failure
             return VK_ERROR_OUT_OF_HOST_MEMORY;
         }
     } else if (string_list->count + 1 > string_list->allocated_count) {
@@ -320,12 +320,35 @@ VkResult append_str_to_string_list(const struct loader_instance *inst, struct lo
         string_list->list = loader_instance_heap_realloc(inst, string_list->list, sizeof(char *) * string_list->allocated_count,
                                                          sizeof(char *) * new_allocated_count, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
         if (NULL == string_list->list) {
-            loader_instance_heap_free(inst, str);  // Must clean up in case of failure
             return VK_ERROR_OUT_OF_HOST_MEMORY;
         }
         string_list->allocated_count *= 2;
     }
+    return VK_SUCCESS;
+}
+
+VkResult append_str_to_string_list(const struct loader_instance *inst, struct loader_string_list *string_list, char *str) {
+    assert(string_list && str);
+    VkResult res = increase_str_capacity_by_at_least_one(inst, string_list);
+    if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+        loader_instance_heap_free(inst, str);  // Must clean up in case of failure
+        return res;
+    }
     string_list->list[string_list->count++] = str;
+    return VK_SUCCESS;
+}
+
+VkResult prepend_str_to_string_list(const struct loader_instance *inst, struct loader_string_list *string_list, char *str) {
+    assert(string_list && str);
+    VkResult res = increase_str_capacity_by_at_least_one(inst, string_list);
+    if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+        loader_instance_heap_free(inst, str);  // Must clean up in case of failure
+        return res;
+    }
+    // Shift everything down one
+    void *ptr_to_list = memmove(string_list->list + 1, string_list->list, sizeof(char *) * string_list->count);
+    if (ptr_to_list) string_list->list[0] = str;  // Write new string to start of list
+    string_list->count++;
     return VK_SUCCESS;
 }
 
@@ -341,6 +364,18 @@ VkResult copy_str_to_string_list(const struct loader_instance *inst, struct load
     return append_str_to_string_list(inst, string_list, new_str);
 }
 
+VkResult copy_str_to_start_of_string_list(const struct loader_instance *inst, struct loader_string_list *string_list,
+                                          const char *str, size_t str_len) {
+    assert(string_list && str);
+    char *new_str = loader_instance_heap_calloc(inst, sizeof(char *) * str_len + 1, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+    if (NULL == new_str) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    loader_strncpy(new_str, sizeof(char *) * str_len + 1, str, str_len);
+    new_str[str_len] = '\0';
+    return prepend_str_to_string_list(inst, string_list, new_str);
+}
+
 void free_string_list(const struct loader_instance *inst, struct loader_string_list *string_list) {
     assert(string_list);
     if (string_list->list) {
@@ -351,6 +386,269 @@ void free_string_list(const struct loader_instance *inst, struct loader_string_l
         loader_instance_heap_free(inst, string_list->list);
     }
     memset(string_list, 0, sizeof(struct loader_string_list));
+}
+
+// In place modify the passed in path to do the following:
+// If HAVE_REALPATH is defined, then this simply calls realpath() so its behavior is defined by realpath()
+// Else:
+// * Windows-only: Replace forward slashes with backwards slashes (platform correct directory separator)
+// * Replace contiguous directory separators with a single directory separator
+// * Replace "/./" separator with "/" (where / is the platform correct directory separator)
+// * Replace "/<directory_name>/../" with just "/" (where / is the platform correct directory separator)
+VkResult normalize_path(const struct loader_instance *inst, char **passed_in_path) {
+    // passed_in_path doesn't point to anything, can't modify inplace so just return
+    if (passed_in_path == NULL) {
+        return VK_SUCCESS;
+    }
+
+// POSIX systems has the realpath() function to do this for us, fallback to basic normalization on other platforms
+#if defined(HAVE_REALPATH)
+    char *path = loader_instance_heap_calloc(inst, PATH_MAX, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+    if (NULL == path) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    char *ret = realpath(*passed_in_path, path);
+    if (NULL == ret) {
+        // error path
+        int error_code = errno;
+        loader_log(inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                   "normalize_path: Call to realpath() failed with error code %d when given the path %s", error_code,
+                   *passed_in_path);
+        loader_instance_heap_free(inst, path);
+    } else {
+        // Replace string pointed to by passed_in_path with the one given to us by realpath()
+        loader_instance_heap_free(inst, *passed_in_path);
+        *passed_in_path = path;
+    }
+    return VK_SUCCESS;
+
+// Windows has GetFullPathName which does essentially the same thing. Note that we call GetFullPathNameA because the path has
+// already been converted from the wide char format when it was initially gotten
+#elif defined(WIN32)
+    VkResult res = VK_SUCCESS;
+    DWORD path_len = (DWORD)strlen(*passed_in_path) + 1;
+    char *path = loader_instance_heap_calloc(inst, (size_t)path_len, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+    if (NULL == path) {
+        res = VK_ERROR_OUT_OF_HOST_MEMORY;
+        goto out;
+    }
+    DWORD actual_len = GetFullPathNameA(*passed_in_path, path_len, path, NULL);
+    if (actual_len == 0) {
+        size_t last_error = (size_t)GetLastError();
+        loader_log(inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                   "normalize_path: Call to GetFullPathNameA() failed with error code %zu when given the path %s", last_error,
+                   *passed_in_path);
+        res = VK_ERROR_INITIALIZATION_FAILED;
+        goto out;
+    }
+
+    // If path_len wasn't big enough, need to realloc and call again
+    // actual_len doesn't include null terminator
+    if (actual_len + 1 > path_len) {
+        path = loader_instance_heap_realloc(inst, path, path_len, actual_len + 1, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+        if (NULL == path) {
+            res = VK_ERROR_OUT_OF_HOST_MEMORY;
+            goto out;
+        }
+        // store the updated allocation size (sans null terminator)
+        path_len = actual_len + 1;
+
+        actual_len = GetFullPathNameA(*passed_in_path, path_len, path, NULL);
+        if (actual_len == 0) {
+            size_t last_error = (size_t)GetLastError();
+            loader_log(inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                       "normalize_path: Call to GetFullPathNameA() failed with error code %zu when given the path %s", last_error,
+                       *passed_in_path);
+            res = VK_ERROR_INITIALIZATION_FAILED;
+            goto out;
+            // actual_len doesn't include null terminator
+        } else if (actual_len + 1 != path_len) {
+            loader_log(inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                       "normalize_path: Call to GetFullPathNameA() with too small of a buffer when given the path %s after the "
+                       "initial call to GetFullPathNameA() failed for the same reason. Buffer size is %zu, actual size is %zu",
+                       *passed_in_path, (size_t)path_len, (size_t)actual_len);
+            res = VK_ERROR_INITIALIZATION_FAILED;
+            goto out;
+        }
+    }
+    // Replace string pointed to by passed_in_path with the one given to us by realpath()
+    loader_instance_heap_free(inst, *passed_in_path);
+    *passed_in_path = path;
+out:
+    if (VK_SUCCESS != res) {
+        if (NULL != path) {
+            loader_instance_heap_free(inst, path);
+        }
+    }
+    return res;
+
+#else
+    (void)inst;
+    char *path = *passed_in_path;
+    size_t path_len = strlen(path) + 1;
+
+    size_t output_index = 0;
+    // Iterate through the string up to the last character, excluding the null terminator
+    for (size_t i = 0; i < path_len - 1; i++) {
+        if (i + 1 < path_len && path[i] == DIRECTORY_SYMBOL && path[i + 1] == DIRECTORY_SYMBOL) {
+            continue;
+        } else if (i + 2 < path_len && path[i] == DIRECTORY_SYMBOL && path[i + 1] == '.' && path[i + 2] == DIRECTORY_SYMBOL) {
+            i += 1;
+        } else {
+            path[output_index++] = path[i];
+        }
+    }
+    // Add null terminator and set the new length
+    path[output_index++] = '\0';
+    path_len = output_index;
+
+    // Loop while there are still ..'s in the path. Easiest implementation resolves them one by one, which requires quadratic
+    // iteration through the string
+    char *directory_stack = loader_stack_alloc(path_len);
+    if (directory_stack == NULL) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    size_t top_of_stack = 0;
+
+    // Iterate through the path, push characters as we see them, if we find a "..", pop off the top of the directory stack until the
+    // current directory is gone.
+    for (size_t i = 0; i < path_len - 1; i++) {
+        // if the next part of path is "/../" we need to pop from the directory stack until we hit the previous directory symbol.
+        if (i + 3 < path_len && path[i] == DIRECTORY_SYMBOL && path[i + 1] == '.' && path[i + 2] == '.' && path_len &&
+            path[i + 3] == DIRECTORY_SYMBOL) {
+            // Pop until we hit the next directory symbol in the stack
+            while (top_of_stack > 0 && directory_stack[top_of_stack - 1] != DIRECTORY_SYMBOL) {
+                top_of_stack--;
+                directory_stack[top_of_stack] = '\0';
+            }
+            // Amend the directory stack so that the top isn't a directory separator
+            if (top_of_stack > 0 && directory_stack[top_of_stack - 1] == DIRECTORY_SYMBOL) {
+                top_of_stack--;
+                directory_stack[top_of_stack] = '\0';
+            }
+            i += 2;  // need to skip the second dot & directory separator
+        } else {
+            // push characters as we come across them
+            directory_stack[top_of_stack++] = path[i];
+        }
+    }
+
+    // Can't forget the null terminator
+    directory_stack[top_of_stack] = '\0';
+
+    // We now have the path without any ..'s, so just copy it out
+    loader_strncpy(path, path_len, directory_stack, path_len);
+    path[top_of_stack] = '\0';
+    path_len = top_of_stack + 1;
+
+    return VK_SUCCESS;
+#endif
+}
+
+// Queries the path to the library that lib_handle & gipa are associated with, allocating a string to hold it and returning it in
+// out_path
+VkResult get_library_path_of_dl_handle(const struct loader_instance *inst, loader_platform_dl_handle lib_handle,
+                                       PFN_vkGetInstanceProcAddr gipa, char **out_path) {
+#if COMMON_UNIX_PLATFORMS
+    (void)lib_handle;
+    Dl_info dl_info = {0};
+    if (dladdr(gipa, &dl_info) != 0 && NULL != dl_info.dli_fname) {
+        return loader_copy_to_new_str(inst, dl_info.dli_fname, out_path);
+    }
+    return VK_SUCCESS;
+
+#elif defined(WIN32)
+    (void)gipa;
+    size_t module_file_name_len = MAX_PATH;  // start with reasonably large buffer
+    wchar_t *buffer_utf16 = (wchar_t *)loader_stack_alloc(module_file_name_len * sizeof(wchar_t));
+    DWORD ret = GetModuleFileNameW(lib_handle, buffer_utf16, (DWORD)module_file_name_len);
+    if (ret == 0) {
+        return VK_SUCCESS;
+    }
+    while (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        module_file_name_len *= 2;
+        buffer_utf16 = (wchar_t *)loader_stack_alloc(module_file_name_len * sizeof(wchar_t));
+        ret = GetModuleFileNameW(lib_handle, buffer_utf16, (DWORD)module_file_name_len);
+        if (ret == 0) {
+            return VK_SUCCESS;
+        }
+    }
+
+    // Need to convert from utf16 to utf8
+    int buffer_utf8_size = WideCharToMultiByte(CP_UTF8, 0, buffer_utf16, -1, NULL, 0, NULL, NULL);
+    if (buffer_utf8_size <= 0) {
+        return VK_SUCCESS;
+    }
+
+    char *buffer_utf8 = loader_instance_heap_calloc(inst, buffer_utf8_size, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+    if (NULL == buffer_utf8) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    if (WideCharToMultiByte(CP_UTF8, 0, buffer_utf16, -1, buffer_utf8, buffer_utf8_size, NULL, NULL) != buffer_utf8_size) {
+        return VK_SUCCESS;
+    }
+
+    // Successfully got the 'real' path to the library.
+    *out_path = buffer_utf8;
+    return VK_SUCCESS;
+
+#else
+    // Do nothing, platform doesn't handle getting the path to a library
+#endif
+}
+
+// Find and replace the path that was loaded using the lib_name path with the real path of the library. This is done to provide
+// accurate logging info for users.
+// This function prints a warning if there is a mismatch between the lib_name path and the real path.
+VkResult fixup_library_binary_path(const struct loader_instance *inst, char **lib_name, loader_platform_dl_handle lib_handle,
+                                   PFN_vkGetInstanceProcAddr gipa) {
+    if (lib_name == NULL) {
+        // do nothing as we got an invalid lib_path pointer
+        return VK_SUCCESS;
+    }
+
+    bool system_path = true;
+    size_t lib_name_len = strlen(*lib_name) + 1;
+    for (size_t i = 0; i < lib_name_len; i++) {
+        if ((*lib_name)[i] == DIRECTORY_SYMBOL) {
+            system_path = false;
+            break;
+        }
+    }
+
+    if (!system_path) {
+        // The OS path we get for a binary is normalized, so we need to normalize the path passed into LoadLibrary/dlopen so that
+        // mismatches are minimized. EG, do not warn when we give dlopen/LoadLibrary "/foo/./bar" but get "/foo/bar" as the loaded
+        // binary path from the OS.
+        VkResult res = normalize_path(inst, lib_name);
+        if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+            return res;
+        }
+    }
+    char *os_determined_lib_name = NULL;
+    VkResult res = get_library_path_of_dl_handle(inst, lib_handle, gipa, &os_determined_lib_name);
+    if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+        return res;
+    }
+
+    if (NULL != os_determined_lib_name) {
+        if (0 != strcmp(os_determined_lib_name, *lib_name)) {
+            // Paths do not match, so we need to replace lib_name with the real path
+            if (!system_path) {
+                // Only warn when the library_path is relative or absolute, not system. EG lib_name had no directory separators
+                loader_log(inst, VULKAN_LOADER_WARN_BIT | VULKAN_LOADER_LAYER_BIT, 0,
+                           "Path to given binary %s was found to differ from OS loaded path %s", *lib_name, os_determined_lib_name);
+            }
+            loader_instance_heap_free(inst, *lib_name);
+            *lib_name = os_determined_lib_name;
+        } else {
+            // Paths match, so just need to free temporary allocation
+            loader_instance_heap_free(inst, os_determined_lib_name);
+        }
+    }
+
+    return res;
 }
 
 // Given string of three part form "maj.min.pat" convert to a vulkan version number.
@@ -1988,6 +2286,11 @@ VkResult loader_scanned_icd_add(const struct loader_instance *inst, struct loade
     }
     icd_tramp_list->count++;
 
+    // Uses OS calls to find the 'true' path to the binary, for more accurate logging later on.
+    res = fixup_library_binary_path(inst, &(new_scanned_icd->lib_name), new_scanned_icd->handle, fp_get_proc_addr);
+    if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+        goto out;
+    }
 out:
     if (res != VK_SUCCESS) {
         if (NULL != handle) {
@@ -2262,7 +2565,7 @@ bool verify_meta_layer_component_layers(const struct loader_instance *inst, size
             }
             if (comp_prop_index != INT32_MAX && already_checked_meta_layers[comp_prop_index]) {
                 loader_log(inst, VULKAN_LOADER_WARN_BIT, 0,
-                           "verify_meta_layer_component_layers: Recursive depedency between Meta-layer %s and  Meta-layer %s.  "
+                           "verify_meta_layer_component_layers: Recursive dependency between Meta-layer %s and  Meta-layer %s.  "
                            "Skipping this layer.",
                            instance_layers->list[prop_index].info.layerName, comp_prop->info.layerName);
                 return false;
@@ -2996,7 +3299,7 @@ void copy_data_file_info(const char *cur_path, const char *relative_path, size_t
         char *cur_write = *output_path;
 
         while (cur_path[start] != '\0') {
-            while (cur_path[start] == PATH_SEPARATOR) {
+            while (cur_path[start] == PATH_SEPARATOR && cur_path[start] != '\0') {
                 start++;
             }
             stop = start;
@@ -3030,10 +3333,8 @@ void copy_data_file_info(const char *cur_path, const char *relative_path, size_t
     }
 }
 
-// If the file found is a manifest file name, add it to the out_files manifest list.
+// If the file found is a manifest file name, add it to the end of out_files manifest list.
 VkResult add_if_manifest_file(const struct loader_instance *inst, const char *file_name, struct loader_string_list *out_files) {
-    VkResult vk_result = VK_SUCCESS;
-
     assert(NULL != file_name && "add_if_manifest_file: Received NULL pointer for file_name");
     assert(NULL != out_files && "add_if_manifest_file: Received NULL pointer for out_files");
 
@@ -3042,15 +3343,26 @@ VkResult add_if_manifest_file(const struct loader_instance *inst, const char *fi
     const char *name_suffix = file_name + name_len - 5;
     if (!is_json(name_suffix, name_len)) {
         // Use incomplete to indicate invalid name, but to keep going.
-        vk_result = VK_INCOMPLETE;
-        goto out;
+        return VK_INCOMPLETE;
     }
 
-    vk_result = copy_str_to_string_list(inst, out_files, file_name, name_len);
+    return copy_str_to_string_list(inst, out_files, file_name, name_len);
+}
 
-out:
+// If the file found is a manifest file name, add it to the start of the out_files manifest list.
+VkResult prepend_if_manifest_file(const struct loader_instance *inst, const char *file_name, struct loader_string_list *out_files) {
+    assert(NULL != file_name && "prepend_if_manifest_file: Received NULL pointer for file_name");
+    assert(NULL != out_files && "prepend_if_manifest_file: Received NULL pointer for out_files");
 
-    return vk_result;
+    // Look for files ending with ".json" suffix
+    size_t name_len = strlen(file_name);
+    const char *name_suffix = file_name + name_len - 5;
+    if (!is_json(name_suffix, name_len)) {
+        // Use incomplete to indicate invalid name, but to keep going.
+        return VK_INCOMPLETE;
+    }
+
+    return copy_str_to_start_of_string_list(inst, out_files, file_name, name_len);
 }
 
 // Add any files found in the search_path.  If any path in the search path points to a specific JSON, attempt to
@@ -3242,12 +3554,14 @@ VkResult read_data_files_in_search_paths(const struct loader_instance *inst, enu
 
     switch (manifest_type) {
         case LOADER_DATA_FILE_MANIFEST_DRIVER:
-            override_env = loader_secure_getenv(VK_DRIVER_FILES_ENV_VAR, inst);
-            if (NULL == override_env) {
-                // Not there, so fall back to the old name
-                override_env = loader_secure_getenv(VK_ICD_FILENAMES_ENV_VAR, inst);
+            if (loader_settings_should_use_driver_environment_variables(inst)) {
+                override_env = loader_secure_getenv(VK_DRIVER_FILES_ENV_VAR, inst);
+                if (NULL == override_env) {
+                    // Not there, so fall back to the old name
+                    override_env = loader_secure_getenv(VK_ICD_FILENAMES_ENV_VAR, inst);
+                }
+                additional_env = loader_secure_getenv(VK_ADDITIONAL_DRIVER_FILES_ENV_VAR, inst);
             }
-            additional_env = loader_secure_getenv(VK_ADDITIONAL_DRIVER_FILES_ENV_VAR, inst);
 #if COMMON_UNIX_PLATFORMS
             relative_location = VK_DRIVERS_INFO_RELATIVE_DIR;
 #endif
@@ -3795,18 +4109,26 @@ VkResult loader_icd_scan(const struct loader_instance *inst, struct loader_icd_t
     }
 #endif  // VULKANSC
 
-    // Parse the filter environment variables to determine if we have any special behavior
-    res = parse_generic_filter_environment_var(inst, VK_DRIVERS_SELECT_ENV_VAR, &select_filter);
-    if (VK_SUCCESS != res) {
-        goto out;
-    }
-    res = parse_generic_filter_environment_var(inst, VK_DRIVERS_DISABLE_ENV_VAR, &disable_filter);
-    if (VK_SUCCESS != res) {
-        goto out;
+    if (loader_settings_should_use_driver_environment_variables(inst)) {
+        // Parse the filter environment variables to determine if we have any special behavior
+        res = parse_generic_filter_environment_var(inst, VK_DRIVERS_SELECT_ENV_VAR, &select_filter);
+        if (VK_SUCCESS != res) {
+            goto out;
+        }
+        res = parse_generic_filter_environment_var(inst, VK_DRIVERS_DISABLE_ENV_VAR, &disable_filter);
+        if (VK_SUCCESS != res) {
+            goto out;
+        }
     }
 
     // Get a list of manifest files for ICDs
     res = loader_get_data_files(inst, LOADER_DATA_FILE_MANIFEST_DRIVER, NULL, &manifest_files);
+    if (VK_SUCCESS != res) {
+        goto out;
+    }
+
+    // Add any drivers provided by the loader settings file
+    res = loader_settings_get_additional_driver_files(inst, &manifest_files);
     if (VK_SUCCESS != res) {
         goto out;
     }
@@ -3965,9 +4287,13 @@ VkResult get_override_layer_override_paths(struct loader_instance *inst, struct 
         for (uint32_t j = 0; j < prop->override_paths.count; j++) {
             copy_data_file_info(prop->override_paths.list[j], NULL, 0, &cur_write_ptr);
         }
+
+        // Subtract one from cur_write_ptr only if something was written so we can set the null terminator
+        if (*override_paths < cur_write_ptr) {
+            --cur_write_ptr;
+            assert(cur_write_ptr - (*override_paths) < (ptrdiff_t)override_path_size);
+        }
         // Remove the last path separator
-        --cur_write_ptr;
-        assert(cur_write_ptr - (*override_paths) < (ptrdiff_t)override_path_size);
         *cur_write_ptr = '\0';
         loader_log(inst, VULKAN_LOADER_WARN_BIT | VULKAN_LOADER_LAYER_BIT, 0, "Override layer has override paths set to %s",
                    *override_paths);
@@ -4357,15 +4683,20 @@ loader_platform_dl_handle loader_open_layer_file(const struct loader_instance *i
 
 // Go through the search_list and find any layers which match type. If layer
 // type match is found in then add it to ext_list.
-VkResult loader_add_implicit_layers(const struct loader_instance *inst, const struct loader_envvar_all_filters *filters,
-                                    struct loader_pointer_layer_list *target_list,
+// If the layer name is in enabled_layers_env, do not add it to the list, that way it can be ordered alongside the other env-var
+// enabled layers
+VkResult loader_add_implicit_layers(const struct loader_instance *inst, const char *enabled_layers_env,
+                                    const struct loader_envvar_all_filters *filters, struct loader_pointer_layer_list *target_list,
                                     struct loader_pointer_layer_list *expanded_target_list,
                                     const struct loader_layer_list *source_list) {
     for (uint32_t src_layer = 0; src_layer < source_list->count; src_layer++) {
         struct loader_layer_properties *prop = &source_list->list[src_layer];
         if (0 == (prop->type_flags & VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER)) {
-            VkResult result = loader_add_implicit_layer(inst, prop, filters, target_list, expanded_target_list, source_list);
-            if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
+            // If this layer appears in the enabled_layers_env, don't add it. We will let loader_add_environment_layers handle it
+            if (NULL == enabled_layers_env || NULL == strstr(enabled_layers_env, prop->info.layerName)) {
+                VkResult result = loader_add_implicit_layer(inst, prop, filters, target_list, expanded_target_list, source_list);
+                if (result == VK_ERROR_OUT_OF_HOST_MEMORY) return result;
+            }
         }
     }
     return VK_SUCCESS;
@@ -4391,6 +4722,7 @@ VkResult loader_enable_instance_layers(struct loader_instance *inst, const VkIns
                                        const struct loader_layer_list *instance_layers,
                                        const struct loader_envvar_all_filters *layer_filters) {
     VkResult res = VK_SUCCESS;
+    char *enabled_layers_env = NULL;
 
     assert(inst && "Cannot have null instance");
 
@@ -4417,15 +4749,17 @@ VkResult loader_enable_instance_layers(struct loader_instance *inst, const VkIns
         goto out;
     }
 
+    enabled_layers_env = loader_getenv(ENABLED_LAYERS_ENV, inst);
+
     // Add any implicit layers first
-    res = loader_add_implicit_layers(inst, layer_filters, &inst->app_activated_layer_list, &inst->expanded_activated_layer_list,
-                                     instance_layers);
+    res = loader_add_implicit_layers(inst, enabled_layers_env, layer_filters, &inst->app_activated_layer_list,
+                                     &inst->expanded_activated_layer_list, instance_layers);
     if (res != VK_SUCCESS) {
         goto out;
     }
 
     // Add any layers specified via environment variable next
-    res = loader_add_environment_layers(inst, VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER, layer_filters, &inst->app_activated_layer_list,
+    res = loader_add_environment_layers(inst, enabled_layers_env, layer_filters, &inst->app_activated_layer_list,
                                         &inst->expanded_activated_layer_list, instance_layers);
     if (res != VK_SUCCESS) {
         goto out;
@@ -4437,6 +4771,10 @@ VkResult loader_enable_instance_layers(struct loader_instance *inst, const VkIns
 
     warn_if_layers_are_older_than_application(inst);
 out:
+    if (enabled_layers_env != NULL) {
+        loader_free_getenv(enabled_layers_env, inst);
+    }
+
     return res;
 }
 
@@ -4794,6 +5132,11 @@ VkResult loader_create_instance_chain(const VkInstanceCreateInfo *pCreateInfo, c
             }
 
             chain_info.u.pLayerInfo = &layer_instance_link_info[num_activated_layers];
+
+            res = fixup_library_binary_path(inst, &(layer_prop->lib_name), layer_prop->lib_handle, cur_gipa);
+            if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+                return res;
+            }
 
             activated_layers[num_activated_layers].name = layer_prop->info.layerName;
             activated_layers[num_activated_layers].manifest = layer_prop->manifest_file_name;
@@ -5279,6 +5622,7 @@ VkResult loader_validate_instance_extensions(struct loader_instance *inst, const
                                              const VkInstanceCreateInfo *pCreateInfo) {
     VkExtensionProperties *extension_prop;
     char *env_value;
+    char *enabled_layers_env = NULL;
     bool check_if_known = true;
     VkResult res = VK_SUCCESS;
 
@@ -5308,14 +5652,17 @@ VkResult loader_validate_instance_extensions(struct loader_instance *inst, const
             goto out;
         }
     } else {
+        enabled_layers_env = loader_getenv(ENABLED_LAYERS_ENV, inst);
+
         // Build the lists of active layers (including meta layers) and expanded layers (with meta layers resolved to their
         // components)
-        res = loader_add_implicit_layers(inst, layer_filters, &active_layers, &expanded_layers, instance_layers);
+        res =
+            loader_add_implicit_layers(inst, enabled_layers_env, layer_filters, &active_layers, &expanded_layers, instance_layers);
         if (res != VK_SUCCESS) {
             goto out;
         }
-        res = loader_add_environment_layers(inst, VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER, layer_filters, &active_layers,
-                                            &expanded_layers, instance_layers);
+        res = loader_add_environment_layers(inst, enabled_layers_env, layer_filters, &active_layers, &expanded_layers,
+                                            instance_layers);
         if (res != VK_SUCCESS) {
             goto out;
         }
@@ -5401,6 +5748,10 @@ VkResult loader_validate_instance_extensions(struct loader_instance *inst, const
 out:
     loader_destroy_pointer_layer_list(inst, &active_layers);
     loader_destroy_pointer_layer_list(inst, &expanded_layers);
+    if (enabled_layers_env != NULL) {
+        loader_free_getenv(enabled_layers_env, inst);
+    }
+
     return res;
 }
 
@@ -5457,10 +5808,10 @@ VkResult loader_validate_device_extensions(struct loader_instance *this_instance
 // All named terminator_<Vulkan API name>
 VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateInfo *pCreateInfo,
                                                          const VkAllocationCallbacks *pAllocator, VkInstance *pInstance) {
-    struct loader_icd_term *icd_term;
-    VkExtensionProperties *prop;
+    struct loader_icd_term *icd_term = NULL;
+    VkExtensionProperties *prop = NULL;
     char **filtered_extension_names = NULL;
-    VkInstanceCreateInfo icd_create_info;
+    VkInstanceCreateInfo icd_create_info = {0};
     VkResult res = VK_SUCCESS;
     bool one_icd_successful = false;
 
@@ -5678,7 +6029,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
         // API version 1.0 to a Vulkan 1.0 ICD. This does not apply to Vulkan SC as Vulkan
         // SC 1.0 is based on Vulkan 1.2 and does not need this compatibility workaround.
         // Create an instance, substituting the version to 1.0 if necessary
-        VkApplicationInfo icd_app_info;
+        VkApplicationInfo icd_app_info = {0};
         const uint32_t api_variant = 0;
         const uint32_t api_version_1_0 = VK_API_VERSION_1_0;
         uint32_t icd_version_nopatch =
@@ -5696,6 +6047,27 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateInstance(const VkInstanceCreateI
             icd_create_info.pApplicationInfo = &icd_app_info;
         }
 #endif  // VULKANSC
+
+#ifndef VULKANSC
+        // If the settings file has device_configurations, we need to raise the ApiVersion drivers use to 1.1 if the driver
+        // supports 1.1 or higher. This allows 1.0 apps to use the device_configurations without the app having to set its own
+        // ApiVersion to 1.1 on its own.
+        if (ptr_instance->settings.settings_active && ptr_instance->settings.device_configuration_count > 0 &&
+            icd_version >= VK_API_VERSION_1_1 && requested_version < VK_API_VERSION_1_1) {
+            if (NULL != pCreateInfo->pApplicationInfo) {
+                memcpy(&icd_app_info, pCreateInfo->pApplicationInfo, sizeof(VkApplicationInfo));
+            }
+            icd_app_info.apiVersion = VK_API_VERSION_1_1;
+            icd_create_info.pApplicationInfo = &icd_app_info;
+
+            loader_log(
+                ptr_instance, VULKAN_LOADER_INFO_BIT, 0,
+                "terminator_CreateInstance: Raising the VkApplicationInfo::apiVersion from 1.0 to 1.1 on driver \"%s\" so that "
+                "the loader settings file is able to use this driver in the device_configuration selection logic.",
+                icd_term->scanned_icd->lib_name);
+        }
+#endif  // VULKANSC
+
         icd_result =
             ptr_instance->icd_tramp_list.scanned_list[i].CreateInstance(&icd_create_info, pAllocator, &(icd_term->instance));
         if (VK_ERROR_OUT_OF_HOST_MEMORY == icd_result) {
@@ -6838,26 +7210,223 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumeratePhysicalDevices(VkInstance in
         goto out;
     }
 
-    uint32_t copy_count = inst->phys_dev_count_term;
-    if (NULL != pPhysicalDevices) {
-        if (copy_count > *pPhysicalDeviceCount) {
-            copy_count = *pPhysicalDeviceCount;
-            loader_log(inst, VULKAN_LOADER_INFO_BIT, 0,
-                       "terminator_EnumeratePhysicalDevices : Trimming device count from %d to %d.", inst->phys_dev_count_term,
-                       copy_count);
-            res = VK_INCOMPLETE;
+    if (inst->settings.settings_active && inst->settings.device_configuration_count > 0) {
+        // Use settings file device_configurations if present
+        if (NULL == pPhysicalDevices) {
+            // take the minimum of the settings configurations count and number of terminators
+            *pPhysicalDeviceCount = (inst->settings.device_configuration_count < inst->phys_dev_count_term)
+                                        ? inst->settings.device_configuration_count
+                                        : inst->phys_dev_count_term;
+        } else {
+            res = loader_apply_settings_device_configurations(inst, pPhysicalDeviceCount, pPhysicalDevices);
+        }
+    } else {
+        // Otherwise just copy the physical devices up normally and pass it up the chain
+        uint32_t copy_count = inst->phys_dev_count_term;
+        if (NULL != pPhysicalDevices) {
+            if (copy_count > *pPhysicalDeviceCount) {
+                copy_count = *pPhysicalDeviceCount;
+                loader_log(inst, VULKAN_LOADER_INFO_BIT, 0,
+                           "terminator_EnumeratePhysicalDevices : Trimming device count from %d to %d.", inst->phys_dev_count_term,
+                           copy_count);
+                res = VK_INCOMPLETE;
+            }
+
+            for (uint32_t i = 0; i < copy_count; i++) {
+                pPhysicalDevices[i] = (VkPhysicalDevice)inst->phys_devs_term[i];
+            }
         }
 
-        for (uint32_t i = 0; i < copy_count; i++) {
-            pPhysicalDevices[i] = (VkPhysicalDevice)inst->phys_devs_term[i];
-        }
+        *pPhysicalDeviceCount = copy_count;
     }
-
-    *pPhysicalDeviceCount = copy_count;
 
 out:
 
     return res;
+}
+
+VkResult check_physical_device_extensions_for_driver_properties_extension(struct loader_physical_device_term *phys_dev_term,
+                                                                          bool *supports_driver_properties) {
+    *supports_driver_properties = false;
+    uint32_t extension_count = 0;
+    VkResult res = phys_dev_term->this_icd_term->dispatch.EnumerateDeviceExtensionProperties(phys_dev_term->phys_dev, NULL,
+                                                                                             &extension_count, NULL);
+    if (res != VK_SUCCESS || extension_count == 0) {
+        return VK_SUCCESS;
+    }
+    VkExtensionProperties *extension_data = loader_stack_alloc(sizeof(VkExtensionProperties) * extension_count);
+    if (NULL == extension_data) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    res = phys_dev_term->this_icd_term->dispatch.EnumerateDeviceExtensionProperties(phys_dev_term->phys_dev, NULL, &extension_count,
+                                                                                    extension_data);
+    if (res != VK_SUCCESS) {
+        return VK_SUCCESS;
+    }
+    for (uint32_t j = 0; j < extension_count; j++) {
+        if (!strcmp(extension_data[j].extensionName, VK_KHR_DRIVER_PROPERTIES_EXTENSION_NAME)) {
+            *supports_driver_properties = true;
+            return VK_SUCCESS;
+        }
+    }
+    return VK_SUCCESS;
+}
+
+// Helper struct containing the relevant details of a VkPhysicalDevice necessary for applying the loader settings device
+// configurations.
+typedef struct physical_device_configuration_details {
+    bool pd_was_added;
+    bool pd_supports_vulkan_11;
+    bool pd_supports_driver_properties;
+    VkPhysicalDeviceProperties properties;
+    VkPhysicalDeviceIDProperties device_id_properties;
+    VkPhysicalDeviceDriverProperties driver_properties;
+
+} physical_device_configuration_details;
+
+// Apply the device_configurations in the settings file to the output VkPhysicalDeviceList.
+// That means looking up each VkPhysicalDevice's deviceUUID, filtering using that, and putting them in the order of
+// device_configurations in the settings file.
+VkResult loader_apply_settings_device_configurations(struct loader_instance *inst, uint32_t *pPhysicalDeviceCount,
+                                                     VkPhysicalDevice *pPhysicalDevices) {
+    loader_log(inst, VULKAN_LOADER_INFO_BIT, 0,
+               "Reordering the output of vkEnumeratePhysicalDevices to match the loader settings device configurations list");
+
+    physical_device_configuration_details *pd_details =
+        loader_stack_alloc(inst->phys_dev_count_term * sizeof(physical_device_configuration_details));
+    if (NULL == pd_details) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    memset(pd_details, 0, inst->phys_dev_count_term * sizeof(physical_device_configuration_details));
+
+    for (uint32_t i = 0; i < inst->phys_dev_count_term; i++) {
+        struct loader_physical_device_term *phys_dev_term = inst->phys_devs_term[i];
+
+        phys_dev_term->this_icd_term->dispatch.GetPhysicalDeviceProperties(phys_dev_term->phys_dev, &pd_details[i].properties);
+        if (pd_details[i].properties.apiVersion < VK_API_VERSION_1_1) {
+            // Device isn't eligible for sorting
+            continue;
+        }
+        pd_details[i].pd_supports_vulkan_11 = true;
+        if (pd_details[i].properties.apiVersion >= VK_API_VERSION_1_2) {
+            pd_details[i].pd_supports_driver_properties = true;
+        }
+
+        // If this physical device isn't 1.2, then we need to check if it supports VK_KHR_driver_properties
+        if (!pd_details[i].pd_supports_driver_properties) {
+            VkResult res = check_physical_device_extensions_for_driver_properties_extension(
+                phys_dev_term, &pd_details[i].pd_supports_driver_properties);
+            if (res == VK_ERROR_OUT_OF_HOST_MEMORY) {
+                return res;
+            }
+        }
+
+        pd_details[i].device_id_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+        pd_details[i].driver_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+        if (pd_details[i].pd_supports_driver_properties) {
+            pd_details[i].device_id_properties.pNext = (void *)&pd_details[i].driver_properties;
+        }
+
+        VkPhysicalDeviceProperties2 props2 = {0};
+        props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        props2.pNext = (void *)&pd_details[i].device_id_properties;
+        if (phys_dev_term->this_icd_term->dispatch.GetPhysicalDeviceProperties2) {
+            phys_dev_term->this_icd_term->dispatch.GetPhysicalDeviceProperties2(phys_dev_term->phys_dev, &props2);
+        }
+    }
+
+    // Loop over the setting's device configurations, find each VkPhysicalDevice which matches the deviceUUID given, add to the
+    // pPhysicalDevices output list.
+    uint32_t written_output_index = 0;
+
+    for (uint32_t i = 0; i < inst->settings.device_configuration_count; i++) {
+        uint8_t *current_deviceUUID = inst->settings.device_configurations[i].deviceUUID;
+        uint8_t *current_driverUUID = inst->settings.device_configurations[i].driverUUID;
+        bool configuration_found = false;
+        for (uint32_t j = 0; j < inst->phys_dev_count_term; j++) {
+            // Don't compare deviceUUID's if they have nothing, since we require deviceUUID's to effectively sort them.
+            if (!pd_details[j].pd_supports_vulkan_11) {
+                continue;
+            }
+            if (memcmp(current_deviceUUID, pd_details[j].device_id_properties.deviceUUID, sizeof(uint8_t) * VK_UUID_SIZE) == 0 &&
+                memcmp(current_driverUUID, pd_details[j].device_id_properties.driverUUID, sizeof(uint8_t) * VK_UUID_SIZE) == 0 &&
+                inst->settings.device_configurations[i].driverVersion == pd_details[j].properties.driverVersion) {
+                configuration_found = true;
+                // Catch when there are more device_configurations than space available in the output
+                if (written_output_index >= *pPhysicalDeviceCount) {
+                    *pPhysicalDeviceCount = written_output_index;  // write out how many were written
+                    return VK_INCOMPLETE;
+                }
+                if (pd_details[j].pd_supports_driver_properties) {
+                    loader_log(inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                               "pPhysicalDevices array index %d is set to \"%s\" (%s, version %d) ", written_output_index,
+                               pd_details[j].properties.deviceName, pd_details[i].driver_properties.driverName,
+                               pd_details[i].properties.driverVersion);
+                } else {
+                    loader_log(inst, VULKAN_LOADER_DEBUG_BIT, 0,
+                               "pPhysicalDevices array index %d is set to \"%s\" (driver version %d) ", written_output_index,
+                               pd_details[j].properties.deviceName, pd_details[i].properties.driverVersion);
+                }
+                pPhysicalDevices[written_output_index++] = (VkPhysicalDevice)inst->phys_devs_term[j];
+                pd_details[j].pd_was_added = true;
+                break;
+            }
+        }
+        if (!configuration_found) {
+            char device_uuid_str[UUID_STR_LEN] = {0};
+            loader_log_generate_uuid_string(current_deviceUUID, device_uuid_str);
+            char driver_uuid_str[UUID_STR_LEN] = {0};
+            loader_log_generate_uuid_string(current_deviceUUID, driver_uuid_str);
+
+            // Log that this configuration was missing.
+            if (inst->settings.device_configurations[i].deviceName[0] != '\0' &&
+                inst->settings.device_configurations[i].driverName[0] != '\0') {
+                loader_log(
+                    inst, VULKAN_LOADER_WARN_BIT, 0,
+                    "loader_apply_settings_device_configurations: settings file contained device_configuration which does not "
+                    "appear in the enumerated VkPhysicalDevices. Missing VkPhysicalDevice with deviceName: \"%s\", "
+                    "deviceUUID: %s, driverName: %s, driverUUID: %s, driverVersion: %d",
+                    inst->settings.device_configurations[i].deviceName, device_uuid_str,
+                    inst->settings.device_configurations[i].driverName, driver_uuid_str,
+                    inst->settings.device_configurations[i].driverVersion);
+            } else if (inst->settings.device_configurations[i].deviceName[0] != '\0') {
+                loader_log(
+                    inst, VULKAN_LOADER_WARN_BIT, 0,
+                    "loader_apply_settings_device_configurations: settings file contained device_configuration which does not "
+                    "appear in the enumerated VkPhysicalDevices. Missing VkPhysicalDevice with deviceName: \"%s\", "
+                    "deviceUUID: %s, driverUUID: %s, driverVersion: %d",
+                    inst->settings.device_configurations[i].deviceName, device_uuid_str, driver_uuid_str,
+                    inst->settings.device_configurations[i].driverVersion);
+            } else {
+                loader_log(
+                    inst, VULKAN_LOADER_WARN_BIT, 0,
+                    "loader_apply_settings_device_configurations: settings file contained device_configuration which does not "
+                    "appear in the enumerated VkPhysicalDevices. Missing VkPhysicalDevice with deviceUUID: "
+                    "%s, driverUUID: %s, driverVersion: %d",
+                    device_uuid_str, driver_uuid_str, inst->settings.device_configurations[i].driverVersion);
+            }
+        }
+    }
+
+    for (uint32_t j = 0; j < inst->phys_dev_count_term; j++) {
+        if (!pd_details[j].pd_was_added) {
+            loader_log(inst, VULKAN_LOADER_INFO_BIT, 0,
+                       "VkPhysicalDevice \"%s\" did not appear in the settings file device configurations list, so was not added "
+                       "to the pPhysicalDevices array",
+                       pd_details[j].properties.deviceName);
+        }
+    }
+
+    if (written_output_index == 0) {
+        loader_log(inst, VULKAN_LOADER_WARN_BIT, 0,
+                   "loader_apply_settings_device_configurations: None of the settings file device configurations had "
+                   "deviceUUID's that corresponded to enumerated VkPhysicalDevices. Returning VK_ERROR_INITIALIZATION_FAILED");
+        return VK_ERROR_INITIALIZATION_FAILED;
+    }
+
+    *pPhysicalDeviceCount = written_output_index;  // update with how many were written
+    return VK_SUCCESS;
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL terminator_EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice,

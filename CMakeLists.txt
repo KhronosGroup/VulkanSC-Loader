@@ -22,9 +22,9 @@ cmake_minimum_required(VERSION 3.22.1)
 set(VULKANSC ON CACHE BOOL "User defined variable for VULKANSC mode to be passed in through cmake command line e.g. -DVULKANSC=ON")
 
 if(VULKANSC)
-    project(VULKAN_LOADER VERSION 1.0.19 LANGUAGES C)
+    project(VULKAN_LOADER VERSION 1.0.19 LANGUAGES C) # vulkansc
 else()
-    project(VULKAN_LOADER VERSION 1.4.319 LANGUAGES C)
+    project(VULKAN_LOADER VERSION 1.4.330 LANGUAGES C) # vulkan
 endif()
 
 option(CODE_COVERAGE "Enable Code Coverage" OFF)
@@ -65,7 +65,7 @@ if(WIN32)
     set(BUILD_DLL_VERSIONINFO "" CACHE STRING "Set the version to be used in the loader.rc file. Default value is the currently generated header version")
 endif()
 
-find_package(VulkanHeaders CONFIG QUIET)
+find_package(VulkanHeaders ${PROJECT_VERSION} CONFIG QUIET)
 
 include(GNUInstallDirs)
 
@@ -123,7 +123,7 @@ elseif(APPLE)
             target_compile_definitions(platform_wsi INTERFACE VK_USE_PLATFORM_MACOS_MVK)
         endif()
     endif()
-elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU|CYGWIN")
     if(VULKANSC)
         option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" OFF)
         option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" OFF)
@@ -269,7 +269,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" A
     # Prevent <windows.h> from polluting the code. guards against things like MIN and MAX
     target_compile_definitions(loader_common_options INTERFACE WIN32_LEAN_AND_MEAN)
 
-    # For some reason Advapi32.lib needs to be explicitely linked to when building for Arm (32 bit) on Windows, but isn't required on any other architecture
+    # For some reason Advapi32.lib needs to be explicitly linked to when building for Arm (32 bit) on Windows, but isn't required on any other architecture
     if (SYSTEM_PROCESSOR MATCHES "arm" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
         target_link_libraries(loader_common_options INTERFACE Advapi32)
     endif()
@@ -280,7 +280,7 @@ endif()
 target_compile_definitions(loader_common_options INTERFACE $<$<CONFIG:DEBUG>:DEBUG;GIT_BRANCH_NAME="${GIT_BRANCH_NAME}";GIT_TAG_INFO="${GIT_TAG_INFO}">)
 
 if (NOT (WIN32 OR APPLE))
-    # Check for the existance of the secure_getenv or __secure_getenv commands
+    # Check for the existence of the secure_getenv or __secure_getenv commands
     include(CheckFunctionExists)
 
     check_function_exists(secure_getenv HAVE_SECURE_GETENV)
@@ -293,7 +293,20 @@ if (NOT (WIN32 OR APPLE))
         target_compile_definitions(loader_common_options INTERFACE HAVE___SECURE_GETENV)
     endif()
     if (NOT (HAVE_SECURE_GETENV OR HAVE___SECURE_GETENV))
-        message(WARNING "Using non-secure environmental lookups. This loader will not properly disable environent variables when run with elevated permissions.")
+        message(WARNING "Using non-secure environmental lookups. This loader will not properly disable environment variables when run with elevated permissions.")
+    endif()
+endif()
+
+if (NOT (WIN32))
+    # Check for the existence of the realpath() command
+    include(CheckFunctionExists)
+
+    check_function_exists(realpath HAVE_REALPATH)
+
+    if (HAVE_REALPATH)
+        target_compile_definitions(loader_common_options INTERFACE HAVE_REALPATH)
+    else()
+        message(INFO "Platform support for realpath() is missing. Using fallback path normalization implementation.")
     endif()
 endif()
 

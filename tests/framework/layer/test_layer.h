@@ -29,17 +29,21 @@
 
 #pragma once
 
-#include "test_util.h"
-
 #include <functional>
+#include <filesystem>
 
-#include "layer/layer_util.h"
+#include <vulkan/vulkan_core.h>
+#include <vulkan/vk_layer.h>
 
 #ifdef VULKANSC
 #include "loader/generated-vksc/vk_layer_dispatch_table.h"
 #else
 #include "loader/generated/vk_layer_dispatch_table.h"
 #endif  // VULKANSC
+
+#include "util/functions.h"
+
+#include "layer_util.h"
 
 /*
 Interface Version 0
