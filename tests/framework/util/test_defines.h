@@ -44,6 +44,12 @@
 #define TESTING_COMMON_UNIX_PLATFORMS 0
 #endif
 
+#ifdef VULKANSC
+#define TESTING_VULKAN_DIR "vulkansc/"
+#else
+#define TESTING_VULKAN_DIR "vulkan/"
+#endif  // VULKANSC
+
 #include FRAMEWORK_CONFIG_HEADER
 
 enum class ManifestCategory { implicit_layer, explicit_layer, icd, settings };
