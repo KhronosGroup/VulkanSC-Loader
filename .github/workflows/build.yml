@@ -45,7 +45,7 @@ jobs:
                 config: [ Debug, Release ]
                 os: [ ubuntu-22.04, ubuntu-24.04 ]
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -78,7 +78,7 @@ jobs:
       runs-on: ubuntu-latest
       timeout-minutes: 30
       steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v6.0.2
         - run: scripts/update_deps.py --dir ext --no-build
         - run: scripts/generate_source.py --verify ext/Vulkan-Headers/registry/
 
@@ -87,7 +87,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 30
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - run: sudo apt update
             - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
             - run: |
@@ -111,7 +111,7 @@ jobs:
             matrix:
                 config: [ Debug, Release ]
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -147,7 +147,7 @@ jobs:
         runs-on: ubuntu-24.04
         timeout-minutes: 30
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -182,7 +182,7 @@ jobs:
         runs-on: ubuntu-24.04-arm
         timeout-minutes: 30
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -213,7 +213,7 @@ jobs:
                 arch: [ Win32, x64 ]
                 config: [ Debug, Release ]
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - run: |
                 cmake -S. -B build `
                 -D BUILD_TESTS=ON `
@@ -234,7 +234,7 @@ jobs:
             matrix:
                 arch: [ Win32, x64 ]
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - run: |
                 cmake -S. -B build `
                 -D BUILD_TESTS=ON `
@@ -257,7 +257,7 @@ jobs:
                 compiler: [ clang, clang-cl ]
                 config: [ Debug, Release ]
         steps:
-          - uses: actions/checkout@v5
+          - uses: actions/checkout@v6.0.2
           - uses: ilammy/msvc-dev-cmd@v1
           - run: |
               cmake -S. -B build `
@@ -282,7 +282,7 @@ jobs:
             run:
                 shell: bash
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -310,7 +310,7 @@ jobs:
             run:
                 shell: bash
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -333,7 +333,7 @@ jobs:
             run:
                 shell: bash
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - uses: actions/setup-python@v6
               with:
                 python-version: '3.11'
@@ -356,7 +356,7 @@ jobs:
             run:
                 shell: bash
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6.0.2
             - run: |
                 cmake -S. -B build \
                 -D UPDATE_DEPS=ON \

@@ -63,6 +63,12 @@
 
 enum class GpuType { unspecified, integrated, discrete, external };
 
+struct TempFile {
+    explicit TempFile(std::filesystem::path filename) : filename(filename) {}
+    ~TempFile() { std::filesystem::remove(filename); }
+    std::filesystem::path filename;
+};
+
 #if defined(_WIN32)
 #ifdef VULKANSC
 #define VK_VARIANT_REG_STR "SC"
@@ -236,6 +242,8 @@ struct PlatformShim {
     std::string bundle_contents;
 #endif
 #endif
+    std::vector<uint8_t> fuzz_data;
+    std::vector<TempFile> temp_fuzz_files;
     bool is_finished_setup = false;
     bool is_during_destruction = false;
 };

@@ -41,7 +41,7 @@ T get_bad_handle() {
 
 TEST(LoaderHandleValidTests, BadInstEnumPhysDevices) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.CheckCreate();
@@ -55,7 +55,7 @@ TEST(LoaderHandleValidTests, BadInstEnumPhysDevices) {
 
 TEST(LoaderHandleValidTests, BadInstGetInstProcAddr) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.CheckCreate();
@@ -67,7 +67,7 @@ TEST(LoaderHandleValidTests, BadInstGetInstProcAddr) {
 
 TEST(LoaderHandleValidTests, BadInstDestroyInstance) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.CheckCreate();
@@ -82,9 +82,7 @@ TEST(LoaderHandleValidTests, BadInstDestroySurface) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_EXT_headless_surface"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extension(first_ext.extensionName.c_str());
@@ -100,9 +98,7 @@ TEST(LoaderHandleValidTests, BadInstCreateHeadlessSurf) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_EXT_headless_surface"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extensions({first_ext.extensionName.c_str(), second_ext.extensionName.c_str()});
@@ -122,9 +118,7 @@ TEST(LoaderHandleValidTests, BadInstCreateDisplayPlaneSurf) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_KHR_display"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extensions({first_ext.extensionName.c_str(), second_ext.extensionName.c_str()});
@@ -143,7 +137,7 @@ TEST(LoaderHandleValidTests, BadInstCreateDisplayPlaneSurf) {
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateAndroidSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -163,7 +157,7 @@ TEST(LoaderHandleValidTests, BadInstCreateAndroidSurf) {
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
 TEST(LoaderHandleValidTests, BadInstCreateDirectFBSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -183,7 +177,7 @@ TEST(LoaderHandleValidTests, BadInstCreateDirectFBSurf) {
 #if defined(VK_USE_PLATFORM_FUCHSIA)
 TEST(LoaderHandleValidTests, BadInstCreateFuchsiaSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -203,7 +197,7 @@ TEST(LoaderHandleValidTests, BadInstCreateFuchsiaSurf) {
 #if defined(VK_USE_PLATFORM_GGP)
 TEST(LoaderHandleValidTests, BadInstCreateGGPSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -224,7 +218,7 @@ TEST(LoaderHandleValidTests, BadInstCreateGGPSurf) {
 #if defined(VK_USE_PLATFORM_IOS_MVK)
 TEST(LoaderHandleValidTests, BadInstCreateIOSSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -244,7 +238,7 @@ TEST(LoaderHandleValidTests, BadInstCreateIOSSurf) {
 #if defined(VK_USE_PLATFORM_MACOS_MVK)
 TEST(LoaderHandleValidTests, BadInstCreateMacOSSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -264,7 +258,7 @@ TEST(LoaderHandleValidTests, BadInstCreateMacOSSurf) {
 #if defined(VK_USE_PLATFORM_METAL_EXT)
 TEST(LoaderHandleValidTests, BadInstCreateMetalSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -284,7 +278,7 @@ TEST(LoaderHandleValidTests, BadInstCreateMetalSurf) {
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
 TEST(LoaderHandleValidTests, BadInstCreateQNXSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -305,7 +299,7 @@ TEST(LoaderHandleValidTests, BadInstCreateQNXSurf) {
 #if defined(VK_USE_PLATFORM_VI_NN)
 TEST(LoaderHandleValidTests, BadInstCreateViNNSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -326,7 +320,7 @@ TEST(LoaderHandleValidTests, BadInstCreateViNNSurf) {
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateWaylandSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -348,7 +342,7 @@ TEST(LoaderHandleValidTests, BadInstCreateWaylandSurf) {
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateWin32Surf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -370,7 +364,7 @@ TEST(LoaderHandleValidTests, BadInstCreateWin32Surf) {
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateXCBSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -391,7 +385,7 @@ TEST(LoaderHandleValidTests, BadInstCreateXCBSurf) {
 #if defined(VK_USE_PLATFORM_XLIB_KHR)
 TEST(LoaderHandleValidTests, BadInstCreateXlibSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -413,9 +407,7 @@ TEST(LoaderHandleValidTests, BadInstCreateXlibSurf) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFeature) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -431,9 +423,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFeature) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFormatProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -449,9 +439,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFormatProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevImgFormatProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -469,9 +457,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevImgFormatProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -487,9 +473,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevQueueFamProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -504,9 +488,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevQueueFamProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevDevMemProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -522,9 +504,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevDevMemProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevCreateDevice) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -558,9 +538,7 @@ TEST(LoaderHandleValidTests, BadPhysDevCreateDevice) {
 
 TEST(LoaderHandleValidTests, BadPhysDevEnumDevExtProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -575,9 +553,7 @@ TEST(LoaderHandleValidTests, BadPhysDevEnumDevExtProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevEnumDevLayerProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -593,9 +569,7 @@ TEST(LoaderHandleValidTests, BadPhysDevEnumDevLayerProps) {
 #ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -614,9 +588,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFeature2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -634,9 +606,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFeature2) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFormatProps2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -654,9 +624,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevFormatProps2) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevImgFormatProps2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -677,9 +645,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevImgFormatProps2) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevProps2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -697,9 +663,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevProps2) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevQueueFamProps2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -714,9 +678,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevQueueFamProps2) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevDevMemProps2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -735,9 +697,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevDevMemProps2) {
 #ifndef VULKANSC  // Sparse resources are not supported in Vulkan SC
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps2) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -757,9 +717,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSparseImgFormatProps2) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternFenceProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -778,9 +736,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternFenceProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternBufferProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -799,9 +755,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternBufferProps) {
 
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevExternSemaphoreProps) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_physical_device({})
-        .set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({}).set_icd_api_version(VK_MAKE_API_VERSION(0, 1, 1, 0));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.set_api_version(1, 1, 0);
@@ -822,9 +776,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfaceSupportKHR) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_KHR_display"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extension(first_ext.extensionName.c_str());
@@ -842,9 +794,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfaceCapsKHR) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_KHR_display"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extension(first_ext.extensionName.c_str());
@@ -861,9 +811,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfaceFormatsKHR) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_KHR_display"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extension(first_ext.extensionName.c_str());
@@ -880,9 +828,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfacePresentModesKHR) {
     FrameworkEnvironment env{};
     Extension first_ext{"VK_KHR_surface"};
     Extension second_ext{"VK_KHR_display"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions({first_ext, second_ext})
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({first_ext, second_ext}).add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extension(first_ext.extensionName.c_str());
@@ -898,7 +844,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfacePresentModesKHR) {
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
 TEST(LoaderHandleValidTests, BadPhysDevGetDirectFBPresentSupportKHR) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -915,7 +861,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetDirectFBPresentSupportKHR) {
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
 TEST(LoaderHandleValidTests, BadPhysDevGetQNXPresentSupportKHR) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -931,7 +877,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetQNXPresentSupportKHR) {
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWaylandPresentSupportKHR) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -948,7 +894,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWaylandPresentSupportKHR) {
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWin32PresentSupportKHR) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -965,7 +911,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevWin32PresentSupportKHR) {
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetXCBPresentSupportKHR) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -982,7 +928,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetXCBPresentSupportKHR) {
 #if defined(VK_USE_PLATFORM_XLIB_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetXlibPresentSupportKHR) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1002,10 +948,7 @@ InstWrapper setup_BadPhysDev_env(FrameworkEnvironment& env, std::vector<const ch
     for (const auto& ext : exts) {
         ext_modified.push_back(Extension{ext});
     }
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2))
-        .add_instance_extensions(ext_modified)
-        .setup_WSI()
-        .add_physical_device("physical_device_0");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions(ext_modified).setup_WSI().add_physical_device("physical_device_0");
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extensions(exts);
@@ -1292,7 +1235,7 @@ TEST(LoaderHandleValidTests, BadPhysDevGetRandROutputDisplayEXT) {
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevSurfacePresentModes2EXT) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     InstWrapper instance(env.vulkan_functions);
     instance.CheckCreate();
@@ -1329,12 +1272,12 @@ TEST(LoaderHandleValidTests, BadPhysDevGetPhysDevToolPropertiesEXT) {
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingAndroidSurface) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1357,12 +1300,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingAndroidSurface) {
 #if defined(VK_USE_PLATFORM_DIRECTFB_EXT)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingDirectFBSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1385,12 +1328,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingDirectFBSurf) {
 #if defined(VK_USE_PLATFORM_FUCHSIA)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingFuchsiaSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1413,12 +1356,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingFuchsiaSurf) {
 #if defined(VK_USE_PLATFORM_GGP)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingGGPSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1441,12 +1384,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingGGPSurf) {
 #if defined(VK_USE_PLATFORM_IOS_MVK)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingIOSSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1469,12 +1412,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingIOSSurf) {
 #if defined(VK_USE_PLATFORM_MACOS_MVK)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingMacOSSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI("VK_USE_PLATFORM_MACOS_MVK");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI("VK_USE_PLATFORM_MACOS_MVK");
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI("VK_USE_PLATFORM_MACOS_MVK");
@@ -1497,12 +1440,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingMacOSSurf) {
 #if defined(VK_USE_PLATFORM_METAL_EXT)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingMetalSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI("VK_USE_PLATFORM_METAL_EXT");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI("VK_USE_PLATFORM_METAL_EXT");
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI("VK_USE_PLATFORM_METAL_EXT");
@@ -1525,12 +1468,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingMetalSurf) {
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingQNXSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1553,12 +1496,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingQNXSurf) {
 #if defined(VK_USE_PLATFORM_VI_NN)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingViNNSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1581,12 +1524,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingViNNSurf) {
 #if defined(VK_USE_PLATFORM_WAYLAND_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingWaylandSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI("VK_USE_PLATFORM_WAYLAND_KHR");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI("VK_USE_PLATFORM_WAYLAND_KHR");
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI("VK_USE_PLATFORM_WAYLAND_KHR");
@@ -1610,12 +1553,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingWaylandSurf) {
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingWin32Surf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1639,12 +1582,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingWin32Surf) {
 #if defined(VK_USE_PLATFORM_XCB_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingXCBSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI();
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI();
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI();
@@ -1667,12 +1610,12 @@ TEST(LoaderHandleValidTests, VerifyHandleWrappingXCBSurf) {
 #if defined(VK_USE_PLATFORM_XLIB_KHR)
 TEST(LoaderHandleValidTests, VerifyHandleWrappingXlibSurf) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).setup_WSI("VK_USE_PLATFORM_XLIB_KHR");
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI("VK_USE_PLATFORM_XLIB_KHR");
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.setup_WSI("VK_USE_PLATFORM_XLIB_KHR");
@@ -1707,12 +1650,12 @@ VKAPI_ATTR VkBool32 VKAPI_CALL JunkDebugUtilsCallback([[maybe_unused]] VkDebugUt
 TEST(LoaderHandleValidTests, VerifyHandleWrappingDebugUtilsMessenger) {
     FrameworkEnvironment env{};
     Extension ext{"VK_EXT_debug_utils"};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2)).add_instance_extensions({ext});
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_instance_extensions({ext});
 
     const char* wrap_objects_name = "WrapObjectsLayer";
-    env.add_explicit_layer(ManifestLayer{}.add_layer(
-                               ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)),
-                           "wrap_objects_layer.json");
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
 
     InstWrapper instance(env.vulkan_functions);
     instance.create_info.add_extension("VK_EXT_debug_utils");

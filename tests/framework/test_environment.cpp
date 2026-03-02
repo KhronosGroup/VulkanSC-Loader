@@ -29,10 +29,13 @@
 #include "test_environment.h"
 
 #include <array>
+#include <filesystem>
 #include <fstream>
+#include <string>
 #include <utility>
 
 #include "json_writer.h"
+#include "test_defines.h"
 
 InstWrapper::InstWrapper(VulkanFunctions& functions, VkAllocationCallbacks* callbacks) noexcept
     : functions(&functions), callbacks(callbacks) {}
@@ -219,39 +222,20 @@ PlatformShimWrapper::PlatformShimWrapper(fs::FileSystemManager& file_system_mana
     }
 }
 
-TestICDHandle::TestICDHandle() noexcept {}
-TestICDHandle::TestICDHandle(std::filesystem::path const& icd_path) noexcept : icd_library(icd_path) {
-    proc_addr_get_test_icd = icd_library.get_symbol(GET_TEST_ICD_FUNC_STR);
-    proc_addr_reset_icd = icd_library.get_symbol(RESET_ICD_FUNC_STR);
+template <>
+TestBinaryHandle<TestICD, GetTestICDFunc, GetNewTestICDFunc>::TestBinaryHandle(std::filesystem::path const& binary_path) noexcept
+    : library(binary_path) {
+    proc_addr_get_test_binary = library.get_symbol(GET_TEST_ICD_FUNC_STR);
+    proc_addr_reset_binary = library.get_symbol(RESET_ICD_FUNC_STR);
 }
-TestICD& TestICDHandle::get_test_icd() noexcept {
-    assert(proc_addr_get_test_icd != NULL && "symbol must be loaded before use");
-    return *proc_addr_get_test_icd();
-}
-TestICD& TestICDHandle::reset_icd() noexcept {
-    assert(proc_addr_reset_icd != NULL && "symbol must be loaded before use");
-    return *proc_addr_reset_icd();
-}
-std::filesystem::path TestICDHandle::get_icd_full_path() noexcept { return icd_library.get_path(); }
-std::filesystem::path TestICDHandle::get_icd_manifest_path() noexcept { return manifest_path; }
-std::filesystem::path TestICDHandle::get_shimmed_manifest_path() noexcept { return shimmed_manifest_path; }
 
-TestLayerHandle::TestLayerHandle() noexcept {}
-TestLayerHandle::TestLayerHandle(std::filesystem::path const& layer_path) noexcept : layer_library(layer_path) {
-    proc_addr_get_test_layer = layer_library.get_symbol(GET_TEST_LAYER_FUNC_STR);
-    proc_addr_reset_layer = layer_library.get_symbol(RESET_LAYER_FUNC_STR);
+template <>
+TestBinaryHandle<TestLayer, GetTestLayerFunc, GetNewTestLayerFunc>::TestBinaryHandle(
+    std::filesystem::path const& binary_path) noexcept
+    : library(binary_path) {
+    proc_addr_get_test_binary = library.get_symbol(GET_TEST_LAYER_FUNC_STR);
+    proc_addr_reset_binary = library.get_symbol(RESET_LAYER_FUNC_STR);
 }
-TestLayer& TestLayerHandle::get_test_layer() noexcept {
-    assert(proc_addr_get_test_layer != NULL && "symbol must be loaded before use");
-    return *proc_addr_get_test_layer();
-}
-TestLayer& TestLayerHandle::reset_layer() noexcept {
-    assert(proc_addr_reset_layer != NULL && "symbol must be loaded before use");
-    return *proc_addr_reset_layer();
-}
-std::filesystem::path TestLayerHandle::get_layer_full_path() noexcept { return layer_library.get_path(); }
-std::filesystem::path TestLayerHandle::get_layer_manifest_path() noexcept { return manifest_path; }
-std::filesystem::path TestLayerHandle::get_shimmed_manifest_path() noexcept { return shimmed_manifest_path; }
 
 FrameworkEnvironment::FrameworkEnvironment() noexcept : FrameworkEnvironment(FrameworkSettings{}) {}
 FrameworkEnvironment::FrameworkEnvironment(FrameworkSettings const& settings) noexcept
@@ -387,208 +371,190 @@ FrameworkEnvironment::~FrameworkEnvironment() {
     platform_shim->is_during_destruction = true;
 }
 
-TestICD& FrameworkEnvironment::add_icd(TestICDDetails icd_details) noexcept {
-    size_t cur_icd_index = icds.size();
-    fs::Folder* fs_ptr = &get_folder(ManifestLocation::driver);
-    switch (icd_details.discovery_type) {
+ManifestLocation FrameworkEnvironment::map_discovery_type_to_location(ManifestDiscoveryType discovery_type,
+                                                                      ManifestCategory category) {
+    switch (discovery_type) {
         case (ManifestDiscoveryType::env_var):
+            switch (category) {
+                case (ManifestCategory::explicit_layer):
+                    return ManifestLocation::explicit_layer_env_var;
+                case (ManifestCategory::implicit_layer):
+                    return ManifestLocation::implicit_layer_env_var;
+                case (ManifestCategory::icd):
+                    return ManifestLocation::driver_env_var;
+                default:
+                    return ManifestLocation::null;
+            }
         case (ManifestDiscoveryType::add_env_var):
-            fs_ptr = &get_folder(ManifestLocation::driver_env_var);
-            break;
+            switch (category) {
+                case (ManifestCategory::explicit_layer):
+                    return ManifestLocation::explicit_layer_add_env_var;
+                case (ManifestCategory::implicit_layer):
+                    return ManifestLocation::implicit_layer_add_env_var;
+                case (ManifestCategory::icd):
+                    return ManifestLocation::driver_env_var;
+                default:
+                    return ManifestLocation::null;
+            }
 #if defined(WIN32)
         case (ManifestDiscoveryType::windows_app_package):
-            fs_ptr = &get_folder(ManifestLocation::windows_app_package);
-            break;
+            return ManifestLocation::windows_app_package;
 #endif
         case (ManifestDiscoveryType::override_folder):
-            fs_ptr = &get_folder(ManifestLocation::override_layer);
-            break;
+            return ManifestLocation::override_layer;
 #if defined(__APPLE__)
         case (ManifestDiscoveryType::macos_bundle):
-            fs_ptr = &get_folder(ManifestLocation::macos_bundle);
-            break;
+            return ManifestLocation::macos_bundle;
 #endif
         case (ManifestDiscoveryType::unsecured_generic):
-            fs_ptr = &get_folder(ManifestLocation::unsecured_driver);
-            break;
+            switch (category) {
+                case (ManifestCategory::explicit_layer):
+                    return ManifestLocation::unsecured_explicit_layer;
+                case (ManifestCategory::implicit_layer):
+                    return ManifestLocation::unsecured_implicit_layer;
+                case (ManifestCategory::icd):
+                    return ManifestLocation::unsecured_driver;
+                case (ManifestCategory::settings):
+                    return ManifestLocation::unsecured_settings;
+                default:
+                    return ManifestLocation::null;
+            }
         case (ManifestDiscoveryType::null_dir):
         case (ManifestDiscoveryType::none):
-            fs_ptr = &get_folder(ManifestLocation::null);
-            break;
+            return ManifestLocation::null;
+        default:
         case (ManifestDiscoveryType::generic):
-            fs_ptr = &get_folder(ManifestLocation::driver);
-            break;
+            switch (category) {
+                case (ManifestCategory::explicit_layer):
+                    return ManifestLocation::explicit_layer;
+                case (ManifestCategory::implicit_layer):
+                    return ManifestLocation::implicit_layer;
+                case (ManifestCategory::icd):
+                    return ManifestLocation::driver;
+                case (ManifestCategory::settings):
+                    return ManifestLocation::settings_location;
+                default:
+                    return ManifestLocation::null;
+            }
     }
-    auto& folder = *fs_ptr;
+}
 
-    if (!icd_details.is_fake) {
-        std::filesystem::path new_lib_name = icd_details.icd_manifest.lib_path.stem();
+TestICD& FrameworkEnvironment::add_icd(std::filesystem::path const& path, ManifestOptions args, ManifestICD manifest) noexcept {
+    manifest.set_lib_path(path);
+
+    if (args.json_name.empty()) {
+        args.json_name = "test_icd_" + std::to_string(icds.size()) + ".json";
+    }
+
+    size_t cur_icd_index = icds.size();
+    auto& folder = get_folder(map_discovery_type_to_location(args.discovery_type, ManifestCategory::icd));
+
+    if (args.discovery_type == ManifestDiscoveryType::env_var) {
+        if (args.is_dir) {
+            env_var_vk_icd_filenames.add_to_list(folder.location());
+        } else {
+            env_var_vk_icd_filenames.add_to_list(folder.location() / args.json_name);
+        }
+    } else if (args.discovery_type == ManifestDiscoveryType::add_env_var) {
+        if (args.is_dir) {
+            add_env_var_vk_icd_filenames.add_to_list(folder.location());
+        } else {
+            add_env_var_vk_icd_filenames.add_to_list(folder.location() / args.json_name);
+        }
+    }
+    if (!args.is_fake) {
+        std::filesystem::path new_lib_name = manifest.lib_path.stem();
         new_lib_name += "_";
         new_lib_name += std::to_string(cur_icd_index);
-        new_lib_name += icd_details.icd_manifest.lib_path.extension();
-        auto new_driver_location = folder.copy_file(icd_details.icd_manifest.lib_path, new_lib_name);
+        new_lib_name += manifest.lib_path.extension();
+        auto new_driver_location = folder.copy_file(manifest.lib_path, new_lib_name);
 
 #if TESTING_COMMON_UNIX_PLATFORMS
-        if (icd_details.library_path_type == LibraryPathType::default_search_paths) {
+        if (args.library_path_type == LibraryPathType::default_search_paths) {
             platform_shim->add_system_library(new_lib_name, new_driver_location);
         }
 #endif
 #if defined(WIN32)
-        if (icd_details.library_path_type == LibraryPathType::default_search_paths) {
+        if (args.library_path_type == LibraryPathType::default_search_paths) {
             SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_USER_DIRS);
             AddDllDirectory(new_driver_location.parent_path().native().c_str());
         }
 #endif
         icds.push_back(TestICDHandle(new_driver_location));
-        icds.back().reset_icd();
-        if (icd_details.library_path_type == LibraryPathType::relative) {
-            icd_details.icd_manifest.lib_path = std::filesystem::path(".") / new_lib_name;
-        } else if (icd_details.library_path_type == LibraryPathType::default_search_paths) {
-            icd_details.icd_manifest.lib_path = new_lib_name;
+        icds.back().reset();
+        if (args.library_path_type == LibraryPathType::relative) {
+            manifest.lib_path = std::filesystem::path(".") / new_lib_name;
+        } else if (args.library_path_type == LibraryPathType::default_search_paths) {
+            manifest.lib_path = new_lib_name;
         } else {
-            icd_details.icd_manifest.lib_path = new_driver_location;
+            manifest.lib_path = new_driver_location;
         }
     }
-    if (icd_details.discovery_type != ManifestDiscoveryType::none) {
-        std::filesystem::path new_manifest_path = icd_details.json_name.stem();
-        if (!icd_details.disable_icd_inc) {
-            new_manifest_path += "_";
-            new_manifest_path += std::to_string(cur_icd_index);
-        }
-        new_manifest_path += ".json";
-        icds.back().manifest_path = folder.write_manifest(new_manifest_path, icd_details.icd_manifest.get_manifest_str());
+    if (args.discovery_type != ManifestDiscoveryType::none) {
+        icds.back().manifest_path = folder.write_manifest(args.json_name, manifest.get_manifest_str());
         icds.back().shimmed_manifest_path = icds.back().manifest_path;
-        switch (icd_details.discovery_type) {
-            case (ManifestDiscoveryType::generic):
-#if defined(WIN32)
-                platform_shim->add_manifest_to_registry(ManifestCategory::icd, icds.back().manifest_path);
-#elif TESTING_COMMON_UNIX_PLATFORMS
-                icds.back().shimmed_manifest_path =
-                    file_system_manager.get_path_redirect_by_manifest_location(ManifestLocation::driver) / new_manifest_path;
-#endif
-                break;
-            case (ManifestDiscoveryType::unsecured_generic):
-#if defined(WIN32)
-                platform_shim->add_unsecured_manifest_to_registry(ManifestCategory::icd, icds.back().manifest_path);
-#elif TESTING_COMMON_UNIX_PLATFORMS
-                icds.back().shimmed_manifest_path =
-                    file_system_manager.get_path_redirect_by_manifest_location(ManifestLocation::unsecured_driver) /
-                    new_manifest_path;
-#endif
-                break;
-            case (ManifestDiscoveryType::env_var):
-                if (icd_details.is_dir) {
-                    env_var_vk_icd_filenames.add_to_list(folder.location());
-                } else {
-                    env_var_vk_icd_filenames.add_to_list(folder.location() / new_manifest_path);
-                }
-                break;
-            case (ManifestDiscoveryType::add_env_var):
-                if (icd_details.is_dir) {
-                    add_env_var_vk_icd_filenames.add_to_list(folder.location());
-                } else {
-                    add_env_var_vk_icd_filenames.add_to_list(folder.location() / new_manifest_path);
-                }
-                break;
-                break;
 
 #if defined(WIN32)
-            case (ManifestDiscoveryType::windows_app_package):
-                platform_shim->set_app_package_path(folder.location());
-                break;
+        // only add the manifest to the registry if its a generic location (as if it was installed) - both system and user local
+        if (args.discovery_type == ManifestDiscoveryType::generic) {
+            platform_shim->add_manifest_to_registry(ManifestCategory::icd, icds.back().manifest_path);
+        }
+        if (args.discovery_type == ManifestDiscoveryType::unsecured_generic) {
+            platform_shim->add_unsecured_manifest_to_registry(ManifestCategory::icd, icds.back().manifest_path);
+        }
+        if (args.discovery_type == ManifestDiscoveryType::windows_app_package) {
+            platform_shim->set_app_package_path(folder.location());
+        }
 #endif
-#if defined(__APPLE__)
-            case (ManifestDiscoveryType::macos_bundle):  // macos_bundle contents are always discoverable by the loader
+#if TESTING_COMMON_UNIX_PLATFORMS
+        if (args.discovery_type == ManifestDiscoveryType::generic ||
+            args.discovery_type == ManifestDiscoveryType::unsecured_generic) {
+            icds.back().shimmed_manifest_path =
+                file_system_manager.get_path_redirect_by_manifest_location(
+                    args.discovery_type == ManifestDiscoveryType::unsecured_generic ? ManifestLocation::driver
+                                                                                    : ManifestLocation::unsecured_driver) /
+                args.json_name;
+        }
 #endif
-            case (ManifestDiscoveryType::override_folder):  // should be found through override layer/settings file, not 'normal'
-                                                            // search paths
-            case (ManifestDiscoveryType::null_dir):
-            case (ManifestDiscoveryType::none):
-                break;
+    }
+    return icds.back().get_test_binary();
+}
+
+void FrameworkEnvironment::add_implicit_layer(ManifestOptions args, ManifestLayer layer_manifest) noexcept {
+    add_layer_impl(args, layer_manifest, ManifestCategory::implicit_layer);
+}
+void FrameworkEnvironment::add_explicit_layer(ManifestOptions args, ManifestLayer layer_manifest) noexcept {
+    add_layer_impl(args, layer_manifest, ManifestCategory::explicit_layer);
+}
+
+void FrameworkEnvironment::add_layer_impl(ManifestOptions args, ManifestLayer manifest, ManifestCategory category) {
+    if (args.json_name.empty()) {
+        args.json_name = "test_layer_" + std::to_string(created_layer_count) + ".json";
+        created_layer_count++;
+    }
+
+    auto& folder = get_folder(map_discovery_type_to_location(args.discovery_type, category));
+
+    if (args.discovery_type == ManifestDiscoveryType::env_var || args.discovery_type == ManifestDiscoveryType::add_env_var) {
+        std::filesystem::path path_to_add = folder.location();
+        if (!args.is_dir) {
+            path_to_add /= args.json_name;
+        }
+
+        EnvVarWrapper* env_var_to_use = nullptr;
+        if (args.discovery_type == ManifestDiscoveryType::env_var && category == ManifestCategory::explicit_layer) {
+            env_var_vk_layer_paths.add_to_list(path_to_add);
+        } else if (args.discovery_type == ManifestDiscoveryType::env_var && category == ManifestCategory::implicit_layer) {
+            env_var_vk_implicit_layer_paths.add_to_list(path_to_add);
+        } else if (args.discovery_type == ManifestDiscoveryType::add_env_var && category == ManifestCategory::explicit_layer) {
+            add_env_var_vk_layer_paths.add_to_list(path_to_add);
+        } else if (args.discovery_type == ManifestDiscoveryType::add_env_var && category == ManifestCategory::implicit_layer) {
+            add_env_var_vk_implicit_layer_paths.add_to_list(path_to_add);
         }
     }
-    return icds.back().get_test_icd();
-}
 
-void FrameworkEnvironment::add_implicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept {
-    add_layer_impl(TestLayerDetails{layer_manifest, json_name}, ManifestCategory::implicit_layer);
-}
-void FrameworkEnvironment::add_explicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept {
-    add_layer_impl(TestLayerDetails{layer_manifest, json_name}, ManifestCategory::explicit_layer);
-}
-void FrameworkEnvironment::add_fake_implicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept {
-    add_layer_impl(TestLayerDetails{layer_manifest, json_name}.set_is_fake(true), ManifestCategory::implicit_layer);
-}
-void FrameworkEnvironment::add_fake_explicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept {
-    add_layer_impl(TestLayerDetails{layer_manifest, json_name}.set_is_fake(true), ManifestCategory::explicit_layer);
-}
-void FrameworkEnvironment::add_implicit_layer(TestLayerDetails layer_details) noexcept {
-    add_layer_impl(layer_details, ManifestCategory::implicit_layer);
-}
-void FrameworkEnvironment::add_explicit_layer(TestLayerDetails layer_details) noexcept {
-    add_layer_impl(layer_details, ManifestCategory::explicit_layer);
-}
-
-void FrameworkEnvironment::add_layer_impl(TestLayerDetails layer_details, ManifestCategory category) {
-    fs::Folder* fs_ptr = &get_folder(ManifestLocation::explicit_layer);
-    EnvVarWrapper* env_var_to_use = nullptr;
-    switch (layer_details.discovery_type) {
-        case (ManifestDiscoveryType::generic):
-            if (category == ManifestCategory::implicit_layer) fs_ptr = &get_folder(ManifestLocation::implicit_layer);
-            break;
-        case (ManifestDiscoveryType::env_var):
-            if (category == ManifestCategory::explicit_layer) {
-                fs_ptr = &get_folder(ManifestLocation::explicit_layer_env_var);
-                env_var_to_use = &env_var_vk_layer_paths;
-            } else if (category == ManifestCategory::implicit_layer) {
-                fs_ptr = &get_folder(ManifestLocation::implicit_layer_env_var);
-                env_var_to_use = &env_var_vk_implicit_layer_paths;
-            }
-            if (layer_details.is_dir) {
-                env_var_to_use->add_to_list(fs_ptr->location());
-            } else {
-                env_var_to_use->add_to_list(fs_ptr->location() / layer_details.json_name);
-            }
-            break;
-        case (ManifestDiscoveryType::add_env_var):
-            if (category == ManifestCategory::explicit_layer) {
-                fs_ptr = &get_folder(ManifestLocation::explicit_layer_add_env_var);
-                env_var_to_use = &add_env_var_vk_layer_paths;
-            } else if (category == ManifestCategory::implicit_layer) {
-                fs_ptr = &get_folder(ManifestLocation::implicit_layer_add_env_var);
-                env_var_to_use = &add_env_var_vk_implicit_layer_paths;
-            }
-            if (layer_details.is_dir) {
-                env_var_to_use->add_to_list(fs_ptr->location());
-            } else {
-                env_var_to_use->add_to_list(fs_ptr->location() / layer_details.json_name);
-            }
-            break;
-        case (ManifestDiscoveryType::override_folder):
-            fs_ptr = &get_folder(ManifestLocation::override_layer);
-            break;
-#if defined(__APPLE__)
-        case (ManifestDiscoveryType::macos_bundle):
-            fs_ptr = &(get_folder(ManifestLocation::macos_bundle));
-            break;
-#endif
-        case (ManifestDiscoveryType::unsecured_generic):
-            fs_ptr = &(get_folder(category == ManifestCategory::implicit_layer ? ManifestLocation::unsecured_implicit_layer
-                                                                               : ManifestLocation::unsecured_explicit_layer));
-            break;
-#if defined(WIN32)
-        case (ManifestDiscoveryType::windows_app_package):
-            fs_ptr = &(get_folder(ManifestLocation::windows_app_package));
-            break;
-#endif
-        case (ManifestDiscoveryType::none):
-        case (ManifestDiscoveryType::null_dir):
-            fs_ptr = &(get_folder(ManifestLocation::null));
-            break;
-    }
-    auto& folder = *fs_ptr;
     size_t new_layers_start = layers.size();
-    for (auto& layer : layer_details.layer_manifest.layers) {
+    for (auto& layer : manifest.layers) {
         if (!layer.lib_path.empty()) {
             std::filesystem::path new_lib_path = layer.lib_path.stem();
             new_lib_path += "_";
@@ -598,12 +564,12 @@ void FrameworkEnvironment::add_layer_impl(TestLayerDetails layer_details, Manife
             auto new_layer_location = folder.copy_file(layer.lib_path, new_lib_path);
 
 #if TESTING_COMMON_UNIX_PLATFORMS
-            if (layer_details.library_path_type == LibraryPathType::default_search_paths) {
+            if (args.library_path_type == LibraryPathType::default_search_paths) {
                 platform_shim->add_system_library(new_lib_path, new_layer_location);
             }
 #endif
 #if defined(WIN32)
-            if (layer_details.library_path_type == LibraryPathType::default_search_paths) {
+            if (args.library_path_type == LibraryPathType::default_search_paths) {
                 SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_USER_DIRS);
                 AddDllDirectory(new_layer_location.parent_path().native().c_str());
             }
@@ -611,33 +577,32 @@ void FrameworkEnvironment::add_layer_impl(TestLayerDetails layer_details, Manife
 
             // Don't load the layer binary if using any of the wrap objects layers, since it doesn't export the same interface
             // functions
-            if (!layer_details.is_fake &&
-                layer.lib_path.stem().string().find(std::filesystem::path(TEST_LAYER_WRAP_OBJECTS).stem().string()) ==
-                    std::string::npos) {
+            if (!args.is_fake && layer.lib_path.stem().string().find(
+                                     std::filesystem::path(TEST_LAYER_WRAP_OBJECTS).stem().string()) == std::string::npos) {
                 layers.push_back(TestLayerHandle(new_layer_location));
-                layers.back().reset_layer();
+                layers.back().reset();
             }
-            if (layer_details.library_path_type == LibraryPathType::relative) {
+            if (args.library_path_type == LibraryPathType::relative) {
                 layer.lib_path = std::filesystem::path(".") / new_lib_path;
-            } else if (layer_details.library_path_type == LibraryPathType::default_search_paths) {
+            } else if (args.library_path_type == LibraryPathType::default_search_paths) {
                 layer.lib_path = new_lib_path;
             } else {
                 layer.lib_path = new_layer_location;
             }
         }
     }
-    if (layer_details.discovery_type != ManifestDiscoveryType::none) {
+    if (args.discovery_type != ManifestDiscoveryType::none) {
         // Write a manifest file to a folder as long as the discovery type isn't none
-        auto layer_manifest_loc = folder.write_manifest(layer_details.json_name, layer_details.layer_manifest.get_manifest_str());
+        auto layer_manifest_loc = folder.write_manifest(args.json_name, manifest.get_manifest_str());
 #if defined(WIN32)
         // only add the manifest to the registry if its a generic location (as if it was installed) - both system and user local
-        if (layer_details.discovery_type == ManifestDiscoveryType::generic) {
+        if (args.discovery_type == ManifestDiscoveryType::generic) {
             platform_shim->add_manifest_to_registry(category, layer_manifest_loc);
         }
-        if (layer_details.discovery_type == ManifestDiscoveryType::unsecured_generic) {
+        if (args.discovery_type == ManifestDiscoveryType::unsecured_generic) {
             platform_shim->add_unsecured_manifest_to_registry(category, layer_manifest_loc);
         }
-        if (layer_details.discovery_type == ManifestDiscoveryType::windows_app_package) {
+        if (args.discovery_type == ManifestDiscoveryType::windows_app_package) {
             platform_shim->set_app_package_path(folder.location());
         }
 #endif
@@ -645,12 +610,18 @@ void FrameworkEnvironment::add_layer_impl(TestLayerDetails layer_details, Manife
             layers.at(i).manifest_path = layer_manifest_loc;
             layers.at(i).shimmed_manifest_path = layer_manifest_loc;
 #if TESTING_COMMON_UNIX_PLATFORMS
-            if (layer_details.discovery_type == ManifestDiscoveryType::generic) {
+            if (args.discovery_type == ManifestDiscoveryType::generic ||
+                args.discovery_type == ManifestDiscoveryType::unsecured_generic) {
+                ManifestLocation location = ManifestLocation::null;
+                if (args.discovery_type == ManifestDiscoveryType::generic) {
+                    location = (category == ManifestCategory::explicit_layer ? ManifestLocation::explicit_layer
+                                                                             : ManifestLocation::implicit_layer);
+                } else if (args.discovery_type == ManifestDiscoveryType::unsecured_generic) {
+                    location = (category == ManifestCategory::explicit_layer ? ManifestLocation::unsecured_explicit_layer
+                                                                             : ManifestLocation::unsecured_implicit_layer);
+                }
                 layers.at(i).shimmed_manifest_path =
-                    ((category == ManifestCategory::implicit_layer)
-                         ? file_system_manager.get_path_redirect_by_manifest_location(ManifestLocation::implicit_layer)
-                         : file_system_manager.get_path_redirect_by_manifest_location(ManifestLocation::explicit_layer)) /
-                    layer_details.json_name;
+                    file_system_manager.get_path_redirect_by_manifest_location(location) / args.json_name;
             }
 #endif
         }
@@ -798,23 +769,19 @@ void FrameworkEnvironment::write_file_from_source(const char* source_file, Manif
     write_file_from_string(file_stream.str(), category, location, file_name);
 }
 
-TestICD& FrameworkEnvironment::get_test_icd(size_t index) noexcept { return icds[index].get_test_icd(); }
-TestICD& FrameworkEnvironment::reset_icd(size_t index) noexcept { return icds[index].reset_icd(); }
-std::filesystem::path FrameworkEnvironment::get_test_icd_path(size_t index) noexcept { return icds[index].get_icd_full_path(); }
-std::filesystem::path FrameworkEnvironment::get_icd_manifest_path(size_t index) noexcept {
-    return icds[index].get_icd_manifest_path();
-}
+TestICD& FrameworkEnvironment::get_test_icd(size_t index) noexcept { return icds[index].get_test_binary(); }
+TestICD& FrameworkEnvironment::reset_icd(size_t index) noexcept { return icds[index].reset(); }
+std::filesystem::path FrameworkEnvironment::get_test_icd_path(size_t index) noexcept { return icds[index].get_full_path(); }
+std::filesystem::path FrameworkEnvironment::get_icd_manifest_path(size_t index) noexcept { return icds[index].get_manifest_path(); }
 std::filesystem::path FrameworkEnvironment::get_shimmed_icd_manifest_path(size_t index) noexcept {
     return icds[index].get_shimmed_manifest_path();
 }
 
-TestLayer& FrameworkEnvironment::get_test_layer(size_t index) noexcept { return layers[index].get_test_layer(); }
-TestLayer& FrameworkEnvironment::reset_layer(size_t index) noexcept { return layers[index].reset_layer(); }
-std::filesystem::path FrameworkEnvironment::get_test_layer_path(size_t index) noexcept {
-    return layers[index].get_layer_full_path();
-}
+TestLayer& FrameworkEnvironment::get_test_layer(size_t index) noexcept { return layers[index].get_test_binary(); }
+TestLayer& FrameworkEnvironment::reset_layer(size_t index) noexcept { return layers[index].reset(); }
+std::filesystem::path FrameworkEnvironment::get_test_layer_path(size_t index) noexcept { return layers[index].get_full_path(); }
 std::filesystem::path FrameworkEnvironment::get_layer_manifest_path(size_t index) noexcept {
-    return layers[index].get_layer_manifest_path();
+    return layers[index].get_manifest_path();
 }
 std::filesystem::path FrameworkEnvironment::get_shimmed_layer_manifest_path(size_t index) noexcept {
     return layers[index].get_shimmed_manifest_path();

@@ -29,10 +29,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-
-#if !defined(PFN_GetPhysicalDeviceProcAddr)
-typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_GetPhysicalDeviceProcAddr)(VkInstance instance, const char* pName);
-#endif
+#include <vulkan/vk_layer.h>
 
 // Instance function pointer dispatch table
 typedef struct VkLayerInstanceDispatchTable_ {
@@ -228,6 +225,9 @@ typedef struct VkLayerInstanceDispatchTable_ {
     PFN_vkDestroyDebugUtilsMessengerEXT DestroyDebugUtilsMessengerEXT;
     PFN_vkSubmitDebugUtilsMessageEXT SubmitDebugUtilsMessageEXT;
 
+    // ---- VK_EXT_descriptor_heap extension commands
+    PFN_vkGetPhysicalDeviceDescriptorSizeEXT GetPhysicalDeviceDescriptorSizeEXT;
+
     // ---- VK_EXT_sample_locations extension commands
     PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT GetPhysicalDeviceMultisamplePropertiesEXT;
 
@@ -309,6 +309,17 @@ typedef struct VkLayerInstanceDispatchTable_ {
 
     // ---- VK_NV_cooperative_matrix2 extension commands
     PFN_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV GetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV;
+
+    // ---- VK_ARM_performance_counters_by_region extension commands
+    PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM EnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM;
+
+    // ---- VK_SEC_ubm_surface extension commands
+#if defined(VK_USE_PLATFORM_UBM_SEC)
+    PFN_vkCreateUbmSurfaceSEC CreateUbmSurfaceSEC;
+#endif // VK_USE_PLATFORM_UBM_SEC
+#if defined(VK_USE_PLATFORM_UBM_SEC)
+    PFN_vkGetPhysicalDeviceUbmPresentationSupportSEC GetPhysicalDeviceUbmPresentationSupportSEC;
+#endif // VK_USE_PLATFORM_UBM_SEC
 } VkLayerInstanceDispatchTable;
 
 // Device function pointer dispatch table
@@ -779,6 +790,7 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkGetImageViewHandleNVX GetImageViewHandleNVX;
     PFN_vkGetImageViewHandle64NVX GetImageViewHandle64NVX;
     PFN_vkGetImageViewAddressNVX GetImageViewAddressNVX;
+    PFN_vkGetDeviceCombinedImageSamplerIndexNVX GetDeviceCombinedImageSamplerIndexNVX;
 
     // ---- VK_AMD_draw_indirect_count extension commands
     PFN_vkCmdDrawIndirectCountAMD CmdDrawIndirectCountAMD;
@@ -858,6 +870,17 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdDispatchGraphIndirectCountAMDX CmdDispatchGraphIndirectCountAMDX;
 #endif // VK_ENABLE_BETA_EXTENSIONS
 
+    // ---- VK_EXT_descriptor_heap extension commands
+    PFN_vkWriteSamplerDescriptorsEXT WriteSamplerDescriptorsEXT;
+    PFN_vkWriteResourceDescriptorsEXT WriteResourceDescriptorsEXT;
+    PFN_vkCmdBindSamplerHeapEXT CmdBindSamplerHeapEXT;
+    PFN_vkCmdBindResourceHeapEXT CmdBindResourceHeapEXT;
+    PFN_vkCmdPushDataEXT CmdPushDataEXT;
+    PFN_vkGetImageOpaqueCaptureDataEXT GetImageOpaqueCaptureDataEXT;
+    PFN_vkRegisterCustomBorderColorEXT RegisterCustomBorderColorEXT;
+    PFN_vkUnregisterCustomBorderColorEXT UnregisterCustomBorderColorEXT;
+    PFN_vkGetTensorOpaqueCaptureDataARM GetTensorOpaqueCaptureDataARM;
+
     // ---- VK_EXT_sample_locations extension commands
     PFN_vkCmdSetSampleLocationsEXT CmdSetSampleLocationsEXT;
 
@@ -917,6 +940,12 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdSetCheckpointNV CmdSetCheckpointNV;
     PFN_vkGetQueueCheckpointDataNV GetQueueCheckpointDataNV;
     PFN_vkGetQueueCheckpointData2NV GetQueueCheckpointData2NV;
+
+    // ---- VK_EXT_present_timing extension commands
+    PFN_vkSetSwapchainPresentTimingQueueSizeEXT SetSwapchainPresentTimingQueueSizeEXT;
+    PFN_vkGetSwapchainTimingPropertiesEXT GetSwapchainTimingPropertiesEXT;
+    PFN_vkGetSwapchainTimeDomainPropertiesEXT GetSwapchainTimeDomainPropertiesEXT;
+    PFN_vkGetPastPresentationTimingEXT GetPastPresentationTimingEXT;
 
     // ---- VK_INTEL_performance_query extension commands
     PFN_vkInitializePerformanceApiINTEL InitializePerformanceApiINTEL;
@@ -1145,6 +1174,14 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkCmdUpdatePipelineIndirectBufferNV CmdUpdatePipelineIndirectBufferNV;
     PFN_vkGetPipelineIndirectDeviceAddressNV GetPipelineIndirectDeviceAddressNV;
 
+    // ---- VK_OHOS_external_memory extension commands
+#if defined(VK_USE_PLATFORM_OHOS)
+    PFN_vkGetNativeBufferPropertiesOHOS GetNativeBufferPropertiesOHOS;
+#endif // VK_USE_PLATFORM_OHOS
+#if defined(VK_USE_PLATFORM_OHOS)
+    PFN_vkGetMemoryNativeBufferOHOS GetMemoryNativeBufferOHOS;
+#endif // VK_USE_PLATFORM_OHOS
+
     // ---- VK_EXT_extended_dynamic_state3 extension commands
     PFN_vkCmdSetDepthClampEnableEXT CmdSetDepthClampEnableEXT;
     PFN_vkCmdSetPolygonModeEXT CmdSetPolygonModeEXT;
@@ -1275,17 +1312,6 @@ typedef struct VkLayerDispatchTable_ {
     PFN_vkUpdateIndirectExecutionSetPipelineEXT UpdateIndirectExecutionSetPipelineEXT;
     PFN_vkUpdateIndirectExecutionSetShaderEXT UpdateIndirectExecutionSetShaderEXT;
 
-    // ---- VK_OHOS_native_buffer extension commands
-#if defined(VK_USE_PLATFORM_OHOS)
-    PFN_vkGetSwapchainGrallocUsageOHOS GetSwapchainGrallocUsageOHOS;
-#endif // VK_USE_PLATFORM_OHOS
-#if defined(VK_USE_PLATFORM_OHOS)
-    PFN_vkAcquireImageOHOS AcquireImageOHOS;
-#endif // VK_USE_PLATFORM_OHOS
-#if defined(VK_USE_PLATFORM_OHOS)
-    PFN_vkQueueSignalReleaseImageOHOS QueueSignalReleaseImageOHOS;
-#endif // VK_USE_PLATFORM_OHOS
-
     // ---- VK_EXT_external_memory_metal extension commands
 #if defined(VK_USE_PLATFORM_METAL_EXT)
     PFN_vkGetMemoryMetalHandleEXT GetMemoryMetalHandleEXT;
@@ -1296,6 +1322,12 @@ typedef struct VkLayerDispatchTable_ {
 
     // ---- VK_EXT_fragment_density_map_offset extension commands
     PFN_vkCmdEndRendering2EXT CmdEndRendering2EXT;
+
+    // ---- VK_EXT_custom_resolve extension commands
+    PFN_vkCmdBeginCustomResolveEXT CmdBeginCustomResolveEXT;
+
+    // ---- VK_NV_compute_occupancy_priority extension commands
+    PFN_vkCmdSetComputeOccupancyPriorityNV CmdSetComputeOccupancyPriorityNV;
 
     // ---- VK_KHR_acceleration_structure extension commands
     PFN_vkCreateAccelerationStructureKHR CreateAccelerationStructureKHR;

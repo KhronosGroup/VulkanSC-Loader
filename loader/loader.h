@@ -36,6 +36,9 @@
 LOADER_PLATFORM_THREAD_ONCE_EXTERN_DEFINITION(once_init)
 
 static inline VkPhysicalDevice loader_unwrap_physical_device(VkPhysicalDevice physicalDevice) {
+    if (VK_NULL_HANDLE == physicalDevice) {
+        return VK_NULL_HANDLE;
+    }
     struct loader_physical_device_tramp *phys_dev = (struct loader_physical_device_tramp *)physicalDevice;
     if (PHYS_TRAMP_MAGIC_NUMBER != phys_dev->magic) {
         return VK_NULL_HANDLE;
@@ -228,8 +231,7 @@ VkStringErrorFlags vk_string_validate(const int max_length, const char *char_arr
 char *loader_get_next_path(char *path);
 VkResult add_if_manifest_file(const struct loader_instance *inst, const char *file_name, struct loader_string_list *out_files);
 VkResult prepend_if_manifest_file(const struct loader_instance *inst, const char *file_name, struct loader_string_list *out_files);
-VkResult add_data_files(const struct loader_instance *inst, char *search_path, struct loader_string_list *out_files,
-                        bool use_first_found_manifest);
+VkResult add_data_files(const struct loader_instance *inst, char *search_path, struct loader_string_list *out_files);
 
 loader_api_version loader_make_version(uint32_t version);
 loader_api_version loader_combine_version(uint32_t major, uint32_t minor, uint32_t patch);

@@ -335,8 +335,7 @@ using layer_implementation_physical_device_functions = layer_implementation_func
 
 TEST(UnknownFunction, PhysicalDeviceFunction) {
     FrameworkEnvironment env{};
-    auto& test_physical_device =
-        env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_and_get_physical_device({});
+    auto& test_physical_device = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_and_get_physical_device({});
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
     std::vector<std::string> function_names;
     add_function_names(function_names, function_count);
@@ -353,8 +352,8 @@ TEST(UnknownFunction, PhysicalDeviceFunction) {
 
 TEST(UnknownFunction, PhysicalDeviceFunctionMultipleDriverSupport) {
     FrameworkEnvironment env{};
-    auto& driver_0 = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
-    auto& driver_1 = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
+    auto& driver_0 = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
+    auto& driver_1 = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
     std::vector<std::string> function_names;
     add_function_names(function_names, function_count);
@@ -394,8 +393,8 @@ TEST(UnknownFunction, PhysicalDeviceFunctionMultipleDriverSupport) {
 // Add unknown functions to driver 0, and try to use them on driver 1.
 TEST(UnknownFunctionDeathTests, PhysicalDeviceFunctionErrorPath) {
     FrameworkEnvironment env{};
-    auto& driver_0 = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
-    auto& driver_1 = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
+    auto& driver_0 = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
+    auto& driver_1 = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
     std::vector<std::string> function_names;
     add_function_names(function_names, 1);
 
@@ -428,16 +427,15 @@ TEST(UnknownFunctionDeathTests, PhysicalDeviceFunctionErrorPath) {
 
 TEST(UnknownFunction, PhysicalDeviceFunctionWithImplicitLayerImplementation) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
+    env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device({});
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
     std::vector<std::string> function_names;
     add_function_names(function_names, function_count);
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer = env.get_test_layer();
     fill_implementation_functions(layer.custom_physical_device_implementation_functions, function_names,
                                   layer_implementation_physical_device_functions{}, function_count);
@@ -452,8 +450,8 @@ TEST(UnknownFunction, PhysicalDeviceFunctionWithImplicitLayerImplementation) {
 
 TEST(UnknownFunction, PhysicalDeviceFunctionMultipleDriverSupportWithImplicitLayerImplementation) {
     FrameworkEnvironment env{};
-    auto& driver_0 = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
-    auto& driver_1 = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
+    auto& driver_0 = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
+    auto& driver_1 = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
     std::vector<std::string> function_names;
     add_function_names(function_names, function_count);
@@ -470,11 +468,10 @@ TEST(UnknownFunction, PhysicalDeviceFunctionMultipleDriverSupportWithImplicitLay
                                       custom_physical_device_functions{}, 5, i * 10 + 5);
     }
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
 
     InstWrapper inst{env.vulkan_functions};
     inst.CheckCreate();
@@ -498,17 +495,16 @@ TEST(UnknownFunction, PhysicalDeviceFunctionMultipleDriverSupportWithImplicitLay
 
 TEST(UnknownFunction, PhysicalDeviceFunctionWithImplicitLayerInterception) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
+    env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device({});
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
 
     std::vector<std::string> function_names;
     add_function_names(function_names, function_count);
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer = env.get_test_layer();
     fill_phys_dev_intercept_functions(layer, function_names, layer_intercept_physical_device_functions{}, function_count);
 
@@ -522,18 +518,16 @@ TEST(UnknownFunction, PhysicalDeviceFunctionWithImplicitLayerInterception) {
 
 TEST(UnknownFunction, PhysicalDeviceFunctionDriverSupportWithImplicitLayerInterception) {
     FrameworkEnvironment env{};
-    auto& test_physical_device =
-        env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_and_get_physical_device({});
+    auto& test_physical_device = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_and_get_physical_device({});
     uint32_t function_count = 100;
     std::vector<std::string> function_names;
     add_function_names(function_names, function_count);
     fill_implementation_functions(test_physical_device.custom_physical_device_functions, function_names,
                                   layer_implementation_physical_device_functions{}, function_count);
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer = env.get_test_layer();
     fill_phys_dev_intercept_functions(layer, function_names, layer_intercept_physical_device_functions{}, function_count);
 
@@ -547,24 +541,22 @@ TEST(UnknownFunction, PhysicalDeviceFunctionDriverSupportWithImplicitLayerInterc
 
 TEST(UnknownFunction, PhysicalDeviceFunctionWithMultipleImplicitLayersInterception) {
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
+    auto& driver = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
     std::vector<std::string> function_names;
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
     add_function_names(function_names, function_count);
     auto& test_physical_device = driver.add_and_get_physical_device("physical_device_0");
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_0")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept_0.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_0")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer_0 = env.get_test_layer(0);
     layer_0.set_use_gipa_GetPhysicalDeviceProcAddr(true);
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_1")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept_1.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_1")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer_1 = env.get_test_layer(1);
     layer_1.set_use_gipa_GetPhysicalDeviceProcAddr(false);
     for (uint32_t i = 0; i < function_count / 10; i++) {
@@ -636,7 +628,7 @@ void unknown_function_test_impl(std::vector<TestConfig> const& flags) {
     using layer_intercept_functions_type = layer_intercept_functions<DispatchableHandleType>;
 
     FrameworkEnvironment env{};
-    auto& driver = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA));
+    auto& driver = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
     auto& pd = driver.add_and_get_physical_device({});
     uint32_t function_count = MAX_NUM_UNKNOWN_EXTS;
 
@@ -651,11 +643,10 @@ void unknown_function_test_impl(std::vector<TestConfig> const& flags) {
     }
     TestLayer* layer_ptr = nullptr;
     if (has_flag(flags, TestConfig::add_layer_implementation) || has_flag(flags, TestConfig::add_layer_interception)) {
-        env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
-                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                             .set_disable_environment("DISABLE_ME")),
-                               "implicit_layer_unknown_function_intercept.json");
+        env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                                 .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
+                                                                 .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                                 .set_disable_environment("DISABLE_ME")));
         layer_ptr = &env.get_test_layer();
     }
     if (has_flag(flags, TestConfig::add_layer_implementation) && has_flag(flags, TestConfig::add_layer_interception)) {
@@ -1097,24 +1088,22 @@ struct D {};
 
 TEST(UnknownFunction, PhysicalDeviceFunctionTwoLayerInterception) {
     FrameworkEnvironment env{};
-    PhysicalDevice& pd = env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_and_get_physical_device({});
+    PhysicalDevice& pd = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_and_get_physical_device({});
 
     UnknownFunction f{"vkFunc1"};
     Functions::three::physical_device::add_to_driver(f, pd);
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer0 = env.get_test_layer(0);
     Functions::three::physical_device::add_to_layer(f, layer0, D<0>{});
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept2")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept2.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept2")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer1 = env.get_test_layer(1);
 
     Functions::three::physical_device::add_to_layer(f, layer1, D<1>{});
@@ -1129,8 +1118,7 @@ TEST(UnknownFunction, PhysicalDeviceFunctionTwoLayerInterception) {
 
 TEST(UnknownFunction, ManyCombinations) {
     FrameworkEnvironment env{};
-    PhysicalDevice& physical_device =
-        env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_and_get_physical_device({});
+    PhysicalDevice& physical_device = env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_and_get_physical_device({});
     std::vector<UnknownFunction> unknown_funcs;
 
     unknown_funcs.emplace_back("vkZero_uint32_uint32_0");
@@ -1147,20 +1135,18 @@ TEST(UnknownFunction, ManyCombinations) {
     unknown_funcs.emplace_back("vkOne_uint32_uint32_char_11");
     unknown_funcs.emplace_back("vkTwo_ptr_int_ptr_int_12");
 
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_0")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")
-                                                         .add_device_extension(ManifestLayer::LayerDescription::Extension{
-                                                             "VK_EXT_for_the_laughs", 0, {"vkOne_uint32_uint32_char_11"}})),
-                           "implicit_layer_unknown_function_intercept_0.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_0")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")
+                                                             .add_device_extension(ManifestLayer::LayerDescription::Extension{
+                                                                 "VK_EXT_for_the_laughs", 0, {"vkOne_uint32_uint32_char_11"}})));
     auto& layer_0 = env.get_test_layer(0);
     layer_0.set_use_gipa_GetPhysicalDeviceProcAddr(true);
-    env.add_implicit_layer(ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
-                                                         .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_1")
-                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
-                                                         .set_disable_environment("DISABLE_ME")),
-                           "implicit_layer_unknown_function_intercept_1.json");
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("VK_LAYER_implicit_layer_unknown_function_intercept_1")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")));
     auto& layer_1 = env.get_test_layer(1);
     layer_1.set_use_gipa_GetPhysicalDeviceProcAddr(false);
 
@@ -1273,37 +1259,35 @@ TEST(UnknownFunction, ManyCombinations) {
 
 TEST(UnknownFunction, PhysicalDeviceFunctionInLayer) {
     FrameworkEnvironment env{};
-    env.add_icd(TestICDDetails(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA)).add_physical_device({});
+    env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device({});
 
-    env.add_implicit_layer(ManifestLayer{}
-                               .add_layer(ManifestLayer::LayerDescription{}
-                                              .set_name("VK_LAYER_implicit_layer_1")
-                                              .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_0)
-                                              .set_disable_environment("DISABLE_ME"))
-                               .set_file_format_version({1, 0, 0}),
-                           "implicit_layer_1.json");
+    env.add_implicit_layer({}, ManifestLayer{}
+                                   .add_layer(ManifestLayer::LayerDescription{}
+                                                  .set_name("VK_LAYER_implicit_layer_1")
+                                                  .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_0)
+                                                  .set_disable_environment("DISABLE_ME"))
+                                   .set_file_format_version({1, 0, 0}));
 
     UnknownFunction unknown_func{"vkPhysicalDeviceFunctionInLayer"};
     const char* ext_name = "VK_EXT_not_funny";
 
     const char* explicit_layer_unknown_function_implement = "VK_LAYER_implement_unknown_function";
     env.add_explicit_layer(
+        {},
         ManifestLayer{}
             .add_layer(ManifestLayer::LayerDescription{}
                            .set_name(explicit_layer_unknown_function_implement)
                            .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
                            .add_instance_extension(ManifestLayer::LayerDescription::Extension{ext_name, 0, {unknown_func.name}}))
-            .set_file_format_version({1, 1, 0}),
-        "implement_unknown_function.json");
+            .set_file_format_version({1, 1, 0}));
     auto& layer0 = env.get_test_layer(1);
 
     const char* explicit_layer_to_enable_1 = "VK_LAYER_explicit_layer_1";
-    env.add_explicit_layer(ManifestLayer{}
-                               .add_layer(ManifestLayer::LayerDescription{}
-                                              .set_name(explicit_layer_to_enable_1)
-                                              .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2))
-                               .set_file_format_version({1, 2, 0}),
-                           "explicit_layer_2.json");
+    env.add_explicit_layer({}, ManifestLayer{}
+                                   .add_layer(ManifestLayer::LayerDescription{}
+                                                  .set_name(explicit_layer_to_enable_1)
+                                                  .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2))
+                                   .set_file_format_version({1, 2, 0}));
 
     Functions::four::physical_device::add_implementation_to_layer(unknown_func, layer0);
 

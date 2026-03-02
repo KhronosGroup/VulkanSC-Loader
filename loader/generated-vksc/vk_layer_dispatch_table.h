@@ -29,10 +29,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-
-#if !defined(PFN_GetPhysicalDeviceProcAddr)
-typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_GetPhysicalDeviceProcAddr)(VkInstance instance, const char* pName);
-#endif
+#include <vulkan/vk_layer.h>
 
 // Instance function pointer dispatch table
 typedef struct VkLayerInstanceDispatchTable_ {

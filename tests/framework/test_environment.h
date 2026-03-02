@@ -392,8 +392,6 @@ struct LoaderSettings {
     BUILDER_VECTOR(AppSpecificSettings, app_specific_settings, app_specific_setting);
 };
 
-struct FrameworkEnvironment;  // forward declaration
-
 struct PlatformShimWrapper {
     PlatformShimWrapper(fs::FileSystemManager& file_system_manager, const char* log_filter) noexcept;
     PlatformShimWrapper(PlatformShimWrapper const&) = delete;
@@ -407,68 +405,42 @@ struct PlatformShimWrapper {
     EnvVarWrapper loader_logging;
 };
 
-struct TestICDHandle {
-    TestICDHandle() noexcept;
-    TestICDHandle(std::filesystem::path const& icd_path) noexcept;
-    TestICD& reset_icd() noexcept;
-    TestICD& get_test_icd() noexcept;
-    std::filesystem::path get_icd_full_path() noexcept;
-    std::filesystem::path get_icd_manifest_path() noexcept;
-    std::filesystem::path get_shimmed_manifest_path() noexcept;
+template <typename BinaryObject, typename GetTestBinaryFunc, typename GetNewTestBinaryFunc>
+struct TestBinaryHandle {
+    TestBinaryHandle() noexcept {}
+    TestBinaryHandle(std::filesystem::path const& binary_path) noexcept;
 
-    // Must use statically
-    LibraryWrapper icd_library;
-    GetTestICDFunc proc_addr_get_test_icd = nullptr;
-    GetNewTestICDFunc proc_addr_reset_icd = nullptr;
-    std::filesystem::path
-        manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
-    std::filesystem::path
-        shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
-};
-struct TestLayerHandle {
-    TestLayerHandle() noexcept;
-    TestLayerHandle(std::filesystem::path const& layer_path) noexcept;
-    TestLayer& reset_layer() noexcept;
-    TestLayer& get_test_layer() noexcept;
-    std::filesystem::path get_layer_full_path() noexcept;
-    std::filesystem::path get_layer_manifest_path() noexcept;
-    std::filesystem::path get_shimmed_manifest_path() noexcept;
-
-    // Must use statically
-    LibraryWrapper layer_library;
-    GetTestLayerFunc proc_addr_get_test_layer = nullptr;
-    GetNewTestLayerFunc proc_addr_reset_layer = nullptr;
-    std::filesystem::path
-        manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
-    std::filesystem::path
-        shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
-};
-
-struct TestICDDetails {
-    TestICDDetails(ManifestICD icd_manifest) noexcept : icd_manifest(icd_manifest) {}
-    TestICDDetails(std::filesystem::path icd_binary_path, uint32_t api_version = VK_API_VERSION_1_0) noexcept {
-        icd_manifest.set_lib_path(icd_binary_path).set_api_version(api_version);
+    BinaryObject& get_test_binary() noexcept {
+        assert(proc_addr_get_test_binary != NULL && "symbol must be loaded before use");
+        return *proc_addr_get_test_binary();
     }
-    BUILDER_VALUE(ManifestICD, icd_manifest);
-    BUILDER_VALUE_WITH_DEFAULT(std::filesystem::path, json_name, "test_icd");
-    // Uses the json_name without modification - default is to append _1 in the json file to distinguish drivers
-    BUILDER_VALUE(bool, disable_icd_inc);
+    BinaryObject& reset() noexcept {
+        assert(proc_addr_reset_binary != NULL && "symbol must be loaded before use");
+        return *proc_addr_reset_binary();
+    }
+    std::filesystem::path get_full_path() noexcept { return library.get_path(); }
+    std::filesystem::path get_manifest_path() noexcept { return manifest_path; }
+    std::filesystem::path get_shimmed_manifest_path() noexcept { return shimmed_manifest_path; }
+
+    // Must use statically
+    LibraryWrapper library;
+    GetTestBinaryFunc proc_addr_get_test_binary = nullptr;
+    GetNewTestBinaryFunc proc_addr_reset_binary = nullptr;
+    std::filesystem::path
+        manifest_path;  // path to the manifest file is on the actual filesystem (aka <build_folder>/tests/framework/<...>)
+    std::filesystem::path
+        shimmed_manifest_path;  // path to where the loader will find the manifest file (eg /usr/local/share/vulkan/<...>)
+};
+
+using TestICDHandle = TestBinaryHandle<TestICD, GetTestICDFunc, GetNewTestICDFunc>;
+using TestLayerHandle = TestBinaryHandle<TestLayer, GetTestLayerFunc, GetNewTestLayerFunc>;
+
+struct ManifestOptions {
+    BUILDER_VALUE(std::filesystem::path, json_name);
     BUILDER_VALUE_WITH_DEFAULT(ManifestDiscoveryType, discovery_type, ManifestDiscoveryType::generic);
     BUILDER_VALUE(bool, is_fake);
     // If discovery type is env-var, is_dir controls whether to use the path to the file or folder the manifest is in
     BUILDER_VALUE(bool, is_dir);
-    BUILDER_VALUE_WITH_DEFAULT(LibraryPathType, library_path_type, LibraryPathType::absolute);
-};
-
-struct TestLayerDetails {
-    TestLayerDetails(ManifestLayer layer_manifest, const std::string& json_name) noexcept
-        : layer_manifest(layer_manifest), json_name(json_name) {}
-    BUILDER_VALUE(ManifestLayer, layer_manifest);
-    BUILDER_VALUE_WITH_DEFAULT(std::string, json_name, "test_layer");
-    BUILDER_VALUE_WITH_DEFAULT(ManifestDiscoveryType, discovery_type, ManifestDiscoveryType::generic);
-    BUILDER_VALUE(bool, is_fake);
-    // If discovery type is env-var, is_dir controls whether to use the path to the file or folder the manifest is in
-    BUILDER_VALUE_WITH_DEFAULT(bool, is_dir, true);
     BUILDER_VALUE_WITH_DEFAULT(LibraryPathType, library_path_type, LibraryPathType::absolute);
 };
 
@@ -495,13 +467,11 @@ struct FrameworkEnvironment {
     FrameworkEnvironment(const FrameworkEnvironment&) = delete;
     FrameworkEnvironment& operator=(const FrameworkEnvironment&) = delete;
 
-    TestICD& add_icd(TestICDDetails icd_details) noexcept;
-    void add_implicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept;
-    void add_implicit_layer(TestLayerDetails layer_details) noexcept;
-    void add_explicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept;
-    void add_explicit_layer(TestLayerDetails layer_details) noexcept;
-    void add_fake_implicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept;
-    void add_fake_explicit_layer(ManifestLayer layer_manifest, const std::string& json_name) noexcept;
+    TestICD& add_icd(std::filesystem::path const& path, ManifestOptions args = ManifestOptions{},
+                     ManifestICD manifest = ManifestICD{}) noexcept;
+
+    void add_implicit_layer(ManifestOptions args, ManifestLayer layer_manifest) noexcept;
+    void add_explicit_layer(ManifestOptions args, ManifestLayer layer_manifest) noexcept;
 
     // Resets the current settings with the values contained in loader_settings.
     // Write_to_secure_location determines whether to write to the secure or unsecure settings folder.
@@ -583,7 +553,10 @@ struct FrameworkEnvironment {
 
     LoaderSettings loader_settings;  // the current settings written to disk
    private:
-    void add_layer_impl(TestLayerDetails layer_details, ManifestCategory category);
+    uint32_t created_layer_count = 0;
+    void add_layer_impl(ManifestOptions args, ManifestLayer manifest, ManifestCategory category);
+
+    static ManifestLocation map_discovery_type_to_location(ManifestDiscoveryType type, ManifestCategory category);
 };
 
 // Create a surface using a platform specific API
