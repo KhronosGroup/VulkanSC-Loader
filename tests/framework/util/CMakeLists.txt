@@ -53,13 +53,8 @@ if(UNIX)
     target_compile_options(testing_framework_util PUBLIC -fPIC)
 endif()
 # Gives access to all headers in this folder, the framework folder, the framework binary folder, and the loader/generated folder
-if(VULKANSC)
-    target_include_directories(testing_framework_util
-        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/loader/generated-vksc")
-else()
-    target_include_directories(testing_framework_util
-        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")
-endif()
+target_include_directories(testing_framework_util
+    PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}")
 
 if (UNIX)
     if (LOADER_ENABLE_ADDRESS_SANITIZER)
