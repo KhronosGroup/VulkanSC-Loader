@@ -81,6 +81,10 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_PIPELINE_COMPILE_REQUIRED";
         case (VK_ERROR_NOT_PERMITTED):
             return os << "VK_ERROR_NOT_PERMITTED";
+        case (VK_ERROR_INVALID_PIPELINE_CACHE_DATA):
+            return os << "VK_ERROR_INVALID_PIPELINE_CACHE_DATA";
+        case (VK_ERROR_NO_PIPELINE_MATCH):
+            return os << "VK_ERROR_NO_PIPELINE_MATCH";
         case (VK_ERROR_SURFACE_LOST_KHR):
             return os << "VK_ERROR_SURFACE_LOST_KHR";
         case (VK_ERROR_NATIVE_WINDOW_IN_USE_KHR):
@@ -91,44 +95,8 @@ inline std::ostream& operator<<(std::ostream& os, const VkResult& result) {
             return os << "VK_ERROR_OUT_OF_DATE_KHR";
         case (VK_ERROR_INCOMPATIBLE_DISPLAY_KHR):
             return os << "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
-        case (VK_ERROR_INVALID_SHADER_NV):
-            return os << "VK_ERROR_INVALID_SHADER_NV";
-        case (VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR):
-            return os << "VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR";
-        case (VK_ERROR_VIDEO_PICTURE_LAYOUT_NOT_SUPPORTED_KHR):
-            return os << "VK_ERROR_VIDEO_PICTURE_LAYOUT_NOT_SUPPORTED_KHR";
-        case (VK_ERROR_VIDEO_PROFILE_OPERATION_NOT_SUPPORTED_KHR):
-            return os << "VK_ERROR_VIDEO_PROFILE_OPERATION_NOT_SUPPORTED_KHR";
-        case (VK_ERROR_VIDEO_PROFILE_FORMAT_NOT_SUPPORTED_KHR):
-            return os << "VK_ERROR_VIDEO_PROFILE_FORMAT_NOT_SUPPORTED_KHR";
-        case (VK_ERROR_VIDEO_PROFILE_CODEC_NOT_SUPPORTED_KHR):
-            return os << "VK_ERROR_VIDEO_PROFILE_CODEC_NOT_SUPPORTED_KHR";
-        case (VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR):
-            return os << "VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR";
         case (VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT):
             return os << "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
-        case (VK_ERROR_PRESENT_TIMING_QUEUE_FULL_EXT):
-            return os << "VK_ERROR_PRESENT_TIMING_QUEUE_FULL_EXT";
-        case (VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT):
-            return os << "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
-        case (VK_THREAD_IDLE_KHR):
-            return os << "VK_THREAD_IDLE_KHR";
-        case (VK_THREAD_DONE_KHR):
-            return os << "VK_THREAD_DONE_KHR";
-        case (VK_OPERATION_DEFERRED_KHR):
-            return os << "VK_OPERATION_DEFERRED_KHR";
-        case (VK_OPERATION_NOT_DEFERRED_KHR):
-            return os << "VK_OPERATION_NOT_DEFERRED_KHR";
-        case (VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR):
-            return os << "VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR";
-        case (VK_ERROR_COMPRESSION_EXHAUSTED_EXT):
-            return os << "VK_ERROR_COMPRESSION_EXHAUSTED_EXT";
-        case (VK_INCOMPATIBLE_SHADER_BINARY_EXT):
-            return os << "VK_INCOMPATIBLE_SHADER_BINARY_EXT";
-        case (VK_PIPELINE_BINARY_MISSING_KHR):
-            return os << "VK_PIPELINE_BINARY_MISSING_KHR";
-        case (VK_ERROR_NOT_ENOUGH_SPACE_KHR):
-            return os << "VK_ERROR_NOT_ENOUGH_SPACE_KHR";
         default:
             return os << static_cast<int32_t>(result);
     }

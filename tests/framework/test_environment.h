@@ -66,7 +66,11 @@
 
 #include "layer/test_layer.h"
 
+#ifdef VULKANSC
+#include "generated-vksc/vk_result_to_string_helper.h"
+#else
 #include "generated/vk_result_to_string_helper.h"
+#endif  // VULKANSC
 
 // handle checking
 template <typename T>

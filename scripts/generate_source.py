@@ -107,7 +107,7 @@ def RunGenerators(api: str, registry: str, directory: str, styleFile: str, targe
         f'{result_to_string_filename}': {
             'generator' : VkResultToStringGenerator,
             'genCombined': False,
-            'directory' : 'tests/framework/generated',
+            'directory' : 'tests/framework/generated-vksc' if api == 'vulkansc' else 'tests/framework/generated',
         }
     })
 
