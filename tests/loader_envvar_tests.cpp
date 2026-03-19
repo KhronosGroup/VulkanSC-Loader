@@ -159,12 +159,11 @@ TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarInFolder) {
     EXPECT_FALSE(
         env.debug_log.find("Ignoring override VK_ICD_FILENAMES, VK_DRIVER_FILES, and VK_ADD_DRIVER_FILES due to high-integrity"));
 
-#if defined(VULKANSC)  // The availability of GPDP2 in Vulkan SC and using linux device sort cause duplicately reported devices
-#if TESTING_COMMON_UNIX_PLATFORMS
+    // The availability of GPDP2 in Vulkan SC and using linux device sort cause duplicately reported devices
+#if defined(VULKANSC) && TESTING_COMMON_UNIX_PLATFORMS
     std::array<VkPhysicalDevice, 9> phys_devs_array;
 #else
     std::array<VkPhysicalDevice, 5> phys_devs_array;
-#endif
 #endif  // VULKANSC
     uint32_t phys_dev_count = 1;
     ASSERT_EQ(inst1->vkEnumeratePhysicalDevices(inst1.inst, &phys_dev_count, phys_devs_array.data()), VK_SUCCESS);
@@ -179,8 +178,8 @@ TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarInFolder) {
     InstWrapper inst2{env.vulkan_functions};
     inst2.CheckCreate();
 
-#if defined(VULKANSC)  // The availability of GPDP2 in Vulkan SC and using linux device sort cause duplicately reported devices
-#if TESTING_COMMON_UNIX_PLATFORMS
+    // The availability of GPDP2 in Vulkan SC and using linux device sort cause duplicately reported devices
+#if defined(VULKANSC) && TESTING_COMMON_UNIX_PLATFORMS
     phys_dev_count = 9;
     ASSERT_EQ(inst2->vkEnumeratePhysicalDevices(inst2.inst, &phys_dev_count, phys_devs_array.data()), VK_SUCCESS);
     ASSERT_EQ(phys_dev_count, 9U);
@@ -188,7 +187,6 @@ TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarInFolder) {
     phys_dev_count = 5;
     ASSERT_EQ(inst2->vkEnumeratePhysicalDevices(inst2.inst, &phys_dev_count, phys_devs_array.data()), VK_SUCCESS);
     ASSERT_EQ(phys_dev_count, 5U);
-#endif
 #endif  // VULKANSC
 }
 // Test VK_DRIVER_FILES environment variable containing a path to a folder  with elevated privileges
