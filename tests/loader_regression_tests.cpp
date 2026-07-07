@@ -164,12 +164,20 @@ TEST(CreateInstance, LogsInstanceCreateInfo) {
         .set_app_version(42)
         .set_engine_name("MyTestEngine")
         .set_engine_version(7)
+#ifdef VULKANSC
+        .set_api_version(1, 0, 0);
+#else
         .set_api_version(1, 2, 0);
+#endif
     FillDebugUtilsCreateDetails(inst.create_info, debug_log);
     inst.CheckCreate();
 
     ASSERT_TRUE(debug_log.find("applicationName: \"MyTestApp\", applicationVersion: 42"));
+#ifdef VULKANSC
+    ASSERT_TRUE(debug_log.find("engineName: \"MyTestEngine\", engineVersion: 7, apiVersion: 1.0.0"));
+#else
     ASSERT_TRUE(debug_log.find("engineName: \"MyTestEngine\", engineVersion: 7, apiVersion: 1.2.0"));
+#endif
     // FillDebugUtilsCreateDetails enables VK_EXT_debug_utils, so it should appear in the requested-extensions dump.
     ASSERT_TRUE(debug_log.find("VK_EXT_debug_utils"));
 }

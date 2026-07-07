@@ -406,18 +406,34 @@ TEST(UnknownFunctionDeathTests, PhysicalDeviceFunctionErrorPath) {
 
     auto phys_devs = inst.GetPhysDevs(2);
     VkPhysicalDeviceProperties props{};
+    // The availability of GPDP2 in Vulkan SC and using linux device sort cause change in device order
+#if defined(VULKANSC) && TESTING_COMMON_UNIX_PLATFORMS
+    env.vulkan_functions.vkGetPhysicalDeviceProperties(phys_devs[1], &props);
+    ASSERT_EQ(props.deviceType, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU);
+
+    env.vulkan_functions.vkGetPhysicalDeviceProperties(phys_devs[0], &props);
+    ASSERT_EQ(props.deviceType, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
+#else
     env.vulkan_functions.vkGetPhysicalDeviceProperties(phys_devs[0], &props);
     ASSERT_EQ(props.deviceType, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU);
 
     env.vulkan_functions.vkGetPhysicalDeviceProperties(phys_devs[1], &props);
     ASSERT_EQ(props.deviceType, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
+#endif
 
     // GPU that supports the unknown function is enumerated first (gpus are enumerated in reverse order)
     PFN_test_icd_internal_function returned_func_i = env.vulkan_functions.load(inst.inst, TEST_ICD_INTERNAL_FUNCTION_NAME_STRING);
     ASSERT_NE(returned_func_i, nullptr);
+    // The availability of GPDP2 in Vulkan SC and using linux device sort cause change in device order
+#if defined(VULKANSC) && TESTING_COMMON_UNIX_PLATFORMS
+    ASSERT_EQ(returned_func_i(phys_devs[1], 0, 1, 2.2f), VK_SUCCESS);
+    ASSERT_DEATH(returned_func_i(phys_devs[0], 0, 1, 2.2f),
+                 "Function " TEST_ICD_INTERNAL_FUNCTION_NAME_STRING " not supported for this physical device");
+#else
     ASSERT_EQ(returned_func_i(phys_devs[0], 0, 1, 2.2f), VK_SUCCESS);
     ASSERT_DEATH(returned_func_i(phys_devs[1], 0, 1, 2.2f),
                  "Function " TEST_ICD_INTERNAL_FUNCTION_NAME_STRING " not supported for this physical device");
+#endif
 }
 
 TEST(UnknownFunction, PhysicalDeviceFunctionWithImplicitLayerImplementation) {
