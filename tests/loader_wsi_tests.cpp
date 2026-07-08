@@ -780,8 +780,7 @@ TEST(WsiTests, GoogleSurfaceslessQuery) {
                                  .add_extension("VK_EXT_full_screen_exclusive")
 #endif
                                  .add_surface_format(surface_format)
-                                 .add_surface_present_modes(present_modes)
-                                 .finish());
+                                 .add_surface_present_modes(present_modes));
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_extension("VK_KHR_surface");
@@ -830,9 +829,7 @@ TEST(WsiTests, GoogleSurfaceslessQuery) {
 
 TEST(WsiTests, ForgetEnableSurfaceExtensions) {
     FrameworkEnvironment env{};
-    env.add_icd(TEST_ICD_PATH_VERSION_2)
-        .setup_WSI()
-        .add_physical_device(PhysicalDevice{}.add_extension("VK_KHR_swapchain").finish());
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI().add_physical_device(PhysicalDevice{}.add_extension("VK_KHR_swapchain"));
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.add_extension("VK_KHR_surface");
@@ -844,9 +841,7 @@ TEST(WsiTests, ForgetEnableSurfaceExtensions) {
 
 TEST(WsiTests, SwapchainFunctional) {
     FrameworkEnvironment env{};
-    env.add_icd(TEST_ICD_PATH_VERSION_2)
-        .setup_WSI()
-        .add_physical_device(PhysicalDevice{}.add_extension("VK_KHR_swapchain").finish());
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI().add_physical_device(PhysicalDevice{}.add_extension("VK_KHR_swapchain"));
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.setup_WSI();
@@ -947,8 +942,7 @@ TEST(WsiTests, EXTSurfaceMaintenance1) {
                                                                         .add_extension("VK_KHR_swapchain")
                                                                         .set_deviceName("no")
                                                                         .set_surface_capabilities(surface_caps)
-                                                                        .add_surface_present_modes(present_modes)
-                                                                        .finish());
+                                                                        .add_surface_present_modes(present_modes));
     VkSurfacePresentScalingCapabilitiesEXT scaling_capabilities{};
     scaling_capabilities.supportedPresentScaling = VK_PRESENT_SCALING_ONE_TO_ONE_BIT_EXT;
     scaling_capabilities.supportedPresentGravityX = VK_PRESENT_SCALING_ASPECT_RATIO_STRETCH_BIT_EXT;
@@ -965,8 +959,7 @@ TEST(WsiTests, EXTSurfaceMaintenance1) {
                                              .set_deviceName("yes")
                                              .set_surface_capabilities(surface_caps)
                                              .add_surface_present_modes(present_modes)
-                                             .set_surface_present_scaling_capabilities(scaling_capabilities)
-                                             .finish());
+                                             .set_surface_present_scaling_capabilities(scaling_capabilities));
     std::vector<std::vector<VkPresentModeKHR>> compatible_present_modes{
         {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR},
         {VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_MAILBOX_KHR},
@@ -980,8 +973,7 @@ TEST(WsiTests, EXTSurfaceMaintenance1) {
                                  .add_extension("VK_KHR_swapchain")
                                  .set_deviceName("no")
                                  .set_surface_capabilities(surface_caps)
-                                 .add_surface_present_modes(present_modes)
-                                 .finish());
+                                 .add_surface_present_modes(present_modes));
 
     InstWrapper inst{env.vulkan_functions};
     inst.create_info.setup_WSI();
@@ -1066,15 +1058,13 @@ TEST(WsiTests, MultiPlatformGetPhysicalDeviceSurfaceSupportKHR) {
         .setup_WSI("VK_USE_PLATFORM_XCB_KHR")
         .add_physical_device(PhysicalDevice{}
                                  .set_deviceName(xcb_device_name)
-                                 .add_queue_family_properties({{VK_QUEUE_GRAPHICS_BIT, 1, 0, {1, 1, 1}}, true})
-                                 .finish());
+                                 .add_queue_family_properties({{VK_QUEUE_GRAPHICS_BIT, 1, 0, {1, 1, 1}}, true}));
     const char* wayland_device_name = "WAYLAND";
     env.add_icd(TEST_ICD_PATH_VERSION_2)
         .setup_WSI("VK_USE_PLATFORM_WAYLAND_KHR")
         .add_physical_device(PhysicalDevice{}
                                  .set_deviceName(wayland_device_name)
-                                 .add_queue_family_properties({{VK_QUEUE_GRAPHICS_BIT, 1, 0, {1, 1, 1}}, true})
-                                 .finish());
+                                 .add_queue_family_properties({{VK_QUEUE_GRAPHICS_BIT, 1, 0, {1, 1, 1}}, true}));
 
     {
         // Create instance with only XCB support

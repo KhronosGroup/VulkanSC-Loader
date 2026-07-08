@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <mutex>
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -40,6 +41,7 @@
 
 #include "util/folder_manager.h"
 
+std::recursive_mutex shim_lock;
 PlatformShim platform_shim;
 extern "C" {
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__) || defined(__QNX__)
@@ -144,7 +146,16 @@ PFN_FPUTS real_fputs = nullptr;
 PFN_FPUTC real_fputc = nullptr;
 #endif
 
+// It would be nicer to use a lock_guard but due to the interposer, it isn't possible because these functions get called
+// before the shim_lock variable is finished initializing.
+#define LOCK_IF_NOT_IN_SETUP                                      \
+    std::unique_lock<std::recursive_mutex> lock{};                \
+    if (platform_shim.is_finished_setup) {                        \
+        lock = std::unique_lock<std::recursive_mutex>(shim_lock); \
+    }
+
 FRAMEWORK_EXPORT DIR* OPENDIR_FUNC_NAME(const char* path_name) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_opendir) real_opendir = (PFN_OPENDIR)dlsym(RTLD_NEXT, "opendir");
 #endif
@@ -163,6 +174,7 @@ FRAMEWORK_EXPORT DIR* OPENDIR_FUNC_NAME(const char* path_name) {
 }
 
 FRAMEWORK_EXPORT struct dirent* READDIR_FUNC_NAME(DIR* dir_stream) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_readdir) {
         if (sizeof(void*) == 8) {
@@ -223,6 +235,7 @@ FRAMEWORK_EXPORT struct dirent* READDIR_FUNC_NAME(DIR* dir_stream) {
 }
 
 FRAMEWORK_EXPORT int CLOSEDIR_FUNC_NAME(DIR* dir_stream) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_closedir) real_closedir = (PFN_CLOSEDIR)dlsym(RTLD_NEXT, "closedir");
 #endif
@@ -240,6 +253,7 @@ FRAMEWORK_EXPORT int CLOSEDIR_FUNC_NAME(DIR* dir_stream) {
 }
 
 FRAMEWORK_EXPORT int ACCESS_FUNC_NAME(const char* in_pathname, int mode) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_access) real_access = (PFN_ACCESS)dlsym(RTLD_NEXT, "access");
 #endif
@@ -262,6 +276,7 @@ FRAMEWORK_EXPORT int ACCESS_FUNC_NAME(const char* in_pathname, int mode) {
 }
 
 FRAMEWORK_EXPORT FILE* FOPEN_FUNC_NAME(const char* in_filename, const char* mode) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_fopen) real_fopen = (PFN_FOPEN)dlsym(RTLD_NEXT, "fopen");
 #endif
@@ -300,6 +315,7 @@ FRAMEWORK_EXPORT FILE* FOPEN_FUNC_NAME(const char* in_filename, const char* mode
 }
 
 FRAMEWORK_EXPORT void* DLOPEN_FUNC_NAME(const char* in_filename, int flags) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_dlopen) real_dlopen = (PFN_DLOPEN)dlsym(RTLD_NEXT, "dlopen");
 #endif
@@ -320,6 +336,7 @@ FRAMEWORK_EXPORT void* DLOPEN_FUNC_NAME(const char* in_filename, int flags) {
 }
 
 FRAMEWORK_EXPORT uid_t GETEUID_FUNC_NAME(void) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_geteuid) real_geteuid = (PFN_GETEUID)dlsym(RTLD_NEXT, "geteuid");
 #endif
@@ -332,6 +349,7 @@ FRAMEWORK_EXPORT uid_t GETEUID_FUNC_NAME(void) {
 }
 
 FRAMEWORK_EXPORT gid_t GETEGID_FUNC_NAME(void) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_getegid) real_getegid = (PFN_GETEGID)dlsym(RTLD_NEXT, "getegid");
 #endif
@@ -346,6 +364,7 @@ FRAMEWORK_EXPORT gid_t GETEGID_FUNC_NAME(void) {
 #if !defined(TARGET_OS_IPHONE)
 #if defined(HAVE_SECURE_GETENV)
 FRAMEWORK_EXPORT char* SECURE_GETENV_FUNC_NAME(const char* name) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_secure_getenv) real_secure_getenv = (PFN_SEC_GETENV)dlsym(RTLD_NEXT, "secure_getenv");
 #endif
@@ -358,6 +377,7 @@ FRAMEWORK_EXPORT char* SECURE_GETENV_FUNC_NAME(const char* name) {
 #endif
 #if defined(HAVE___SECURE_GETENV)
 FRAMEWORK_EXPORT char* __SECURE_GETENV_FUNC_NAME(const char* name) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real__secure_getenv) real__secure_getenv = (PFN_SEC_GETENV)dlsym(RTLD_NEXT, "__secure_getenv");
 #endif
@@ -372,6 +392,7 @@ FRAMEWORK_EXPORT char* __SECURE_GETENV_FUNC_NAME(const char* name) {
 #endif
 
 FRAMEWORK_EXPORT int FPUTS_FUNC_NAME(const char* str, FILE* stream) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_fputs) real_fputs = (PFN_FPUTS)dlsym(RTLD_NEXT, "fputs");
 #endif
@@ -382,6 +403,7 @@ FRAMEWORK_EXPORT int FPUTS_FUNC_NAME(const char* str, FILE* stream) {
 }
 
 FRAMEWORK_EXPORT int FPUTC_FUNC_NAME(int ch, FILE* stream) {
+    LOCK_IF_NOT_IN_SETUP
 #if !defined(__APPLE__)
     if (!real_fputc) real_fputc = (PFN_FPUTC)dlsym(RTLD_NEXT, "fputc");
 #endif
@@ -393,16 +415,19 @@ FRAMEWORK_EXPORT int FPUTC_FUNC_NAME(int ch, FILE* stream) {
 
 #if defined(__APPLE__)
 FRAMEWORK_EXPORT CFBundleRef my_CFBundleGetMainBundle() {
+    LOCK_IF_NOT_IN_SETUP
     static CFBundleRef global_bundle{};
     return reinterpret_cast<CFBundleRef>(&global_bundle);
 }
 FRAMEWORK_EXPORT CFURLRef my_CFBundleCopyResourcesDirectoryURL([[maybe_unused]] CFBundleRef bundle) {
+    LOCK_IF_NOT_IN_SETUP
     static CFURLRef global_url{};
     return reinterpret_cast<CFURLRef>(&global_url);
 }
 FRAMEWORK_EXPORT Boolean my_CFURLGetFileSystemRepresentation([[maybe_unused]] CFURLRef url,
                                                              [[maybe_unused]] Boolean resolveAgainstBase, UInt8* buffer,
                                                              CFIndex maxBufLen) {
+    LOCK_IF_NOT_IN_SETUP
     if (!platform_shim.bundle_contents.empty()) {
         CFIndex copy_len = (CFIndex)platform_shim.bundle_contents.size();
         if (copy_len > maxBufLen) {

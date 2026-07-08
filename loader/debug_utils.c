@@ -181,6 +181,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugUtilsMessengerEXT(VkInstanc
     VkResult res = VK_SUCCESS;
     VkLayerDbgFunctionNode *new_dbg_func_node = NULL;
     uint32_t next_index = 0;
+    bool index_reserved = false;
 
     uint32_t *pNextIndex = loader_instance_heap_alloc(inst, sizeof(uint32_t), VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
     if (NULL == pNextIndex) {
@@ -192,6 +193,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugUtilsMessengerEXT(VkInstanc
     if (res != VK_SUCCESS) {
         goto out;
     }
+    index_reserved = true;
 
     for (struct loader_icd_term *icd_term = inst->icd_terms; icd_term != NULL; icd_term = icd_term->next) {
         if (icd_term->debug_utils_messenger_list.list == NULL) {
@@ -251,11 +253,11 @@ out:
                 }
             }
         }
-        if (inst->debug_utils_messengers_list.list &&
-            inst->debug_utils_messengers_list.capacity > (*pNextIndex) * sizeof(struct loader_used_object_status)) {
-            inst->debug_utils_messengers_list.list[*pNextIndex].status = VK_FALSE;
+        if (index_reserved && inst->debug_utils_messengers_list.list &&
+            inst->debug_utils_messengers_list.capacity > next_index * sizeof(struct loader_used_object_status)) {
+            inst->debug_utils_messengers_list.list[next_index].status = VK_FALSE;
             if (NULL != pAllocator) {
-                inst->debug_utils_messengers_list.list[*pNextIndex].allocation_callbacks = *pAllocator;
+                inst->debug_utils_messengers_list.list[next_index].allocation_callbacks = *pAllocator;
             }
         }
         loader_free_with_instance_fallback(pAllocator, inst, new_dbg_func_node);
@@ -460,6 +462,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugReportCallbackEXT(VkInstanc
     VkResult res = VK_SUCCESS;
     VkLayerDbgFunctionNode *new_dbg_func_node = NULL;
     uint32_t next_index = 0;
+    bool index_reserved = false;
 
     uint32_t *pNextIndex = loader_instance_heap_alloc(inst, sizeof(uint32_t), VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
     if (NULL == pNextIndex) {
@@ -471,6 +474,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateDebugReportCallbackEXT(VkInstanc
     if (res != VK_SUCCESS) {
         goto out;
     }
+    index_reserved = true;
 
     for (struct loader_icd_term *icd_term = inst->icd_terms; icd_term != NULL; icd_term = icd_term->next) {
         if (icd_term->debug_report_callback_list.list == NULL) {
@@ -530,11 +534,11 @@ out:
                 }
             }
         }
-        if (inst->debug_report_callbacks_list.list &&
-            inst->debug_report_callbacks_list.capacity > (*pNextIndex) * sizeof(struct loader_used_object_status)) {
-            inst->debug_report_callbacks_list.list[*pNextIndex].status = VK_FALSE;
+        if (index_reserved && inst->debug_report_callbacks_list.list &&
+            inst->debug_report_callbacks_list.capacity > next_index * sizeof(struct loader_used_object_status)) {
+            inst->debug_report_callbacks_list.list[next_index].status = VK_FALSE;
             if (NULL != pAllocator) {
-                inst->debug_report_callbacks_list.list[*pNextIndex].allocation_callbacks = *pAllocator;
+                inst->debug_report_callbacks_list.list[next_index].allocation_callbacks = *pAllocator;
             }
         }
         loader_free_with_instance_fallback(pAllocator, inst, new_dbg_func_node);

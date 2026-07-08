@@ -20,6 +20,8 @@ enable_language(CXX) # Tests use C++
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
+
 
 # Make sure tests uses the dynamic runtime instead
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
@@ -143,6 +145,7 @@ endif()
 if(NOT CMAKE_CROSSCOMPILING)
     gtest_discover_tests(test_regression PROPERTIES DISCOVERY_TIMEOUT 100)
     gtest_discover_tests(test_fuzzing PROPERTIES DISCOVERY_TIMEOUT 100)
+    gtest_discover_tests(test_threading PROPERTIES DISCOVERY_TIMEOUT 100)
 else()
     gtest_add_tests(TARGET test_regression)
     # Used to skip certain tests that require rebuilding
@@ -150,6 +153,7 @@ else()
     # comments for TEST(TryLoadWrongBinaries, WrongICD).
     add_compile_definitions(CROSS_COMPILING)
     gtest_add_tests(TARGET test_fuzzing)
+    gtest_add_tests(TARGET test_threading)
 endif()
 
 # When APPLE_STATIC_LOADER is ON installation is disabled

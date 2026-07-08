@@ -155,7 +155,7 @@ TEST_F(CreateDestroyInstanceReport, WarnInCreateIgnored) {
     expected_object_type = VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT;
     expected_flag = VK_DEBUG_REPORT_WARNING_BIT_EXT;
 
-    VkApplicationInfo app_info;
+    VkApplicationInfo app_info{};
     app_info.apiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
     VkInstance inst = VK_NULL_HANDLE;
     ASSERT_EQ(VK_SUCCESS, CreateReportInstance(VK_DEBUG_REPORT_ERROR_BIT_EXT, &inst, &app_info));
@@ -171,7 +171,7 @@ TEST_F(CreateDestroyInstanceReport, WarnInCreate) {
     expected_object_type = VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT;
     expected_flag = VK_DEBUG_REPORT_WARNING_BIT_EXT;
 
-    VkApplicationInfo app_info;
+    VkApplicationInfo app_info{};
     app_info.apiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
     VkInstance inst = VK_NULL_HANDLE;
     ASSERT_EQ(VK_SUCCESS, CreateReportInstance(VK_DEBUG_REPORT_WARNING_BIT_EXT, &inst, &app_info));
@@ -500,7 +500,7 @@ TEST_F(CreateDestroyInstanceMessenger, WarnInCreateIgnored) {
     expected_message_flags = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
     expected_severity_flags = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
 
-    VkApplicationInfo app_info;
+    VkApplicationInfo app_info{};
     app_info.apiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
 
     VkInstance inst = VK_NULL_HANDLE;
@@ -519,7 +519,7 @@ TEST_F(CreateDestroyInstanceMessenger, WarnInCreate) {
     expected_message_flags = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
     expected_severity_flags = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
 
-    VkApplicationInfo app_info;
+    VkApplicationInfo app_info{};
     app_info.apiVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
 
     VkInstance inst = VK_NULL_HANDLE;
@@ -1170,9 +1170,9 @@ TEST(DebugUtils, WrappingLayer) {
     env.add_icd(TEST_ICD_PATH_VERSION_2)
         .set_min_icd_interface_version(5)
 #ifdef VULKANSC  // VK_EXT_debug_marker is not supported in Vulkan SC
-        .add_physical_device(PhysicalDevice{}.finish())
+        .add_physical_device(PhysicalDevice{})
 #else
-        .add_physical_device(PhysicalDevice{}.add_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME).finish())
+        .add_physical_device(PhysicalDevice{}.add_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 #endif  // VULKANSC
         .add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 

@@ -2583,7 +2583,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtBufPropsMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -2830,7 +2830,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtSemPropsMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -3076,7 +3076,7 @@ TEST(LoaderInstPhysDevExts, PhysDevExtFencePropsMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -3661,7 +3661,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPropsKHRMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -3836,7 +3836,7 @@ TEST(LoaderInstPhysDevExts, PhysDevDispPlanePropsKHRMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -4010,7 +4010,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneSupDispsKHRMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -4183,7 +4183,7 @@ TEST(LoaderInstPhysDevExts, GetDispModePropsKHRMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -4341,7 +4341,7 @@ TEST(LoaderInstPhysDevExts, GetDispModesKHRMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -4513,7 +4513,7 @@ TEST(LoaderInstPhysDevExts, GetDispPlaneCapsKHRMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -5278,7 +5278,7 @@ TEST(LoaderInstPhysDevExts, AcquireDrmDisplayEXTMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
@@ -5430,7 +5430,7 @@ TEST(LoaderInstPhysDevExts, GetDrmDisplayEXTMixed) {
         for (uint32_t icd = 0; icd < max_icd_count; ++icd) {
             auto& cur_icd = env.get_test_icd(icd);
             bool found = false;
-            for (auto const& [physical_device_handle, cur_dev] : cur_icd.physical_devices) {
+            for (auto const& cur_dev : cur_icd.physical_devices) {
                 // Find the ICD device matching the physical device we're looking at info for so we can compare the
                 // physical devices info with the returned info.
                 if (cur_dev.properties.apiVersion == pd_props.apiVersion && cur_dev.properties.deviceID == pd_props.deviceID &&
