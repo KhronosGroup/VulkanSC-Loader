@@ -40,8 +40,7 @@ The `sc_main` branch is currently based on the `sdk-1.3.257` Vulkan-Loader tag a
 
 ## Contact Information
 
-- [Charles Giessen](mailto:charles@lunarg.com)
-- [Mark Young](mailto:marky@lunarg.com)
+- [Daniel Rakos](mailto:daniel.rakos@rastergrid.com)
 
 ## Information for Developing or Contributing
 
