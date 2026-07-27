@@ -19,7 +19,7 @@
             "cmake_options": [
                 "-DGEN_VULKANSC_COMBINED=ON"
             ],
-            "commit": "0ab56483a26838b40cf024df0ae425d5e577484a"
+            "commit": "vksc1.0.22"
         },
         {
             "name": "googletest",
