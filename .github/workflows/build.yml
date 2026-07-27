@@ -46,7 +46,7 @@ jobs:
                 os: [ ubuntu-22.04, ubuntu-24.04 ]
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -113,7 +113,7 @@ jobs:
                 config: [ Debug, Release ]
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -150,7 +150,7 @@ jobs:
         timeout-minutes: 30
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -186,7 +186,7 @@ jobs:
         timeout-minutes: 30
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -213,7 +213,7 @@ jobs:
         timeout-minutes: 30
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -245,7 +245,7 @@ jobs:
                 config: [ Debug, Release ]
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -270,7 +270,7 @@ jobs:
                 arch: [ Win32, x64 ]
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -297,7 +297,7 @@ jobs:
                 config: [ Debug, Release ]
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.x'
             - run: python3 -m pip install pyparsing
@@ -320,7 +320,7 @@ jobs:
         timeout-minutes: 30
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.x'
             - run: python3 -m pip install pyparsing
@@ -368,7 +368,7 @@ jobs:
                 config: [ Debug, Release ]
         steps:
           - uses: actions/checkout@v7
-          - uses: actions/setup-python@v6
+          - uses: actions/setup-python@v7
             with:
               python-version: '3.11'
           - run: python3 -m pip install pyparsing
@@ -396,7 +396,7 @@ jobs:
                 shell: bash
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -425,7 +425,7 @@ jobs:
                 shell: bash
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -449,7 +449,7 @@ jobs:
                 shell: bash
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
@@ -473,7 +473,7 @@ jobs:
                 shell: bash
         steps:
             - uses: actions/checkout@v7
-            - uses: actions/setup-python@v6
+            - uses: actions/setup-python@v7
               with:
                 python-version: '3.11'
             - run: python3 -m pip install pyparsing
