@@ -749,7 +749,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL noop_debug_report_callback(VkDebugReportFl
     return VK_FALSE;
 }
 
-#ifndef VULKANSC // VK_EXT_debug_report is not supported in Vulkan SC
+#ifndef VULKANSC  // VK_EXT_debug_report is not supported in Vulkan SC
 // The allocator passed to vkCreate/vkDestroyDebugUtilsMessengerEXT and vkCreate/vkDestroyDebugReportCallbackEXT may differ
 // from the instance allocator. Everything the loader allocates for the messenger/callback has to come from, and go back to,
 // the allocator passed to those calls.
@@ -864,7 +864,7 @@ TEST(Allocation, DebugUtilsMessengerCreateFailOnReusedSlot) {
     ASSERT_TRUE(instance_tracker.empty());
 }
 
-#ifndef VULKANSC // VK_EXT_debug_report is not supported in Vulkan SC
+#ifndef VULKANSC  // VK_EXT_debug_report is not supported in Vulkan SC
 // Same as above for vkDestroyDebugReportCallbackEXT and each ICD's debug_report_callback_list.
 TEST(Allocation, DebugReportCallbackCreateFailOnReusedSlot) {
     FrameworkEnvironment env{};

@@ -87,7 +87,7 @@ LOADER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkI
         if (ptr_instance != NULL &&
             loader_check_version_meets_required(loader_combine_version(1, 3, 0), ptr_instance->app_api_version)) {
 #endif  // VULKANSC
-            // New behavior
+        // New behavior
             return NULL;
         }
         // Old behavior
