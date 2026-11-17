@@ -61,24 +61,47 @@ static const unsigned char UTF8_THREE_BYTE_MASK = 248;  // 0xF8;
 static const unsigned char UTF8_DATA_BYTE_CODE = 128;   // 0x80;
 static const unsigned char UTF8_DATA_BYTE_MASK = 192;   // 0xC0;
 
+// 32-bit FNV-1a (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function). Mirrored
+// byte-for-byte in Python as loader_hash_string() in scripts/generators/loader_extension_generator.py,
+// which precomputes the hash constants embedded in loader/generated/vk_loader_extensions.c - keep both in
+// sync or those constants stop matching this function (see HashString.MatchesGeneratorEmbeddedConstants in
+// tests/loader_hash_string_tests.cpp).
+//
+// Used as a cheap pre-filter before the strcmp confirmation when resolving entry point names
+// (vkGet{Instance,Device}ProcAddr): a hash match still falls through to a switch/case-guarded strcmp before
+// anything is returned, so a collision can never produce a wrong lookup - at worst it costs one extra
+// strcmp. Bounded by MaxLoaderStringLength so a non-NUL-terminated or adversarially long input can't make
+// this scan past a bounded byte count the way an unbounded `while (*str)` would. MaxLoaderStringLength is
+// an unrelated pre-existing constant reused here for convenience, not a bound derived from entry point
+// name lengths; every real entry point name is far shorter than the cap, so this never changes the hash
+// of a valid name.
+static inline uint32_t loader_hash_string(const char* str) {
+    uint32_t hash = 2166136261u;
+    for (uint32_t i = 0; i < (uint32_t)MaxLoaderStringLength && str[i]; ++i) {
+        hash ^= (uint8_t)str[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 // form of all dynamic lists/arrays
 // only the list element should be changed
 struct loader_generic_list {
     size_t capacity;
     uint32_t count;
-    void *list;
+    void* list;
 };
 
 struct loader_string_list {
     uint32_t allocated_count;
     uint32_t count;
-    char **list;
+    char** list;
 };
 
 struct loader_extension_list {
     size_t capacity;
     uint32_t count;
-    VkExtensionProperties *list;
+    VkExtensionProperties* list;
 };
 
 struct loader_dev_ext_props {
@@ -89,7 +112,7 @@ struct loader_dev_ext_props {
 struct loader_device_extension_list {
     size_t capacity;
     uint32_t count;
-    struct loader_dev_ext_props *list;
+    struct loader_dev_ext_props* list;
 };
 
 struct loader_used_object_status {
@@ -100,7 +123,7 @@ struct loader_used_object_status {
 struct loader_used_object_list {
     size_t capacity;
     uint32_t padding;  // count variable isn't used
-    struct loader_used_object_status *list;
+    struct loader_used_object_status* list;
 };
 
 struct loader_surface_allocation {
@@ -111,30 +134,30 @@ struct loader_surface_allocation {
 struct loader_surface_list {
     size_t capacity;
     uint32_t padding;  // count variable isn't used
-    VkSurfaceKHR *list;
+    VkSurfaceKHR* list;
 };
 
 struct loader_debug_utils_messenger_list {
     size_t capacity;
     uint32_t padding;  // count variable isn't used
-    VkDebugUtilsMessengerEXT *list;
+    VkDebugUtilsMessengerEXT* list;
 };
 
 struct loader_debug_report_callback_list {
     size_t capacity;
     uint32_t padding;  // count variable isn't used
-    VkDebugReportCallbackEXT *list;
+    VkDebugReportCallbackEXT* list;
 };
 
 struct loader_name_value {
-    char *name;
-    char *value;
+    char* name;
+    char* value;
 };
 
 struct loader_layer_functions {
-    char *str_gipa;
-    char *str_gdpa;
-    char *str_negotiate_interface;
+    char* str_gipa;
+    char* str_gdpa;
+    char* str_negotiate_interface;
     PFN_vkNegotiateLoaderLayerInterfaceVersion negotiate_layer_interface;
     PFN_vkGetInstanceProcAddr get_instance_proc_addr;
     PFN_vkGetDeviceProcAddr get_device_proc_addr;
@@ -157,12 +180,14 @@ enum loader_layer_library_status {
     LOADER_LAYER_LIB_ERROR_WRONG_BIT_TYPE = 20,
     LOADER_LAYER_LIB_ERROR_FAILED_TO_LOAD = 21,
     LOADER_LAYER_LIB_ERROR_OUT_OF_MEMORY = 22,
+    LOADER_LAYER_LIB_ERROR_NEGOTIATE_INTERFACE_VERSION_FAILED = 23,
+    LOADER_LAYER_LIB_ERROR_UNABLE_TO_FIND_VK_GET_INSTANCE_PROC_ADDR = 24,
 };
 
 enum layer_type_flags {
+    VK_LAYER_TYPE_FLAG_NONE = 0x0,
     VK_LAYER_TYPE_FLAG_INSTANCE_LAYER = 0x1,  // If not set, indicates Device layer
     VK_LAYER_TYPE_FLAG_EXPLICIT_LAYER = 0x2,  // If not set, indicates Implicit layer
-    VK_LAYER_TYPE_FLAG_META_LAYER = 0x4,      // If not set, indicates standard layer
 };
 
 enum loader_layer_enabled_by_what {
@@ -172,7 +197,6 @@ enum loader_layer_enabled_by_what {
     ENABLED_BY_WHAT_VK_INSTANCE_LAYERS,
     ENABLED_BY_WHAT_VK_LOADER_LAYERS_ENABLE,
     ENABLED_BY_WHAT_IN_APPLICATION_API,
-    ENABLED_BY_WHAT_META_LAYER,
 };
 
 struct loader_layer_properties {
@@ -181,8 +205,8 @@ struct loader_layer_properties {
     enum loader_settings_layer_control settings_control_value;
 
     uint32_t interface_version;  // PFN_vkNegotiateLoaderLayerInterfaceVersion
-    char *manifest_file_name;
-    char *lib_name;
+    char* manifest_file_name;
+    char* lib_name;
     enum loader_layer_library_status lib_status;
     enum loader_layer_enabled_by_what enabled_by_what;
     loader_platform_dl_handle lib_handle;
@@ -191,35 +215,29 @@ struct loader_layer_properties {
     struct loader_device_extension_list device_extension_list;
     struct loader_name_value disable_env_var;
     struct loader_name_value enable_env_var;
-    struct loader_string_list component_layer_names;
     struct {
-        char *enumerate_instance_extension_properties;
-        char *enumerate_instance_layer_properties;
-        char *enumerate_instance_version;
+        char* enumerate_instance_extension_properties;
+        char* enumerate_instance_layer_properties;
+        char* enumerate_instance_version;
     } pre_instance_functions;
-    struct loader_string_list override_paths;
-    bool is_override;
-    bool keep;
-    struct loader_string_list blacklist_layer_names;
-    struct loader_string_list app_key_paths;
 };
 
 // Stores a list of loader_layer_properties
 struct loader_layer_list {
     size_t capacity;
     uint32_t count;
-    struct loader_layer_properties *list;
+    struct loader_layer_properties* list;
 };
 
 // Stores a list of pointers to loader_layer_properties
-// Used for app_activated_layer_list and expanded_activated_layer_list
+// Used for expanded_activated_layer_list
 struct loader_pointer_layer_list {
     size_t capacity;
     uint32_t count;
-    struct loader_layer_properties **list;
+    struct loader_layer_properties** list;
 };
 
-typedef VkResult(VKAPI_PTR *PFN_vkDevExt)(VkDevice device);
+typedef VkResult(VKAPI_PTR* PFN_vkDevExt)(VkDevice device);
 
 struct loader_dev_dispatch_table {
     VkLayerDispatchTable core_dispatch;
@@ -232,7 +250,7 @@ struct loader_device {
     struct loader_dev_dispatch_table loader_dispatch;
     VkDevice chain_device;  // device object from the dispatch chain
     VkDevice icd_device;    // device object from the icd
-    struct loader_physical_device_term *phys_dev_term;
+    struct loader_physical_device_term* phys_dev_term;
 
     VkAllocationCallbacks alloc_callbacks;
 
@@ -254,7 +272,7 @@ struct loader_device {
         bool ext_full_screen_exclusive_enabled;
     } driver_extensions;
 
-    struct loader_device *next;
+    struct loader_device* next;
 
     // Makes vkGetDeviceProcAddr check if core functions are supported by the current app_api_version.
     // Only set to true if VK_KHR_maintenance5 is enabled.
@@ -266,13 +284,13 @@ struct loader_device {
 // Per ICD structure
 struct loader_icd_term {
     // pointers to find other structs
-    const struct loader_scanned_icd *scanned_icd;
-    const struct loader_instance *this_instance;
-    struct loader_device *logical_device_list;
+    const struct loader_scanned_icd* scanned_icd;
+    const struct loader_instance* this_instance;
+    struct loader_device* logical_device_list;
     VkInstance instance;  // instance object from the icd
     struct loader_icd_term_dispatch dispatch;
 
-    struct loader_icd_term *next;
+    struct loader_icd_term* next;
 
     PFN_PhysDevExt phys_dev_ext[MAX_NUM_UNKNOWN_EXTS];
 
@@ -289,7 +307,7 @@ struct loader_icd_term {
 struct loader_icd_tramp_list {
     size_t capacity;
     uint32_t count;
-    struct loader_scanned_icd *scanned_list;
+    struct loader_scanned_icd* scanned_list;
 };
 
 struct loader_instance_dispatch_table {
@@ -303,8 +321,9 @@ struct loader_instance_dispatch_table {
 #define LOADER_MAGIC_NUMBER 0x10ADED010110ADEDUL
 
 // Per instance structure
+// NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding): members are intentionally grouped by usage, not by size
 struct loader_instance {
-    struct loader_instance_dispatch_table *disp;  // must be first entry in structure
+    struct loader_instance_dispatch_table* disp;  // must be first entry in structure
     uint64_t magic;                               // Should be LOADER_MAGIC_NUMBER
 
     // Store all the terminators for instance functions in case a layer queries one *after* vkCreateInstance
@@ -318,44 +337,39 @@ struct loader_instance {
     // create new data unless necessary.
     uint32_t total_gpu_count;
     uint32_t phys_dev_count_term;
-    struct loader_physical_device_term **phys_devs_term;
+    struct loader_physical_device_term** phys_devs_term;
     uint32_t phys_dev_count_tramp;
-    struct loader_physical_device_tramp **phys_devs_tramp;
+    struct loader_physical_device_tramp** phys_devs_tramp;
 
     // We also need to manually track physical device groups, but we don't need
     // loader specific structures since we have that content in the physical
     // device stored internal to the public structures.
     uint32_t phys_dev_group_count_term;
-    struct VkPhysicalDeviceGroupProperties **phys_dev_groups_term;
+    struct VkPhysicalDeviceGroupProperties** phys_dev_groups_term;
 
-    struct loader_instance *next;
+    struct loader_instance* next;
 
     uint32_t icd_terms_count;
-    struct loader_icd_term *icd_terms;
+    struct loader_icd_term* icd_terms;
     struct loader_icd_tramp_list icd_tramp_list;
 
     // Must store the strings inside loader_instance directly - since the asm code will offset into
     // loader_instance to get the function name
     uint32_t dev_ext_disp_function_count;
-    char *dev_ext_disp_functions[MAX_NUM_UNKNOWN_EXTS];
+    char* dev_ext_disp_functions[MAX_NUM_UNKNOWN_EXTS];
     uint32_t phys_dev_ext_disp_function_count;
-    char *phys_dev_ext_disp_functions[MAX_NUM_UNKNOWN_EXTS];
+    char* phys_dev_ext_disp_functions[MAX_NUM_UNKNOWN_EXTS];
 
 #ifndef VULKANSC
-    struct loader_msg_callback_map_entry *icd_msg_callback_map;
+    struct loader_msg_callback_map_entry* icd_msg_callback_map;
 #endif  // VULKANSC
 
     struct loader_string_list enabled_layer_names;
 
     struct loader_layer_list instance_layer_list;
-    bool override_layer_present;
 
-    // List of activated layers.
-    //  app_      is the version based on exactly what the application asked for.
-    //            This is what must be returned to the application on Enumerate calls.
-    //  expanded_ is the version based on expanding meta-layers into their
-    //            individual component layers.  This is what is used internally.
-    struct loader_pointer_layer_list app_activated_layer_list;
+    // List of activated layers. This active list of layers can include layers that failed to actually be enabled, such as not being
+    // able to load the binary, failing version negotiation, and not being able to query vkGetInstanceProcAddr
     struct loader_pointer_layer_list expanded_activated_layer_list;
 
     VkInstance instance;  // layers/ICD instance returned to trampoline
@@ -369,8 +383,8 @@ struct loader_instance {
     struct loader_used_object_list debug_report_callbacks_list;
 
     // Stores debug callbacks - used in the log.
-    VkLayerDbgFunctionNode *current_dbg_function_head;        // Current head
-    VkLayerDbgFunctionNode *instance_only_dbg_function_head;  // Only used for instance create/destroy
+    VkLayerDbgFunctionNode* current_dbg_function_head;        // Current head
+    VkLayerDbgFunctionNode* instance_only_dbg_function_head;  // Only used for instance create/destroy
 
     VkAllocationCallbacks alloc_callbacks;
 
@@ -403,16 +417,16 @@ struct loader_instance {
 // Per enumerated PhysicalDevice structure, used to wrap in trampoline code and
 // also same structure used to wrap in terminator code
 struct loader_physical_device_tramp {
-    struct loader_instance_dispatch_table *disp;  // must be first entry in structure
-    struct loader_instance *this_instance;
+    struct loader_instance_dispatch_table* disp;  // must be first entry in structure
+    struct loader_instance* this_instance;
     uint64_t magic;             // Should be PHYS_TRAMP_MAGIC_NUMBER
     VkPhysicalDevice phys_dev;  // object from layers/loader terminator
 };
 
 // Per enumerated PhysicalDevice structure, used to wrap in terminator code
 struct loader_physical_device_term {
-    struct loader_instance_dispatch_table *disp;  // must be first entry in structure
-    struct loader_icd_term *this_icd_term;
+    struct loader_instance_dispatch_table* disp;  // must be first entry in structure
+    struct loader_icd_term* this_icd_term;
     VkPhysicalDevice phys_dev;  // object from ICD
 };
 
@@ -426,7 +440,7 @@ struct LinuxSortedDeviceInfo {
     bool default_device;
 
     // Loader specific items about the driver providing support for this physical device
-    struct loader_icd_term *icd_term;
+    struct loader_icd_term* icd_term;
 
     // Some generic device properties
     VkPhysicalDeviceType device_type;
@@ -445,7 +459,7 @@ struct LinuxSortedDeviceInfo {
 
 // Per enumerated PhysicalDeviceGroup structure, used to wrap in terminator code
 struct loader_physical_device_group_term {
-    struct loader_icd_term *this_icd_term;
+    struct loader_icd_term* this_icd_term;
     VkPhysicalDeviceGroupProperties group_props;
 #if defined(LOADER_ENABLE_LINUX_SORT)
     struct LinuxSortedDeviceInfo internal_device_info[VK_MAX_DEVICE_GROUP_SIZE];
@@ -453,11 +467,11 @@ struct loader_physical_device_group_term {
 };
 
 struct loader_struct {
-    struct loader_instance *instances;
+    struct loader_instance* instances;
 };
 
 struct loader_scanned_icd {
-    char *lib_name;
+    char* lib_name;
     loader_platform_dl_handle handle;
     uint32_t api_version;
     uint32_t interface_version;
@@ -481,8 +495,8 @@ enum loader_data_files_type {
 
 struct loader_icd_physical_devices {
     uint32_t device_count;
-    VkPhysicalDevice *physical_devices;
-    struct loader_icd_term *icd_term;
+    VkPhysicalDevice* physical_devices;
+    struct loader_icd_term* icd_term;
 #if defined(WIN32)
     LUID windows_adapter_luid;
 #endif
@@ -534,5 +548,5 @@ struct loader_envvar_id_filter_value {
 
 struct loader_envvar_id_filter {
     uint32_t count;
-    struct loader_envvar_id_filter_value *filters;
+    struct loader_envvar_id_filter_value* filters;
 };

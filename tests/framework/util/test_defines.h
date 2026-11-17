@@ -62,7 +62,7 @@ enum class ManifestDiscoveryType {
     null_dir,           // put the manifest in the 'null_dir' which the loader does not search in (D3DKMT for instance)
     env_var,            // use the corresponding env-var for it
     add_env_var,        // use the corresponding add-env-var for it
-    override_folder,    // add to a special folder for the override layer to use
+    overflow_folder,    // add to a special folder for the override layer to use
 #if defined(_WIN32)
     windows_app_package,  // let the app package search find it
 #endif
@@ -88,7 +88,7 @@ enum class ManifestLocation {
     implicit_layer,
     implicit_layer_env_var,
     implicit_layer_add_env_var,
-    override_layer,
+    overflow,
 #if defined(_WIN32)
     windows_app_package,
 #endif

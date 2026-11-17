@@ -71,7 +71,7 @@ TEST(WsiTests, CreateSurfaceWin32NoICDCreateSupport) {
     env.vulkan_functions.vkDestroySurfaceKHR(inst, surface, nullptr);
 }
 
-// When ICD does support the surface creation, the loader should  delegat handle it to the ICD
+// When ICD does support the surface creation, the loader should delegate handle it to the ICD
 TEST(WsiTests, CreateSurfaceWin32ICDSupport) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2);
@@ -254,7 +254,7 @@ TEST(WsiTests, CreateSurfaceXCBNoICDCreateSupport) {
     env.vulkan_functions.vkDestroySurfaceKHR(inst, surface, nullptr);
 }
 
-// When ICD does support the surface creation, the loader should  delegat handle it to the ICD
+// When ICD does support the surface creation, the loader should delegate handle it to the ICD
 TEST(WsiTests, CreateSurfaceXCBICDSupport) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2);
@@ -438,7 +438,7 @@ TEST(WsiTests, CreateSurfaceXLIBNoICDCreateSupport) {
     env.vulkan_functions.vkDestroySurfaceKHR(inst, surface, nullptr);
 }
 
-// When ICD does support the surface creation, the loader should  delegat handle it to the ICD
+// When ICD does support the surface creation, the loader should delegate handle it to the ICD
 TEST(WsiTests, CreateSurfaceXLIBICDSupport) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2);
@@ -622,7 +622,7 @@ TEST(WsiTests, CreateSurfaceWaylandNoICDCreateSupport) {
     env.vulkan_functions.vkDestroySurfaceKHR(inst, surface, nullptr);
 }
 
-// When ICD does support the surface creation, the loader should  delegat handle it to the ICD
+// When ICD does support the surface creation, the loader should delegate handle it to the ICD
 TEST(WsiTests, CreateSurfaceWaylandICDSupport) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2);
@@ -765,7 +765,7 @@ TEST(WsiTests, WaylandGetPhysicalDeviceSurfaceSupportKHR) {
 #endif
 
 #ifndef VULKANSC  // VK_GOOGLE_surfaceless_query is not supported in Vulkan SC
-TEST(WsiTests, GoogleSurfaceslessQuery) {
+TEST(WsiTests, GoogleSurfacelessQuery) {
     std::vector<VkPresentModeKHR> present_modes{VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR,
                                                 VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_FIFO_RELAXED_KHR};
     VkSurfaceFormatKHR surface_format = {VK_FORMAT_R8G8B8A8_SRGB, VK_COLORSPACE_SRGB_NONLINEAR_KHR};
@@ -827,6 +827,46 @@ TEST(WsiTests, GoogleSurfaceslessQuery) {
 }
 #endif  // VULKANSC
 
+// When the ICD does not expose vkGetPhysicalDeviceSurfaceCapabilities2EXT the loader emulates it using the
+// KHR entrypoint. If that driver call fails it may leave the output untouched (per spec), so the loader must
+// not copy the emulation scratch struct back to the caller - doing so returned uninitialized loader stack to
+// the application. Model this with a driver whose vkGetPhysicalDeviceSurfaceCapabilitiesKHR returns an error;
+// the caller's struct must be left as-is.
+TEST(WsiTests, GetPhysicalDeviceSurfaceCapabilities2EXTEmulationDriverError) {
+    FrameworkEnvironment env{};
+    VkSurfaceCapabilitiesKHR driver_caps{};
+    driver_caps.minImageCount = 0xBADC0DE;
+    driver_caps.maxImageCount = 0xBADC0DE;
+    env.add_icd(TEST_ICD_PATH_VERSION_2)
+        .setup_WSI()
+        .add_instance_extension(VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME)
+        .add_physical_device(PhysicalDevice{}
+                                 .add_extension("VK_KHR_swapchain")
+                                 .set_surface_capabilities(driver_caps)
+                                 .set_surface_capabilities_result(VK_ERROR_SURFACE_LOST_KHR));
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.setup_WSI().add_extension(VK_EXT_DISPLAY_SURFACE_COUNTER_EXTENSION_NAME);
+    ASSERT_NO_FATAL_FAILURE(inst.CheckCreate());
+
+    VkSurfaceKHR surface{};
+    ASSERT_EQ(VK_SUCCESS, create_surface(inst, surface));
+    WrappedHandle<VkSurfaceKHR, VkInstance, PFN_vkDestroySurfaceKHR> wrapped_surface{surface, inst.inst,
+                                                                                     env.vulkan_functions.vkDestroySurfaceKHR};
+
+    VkPhysicalDevice physical_device = inst.GetPhysDev();
+
+    PFN_vkGetPhysicalDeviceSurfaceCapabilities2EXT get_caps2ext = inst.load("vkGetPhysicalDeviceSurfaceCapabilities2EXT");
+    ASSERT_NE(get_caps2ext, nullptr);
+
+    VkSurfaceCapabilities2EXT caps2{};
+    caps2.sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_EXT;
+
+    ASSERT_EQ(VK_ERROR_SURFACE_LOST_KHR, get_caps2ext(physical_device, surface, &caps2));
+    ASSERT_EQ(0u, caps2.minImageCount);
+    ASSERT_EQ(0u, caps2.maxImageCount);
+}
+
 TEST(WsiTests, ForgetEnableSurfaceExtensions) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI().add_physical_device(PhysicalDevice{}.add_extension("VK_KHR_swapchain"));
@@ -838,6 +878,25 @@ TEST(WsiTests, ForgetEnableSurfaceExtensions) {
     VkSurfaceKHR surface{};
     ASSERT_EQ(VK_ERROR_EXTENSION_NOT_PRESENT, create_surface(inst, surface));
 }
+
+#if defined(VK_USE_PLATFORM_METAL_EXT)
+// Calling the exported vkCreateMetalSurfaceEXT trampoline when VK_EXT_metal_surface was not enabled must be
+// rejected with VK_ERROR_EXTENSION_NOT_PRESENT, matching every other surface-creation terminator. The
+// terminator used to fall through and hand back a live surface with VK_SUCCESS.
+TEST(WsiTests, CreateMetalSurfaceWithoutEnablingExtension) {
+    FrameworkEnvironment env{};
+    env.add_icd(TEST_ICD_PATH_VERSION_2).setup_WSI().add_physical_device(PhysicalDevice{}.add_extension("VK_KHR_swapchain"));
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.add_extension("VK_KHR_surface");
+    ASSERT_NO_FATAL_FAILURE(inst.CheckCreate());
+
+    VkMetalSurfaceCreateInfoEXT surf_create_info{VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT};
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
+    ASSERT_EQ(VK_ERROR_EXTENSION_NOT_PRESENT,
+              env.vulkan_functions.vkCreateMetalSurfaceEXT(inst, &surf_create_info, nullptr, &surface));
+}
+#endif  // VK_USE_PLATFORM_METAL_EXT
 
 TEST(WsiTests, SwapchainFunctional) {
     FrameworkEnvironment env{};

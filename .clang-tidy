@@ -1,0 +1,26 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-else-after-return,
+  readability-inconsistent-declaration-parameter-name,
+  readability-isolate-declaration,
+  readability-non-const-parameter,
+  readability-redundant-casting,
+  readability-redundant-declaration,
+  readability-redundant-parentheses,
+  readability-suspicious-call-argument,
+  -misc-include-cleaner,
+  -misc-use-internal-linkage,
+  -portability-avoid-pragma-once
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*/loader/.*'
+ExcludeHeaderFilterRegex: '.*/loader/(generated/.*|generated-vksc/.*|cJSON\.h)$'
+FormatStyle: none

@@ -33,6 +33,7 @@
     - [Example Linux Driver Search Path](#example-linux-driver-search-path)
   - [Driver Discovery on Fuchsia](#driver-discovery-on-fuchsia)
   - [Driver Discovery on macOS](#driver-discovery-on-macos)
+    - [Use App Bundled Drivers exclusively](#use-app-bundled-drivers-exclusively)
     - [Example macOS Driver Search Path](#example-macos-driver-search-path)
     - [Additional Settings For Driver Debugging](#additional-settings-for-driver-debugging)
   - [Driver Discovery using the`VK_LUNARG_direct_driver_loading` extension](#driver-discovery-using-thevk_lunarg_direct_driver_loading-extension)
@@ -526,16 +527,14 @@ The order is similar to the search path on Linux with the exception that
 the application's bundle resources are searched first:
 `(bundle)/Contents/Resources/`.
 
-System installed drivers will be ignored if drivers are found inside of the app
-bundle.
-This is because there is not a standard mechanism in which to distinguish drivers
-that happen to be duplicates.
-For example, MoltenVK is commonly placed inside application bundles.
-If there exists a system installed MoltenVK, the loader will load both the app
-bundled and the system installed MoltenVK, leading to potential issues or crashes.
-Drivers found through environment variables, such as `VK_DRIVER_FILES`, will be
-used regardless of whether there are bundled drivers present or not.
+#### Use App Bundled Drivers exclusively
 
+By default, the Vulkan Loader searches various system and user paths
+for driver manifests. Defining the environment variable
+`VK_LOADER_SEARCH_ONLY_IN_BUNDLE` makes the Vulkan Loader only search
+for driver manifests in `(bundle)/Contents/Resources/`. This is
+intended for applications including drivers inside of the app bundle
+so that any drivers elsewhere on the system do not affect the app.
 
 #### Example macOS Driver Search Path
 
@@ -761,7 +760,7 @@ Here is an example driver JSON Manifest file:
   </tr>
   <tr>
     <td>"library_arch"</td>
-    <td>Optional field which specifies the architecture of the binary associated
+    <td><b>OPTIONAL:</b> Field which specifies the architecture of the binary associated
         with "library_path". <br />
         Allows the loader to quickly determine if the architecture of the driver
         matches that of the running application. <br />
@@ -781,7 +780,7 @@ Here is an example driver JSON Manifest file:
   </tr>
   <tr>
     <td>"is_portability_driver" </td>
-    <td>Defines whether the driver contains any VkPhysicalDevices which
+    <td><b>OPTIONAL:</b> Defines whether the driver contains any VkPhysicalDevices which
         implement the VK_KHR_portability_subset extension.<br/>
     </td>
   </tr>

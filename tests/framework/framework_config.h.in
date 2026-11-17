@@ -56,7 +56,7 @@
 
 // Version 7
 #define TEST_ICD_PATH_VERSION_7 "$<TARGET_FILE:test_icd_version_7>"
-#define TEST_ICD_PATH_VERSION_7_WIHTOUT_EXPORTS "$<TARGET_FILE:test_icd_version_7_without_exports>"
+#define TEST_ICD_PATH_VERSION_7_WITHOUT_EXPORTS "$<TARGET_FILE:test_icd_version_7_without_exports>"
 
 // TestLayer binaries
 #define TEST_LAYER_PATH_EXPORT_BASE "$<TARGET_FILE:test_layer_export_base>"
@@ -67,6 +67,8 @@
 #define TEST_LAYER_WRAP_OBJECTS_1 "$<TARGET_FILE:test_layer_wrap_objects_1>"
 #define TEST_LAYER_WRAP_OBJECTS_2 "$<TARGET_FILE:test_layer_wrap_objects_2>"
 #define TEST_LAYER_WRAP_OBJECTS_3 "$<TARGET_FILE:test_layer_wrap_objects_3>"
+
+#define TEST_LAYER_PATH_VERSION_2_UNICODE "$<TARGET_FILE:test_unicode_layer>"
 
 #define COMPLEX_JSON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/data/VkLayer_complex_file.json"
 #define FUZZER_OUTPUT_JSON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/data/fuzzer_output.json"

@@ -141,9 +141,9 @@ std::vector<VkExtensionProperties> InstWrapper::EnumerateLayerDeviceExtensions(V
 }
 
 DeviceWrapper::DeviceWrapper(InstWrapper& inst_wrapper, VkAllocationCallbacks* callbacks) noexcept
-    : functions(inst_wrapper.functions), callbacks(callbacks){};
+    : functions(inst_wrapper.functions), callbacks(callbacks) {};
 DeviceWrapper::DeviceWrapper(VulkanFunctions& functions, VkDevice device, VkAllocationCallbacks* callbacks) noexcept
-    : functions(&functions), dev(device), callbacks(callbacks){};
+    : functions(&functions), dev(device), callbacks(callbacks) {};
 DeviceWrapper::~DeviceWrapper() noexcept { functions->vkDestroyDevice(dev, callbacks); }
 
 DeviceWrapper::DeviceWrapper(DeviceWrapper&& other) noexcept {
@@ -239,10 +239,12 @@ TestBinaryHandle<TestLayer, GetTestLayerFunc, GetNewTestLayerFunc>::TestBinaryHa
 
 FrameworkEnvironment::FrameworkEnvironment() noexcept : FrameworkEnvironment(FrameworkSettings{}) {}
 FrameworkEnvironment::FrameworkEnvironment(FrameworkSettings const& settings) noexcept
-    : settings(settings), platform_shim(file_system_manager, settings.log_filter) {
-    // Setup default path redirections
+    : settings(settings),
+      file_system_manager(settings.use_unicode_in_unsecured_folders),
+      platform_shim(file_system_manager, settings.log_filter) {
+    // Setup default path redirection
 
-    platform_shim->set_elevated_privilege(settings.run_as_if_with_elevated_privleges);
+    platform_shim->set_elevated_privilege(settings.run_as_if_with_elevated_privileges);
 
 #if TESTING_COMMON_UNIX_PLATFORMS
     if (!settings.home_env_var.empty()) env_var_home.set_new_value(settings.home_env_var);
@@ -278,7 +280,7 @@ FrameworkEnvironment::FrameworkEnvironment(FrameworkSettings const& settings) no
     }
 
     // Determines which unsecure path should be used
-    if (!settings.run_as_if_with_elevated_privleges) {
+    if (!settings.run_as_if_with_elevated_privileges) {
         if (!settings.xdg_config_home_env_var.empty()) {
             auto env_var_list = split_env_var_as_list(settings.xdg_config_home_env_var);
             unsecure_manifest_base_location = env_var_list.at(0);
@@ -309,7 +311,7 @@ FrameworkEnvironment::FrameworkEnvironment(FrameworkSettings const& settings) no
     }
 
     // Determines which unsecure path should be used
-    if (!settings.run_as_if_with_elevated_privleges) {
+    if (!settings.run_as_if_with_elevated_privileges) {
         if (!settings.xdg_config_home_env_var.empty()) {
             auto env_var_list = split_env_var_as_list(settings.xdg_config_home_env_var);
             unsecure_manifest_base_location = env_var_list.at(0);
@@ -400,8 +402,8 @@ ManifestLocation FrameworkEnvironment::map_discovery_type_to_location(ManifestDi
         case (ManifestDiscoveryType::windows_app_package):
             return ManifestLocation::windows_app_package;
 #endif
-        case (ManifestDiscoveryType::override_folder):
-            return ManifestLocation::override_layer;
+        case (ManifestDiscoveryType::overflow_folder):
+            return ManifestLocation::overflow;
 #if defined(__APPLE__)
         case (ManifestDiscoveryType::macos_bundle):
             return ManifestLocation::macos_bundle;
@@ -577,8 +579,10 @@ void FrameworkEnvironment::add_layer_impl(ManifestOptions args, ManifestLayer ma
 
             // Don't load the layer binary if using any of the wrap objects layers, since it doesn't export the same interface
             // functions
-            if (!args.is_fake && layer.lib_path.stem().string().find(
-                                     std::filesystem::path(TEST_LAYER_WRAP_OBJECTS).stem().string()) == std::string::npos) {
+            auto lib_path_stem = layer.lib_path.stem().native();
+            auto wrap_objects_stem = std::filesystem::path(TEST_LAYER_WRAP_OBJECTS).stem().native();
+
+            if (!args.is_fake && lib_path_stem.find(wrap_objects_stem) == std::string::npos) {
                 layers.push_back(TestLayerHandle(new_layer_location));
                 layers.back().reset();
             }

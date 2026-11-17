@@ -724,932 +724,1479 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_device_dispatch_table(const VkLayerDis
     struct loader_device* dev = (struct loader_device *)table;
     const struct loader_instance* inst = dev->phys_dev_term->this_icd_term->this_instance;
     uint32_t api_version = VK_MAKE_API_VERSION(0, inst->app_api_version.major, inst->app_api_version.minor, inst->app_api_version.patch);
+    const uint32_t name_hash = loader_hash_string(name);
 
+    switch (name_hash) {
 
-    // ---- Core Vulkan SC 1.0 commands
-    if (!strcmp(name, "GetDeviceProcAddr")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDeviceProcAddr;
-    }
-    if (!strcmp(name, "DestroyDevice")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyDevice;
-    }
-    if (!strcmp(name, "GetDeviceQueue")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDeviceQueue;
-    }
-    if (!strcmp(name, "QueueSubmit")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->QueueSubmit;
-    }
-    if (!strcmp(name, "QueueWaitIdle")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->QueueWaitIdle;
-    }
-    if (!strcmp(name, "DeviceWaitIdle")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DeviceWaitIdle;
-    }
-    if (!strcmp(name, "AllocateMemory")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->AllocateMemory;
-    }
-    if (!strcmp(name, "MapMemory")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->MapMemory;
-    }
-    if (!strcmp(name, "UnmapMemory")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->UnmapMemory;
-    }
-    if (!strcmp(name, "FlushMappedMemoryRanges")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->FlushMappedMemoryRanges;
-    }
-    if (!strcmp(name, "InvalidateMappedMemoryRanges")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->InvalidateMappedMemoryRanges;
-    }
-    if (!strcmp(name, "GetDeviceMemoryCommitment")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDeviceMemoryCommitment;
-    }
-    if (!strcmp(name, "BindBufferMemory")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->BindBufferMemory;
-    }
-    if (!strcmp(name, "BindImageMemory")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->BindImageMemory;
-    }
-    if (!strcmp(name, "GetBufferMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetBufferMemoryRequirements;
-    }
-    if (!strcmp(name, "GetImageMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetImageMemoryRequirements;
-    }
-    if (!strcmp(name, "CreateFence")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateFence;
-    }
-    if (!strcmp(name, "DestroyFence")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyFence;
-    }
-    if (!strcmp(name, "ResetFences")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetFences;
-    }
-    if (!strcmp(name, "GetFenceStatus")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetFenceStatus;
-    }
-    if (!strcmp(name, "WaitForFences")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->WaitForFences;
-    }
-    if (!strcmp(name, "CreateSemaphore")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateSemaphore;
-    }
-    if (!strcmp(name, "DestroySemaphore")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroySemaphore;
-    }
-    if (!strcmp(name, "CreateQueryPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateQueryPool;
-    }
-    if (!strcmp(name, "GetQueryPoolResults")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetQueryPoolResults;
-    }
-    if (!strcmp(name, "CreateBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateBuffer;
-    }
-    if (!strcmp(name, "DestroyBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyBuffer;
-    }
-    if (!strcmp(name, "CreateImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateImage;
-    }
-    if (!strcmp(name, "DestroyImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyImage;
-    }
-    if (!strcmp(name, "GetImageSubresourceLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetImageSubresourceLayout;
-    }
-    if (!strcmp(name, "CreateImageView")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateImageView;
-    }
-    if (!strcmp(name, "DestroyImageView")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyImageView;
-    }
-    if (!strcmp(name, "CreateCommandPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateCommandPool;
-    }
-    if (!strcmp(name, "ResetCommandPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetCommandPool;
-    }
-    if (!strcmp(name, "AllocateCommandBuffers")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->AllocateCommandBuffers;
-    }
-    if (!strcmp(name, "FreeCommandBuffers")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->FreeCommandBuffers;
-    }
-    if (!strcmp(name, "BeginCommandBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->BeginCommandBuffer;
-    }
-    if (!strcmp(name, "EndCommandBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->EndCommandBuffer;
-    }
-    if (!strcmp(name, "ResetCommandBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetCommandBuffer;
-    }
-    if (!strcmp(name, "CmdCopyBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyBuffer;
-    }
-    if (!strcmp(name, "CmdCopyImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyImage;
-    }
-    if (!strcmp(name, "CmdCopyBufferToImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyBufferToImage;
-    }
-    if (!strcmp(name, "CmdCopyImageToBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyImageToBuffer;
-    }
-    if (!strcmp(name, "CmdUpdateBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdUpdateBuffer;
-    }
-    if (!strcmp(name, "CmdFillBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdFillBuffer;
-    }
-    if (!strcmp(name, "CmdPipelineBarrier")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdPipelineBarrier;
-    }
-    if (!strcmp(name, "CmdBeginQuery")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBeginQuery;
-    }
-    if (!strcmp(name, "CmdEndQuery")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdEndQuery;
-    }
-    if (!strcmp(name, "CmdResetQueryPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdResetQueryPool;
-    }
-    if (!strcmp(name, "CmdWriteTimestamp")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdWriteTimestamp;
-    }
-    if (!strcmp(name, "CmdCopyQueryPoolResults")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdCopyQueryPoolResults;
-    }
-    if (!strcmp(name, "CmdExecuteCommands")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdExecuteCommands;
-    }
-    if (!strcmp(name, "CreateEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateEvent;
-    }
-    if (!strcmp(name, "DestroyEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyEvent;
-    }
-    if (!strcmp(name, "GetEventStatus")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetEventStatus;
-    }
-    if (!strcmp(name, "SetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->SetEvent;
-    }
-    if (!strcmp(name, "ResetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetEvent;
-    }
-    if (!strcmp(name, "CreateBufferView")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateBufferView;
-    }
-    if (!strcmp(name, "DestroyBufferView")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyBufferView;
-    }
-    if (!strcmp(name, "CreatePipelineCache")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreatePipelineCache;
-    }
-    if (!strcmp(name, "DestroyPipelineCache")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyPipelineCache;
-    }
-    if (!strcmp(name, "CreateComputePipelines")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateComputePipelines;
-    }
-    if (!strcmp(name, "DestroyPipeline")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyPipeline;
-    }
-    if (!strcmp(name, "CreatePipelineLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreatePipelineLayout;
-    }
-    if (!strcmp(name, "DestroyPipelineLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyPipelineLayout;
-    }
-    if (!strcmp(name, "CreateSampler")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateSampler;
-    }
-    if (!strcmp(name, "DestroySampler")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroySampler;
-    }
-    if (!strcmp(name, "CreateDescriptorSetLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateDescriptorSetLayout;
-    }
-    if (!strcmp(name, "DestroyDescriptorSetLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyDescriptorSetLayout;
-    }
-    if (!strcmp(name, "CreateDescriptorPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateDescriptorPool;
-    }
-    if (!strcmp(name, "ResetDescriptorPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetDescriptorPool;
-    }
-    if (!strcmp(name, "AllocateDescriptorSets")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->AllocateDescriptorSets;
-    }
-    if (!strcmp(name, "FreeDescriptorSets")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->FreeDescriptorSets;
-    }
-    if (!strcmp(name, "UpdateDescriptorSets")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->UpdateDescriptorSets;
-    }
-    if (!strcmp(name, "CmdBindPipeline")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBindPipeline;
-    }
-    if (!strcmp(name, "CmdBindDescriptorSets")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBindDescriptorSets;
-    }
-    if (!strcmp(name, "CmdClearColorImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdClearColorImage;
-    }
-    if (!strcmp(name, "CmdDispatch")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDispatch;
-    }
-    if (!strcmp(name, "CmdDispatchIndirect")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDispatchIndirect;
-    }
-    if (!strcmp(name, "CmdSetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetEvent;
-    }
-    if (!strcmp(name, "CmdResetEvent")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdResetEvent;
-    }
-    if (!strcmp(name, "CmdWaitEvents")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdWaitEvents;
-    }
-    if (!strcmp(name, "CmdPushConstants")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdPushConstants;
-    }
-    if (!strcmp(name, "CreateGraphicsPipelines")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateGraphicsPipelines;
-    }
-    if (!strcmp(name, "CreateFramebuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateFramebuffer;
-    }
-    if (!strcmp(name, "DestroyFramebuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyFramebuffer;
-    }
-    if (!strcmp(name, "CreateRenderPass")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateRenderPass;
-    }
-    if (!strcmp(name, "DestroyRenderPass")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroyRenderPass;
-    }
-    if (!strcmp(name, "GetRenderAreaGranularity")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetRenderAreaGranularity;
-    }
-    if (!strcmp(name, "CmdSetViewport")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetViewport;
-    }
-    if (!strcmp(name, "CmdSetScissor")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetScissor;
-    }
-    if (!strcmp(name, "CmdSetLineWidth")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetLineWidth;
-    }
-    if (!strcmp(name, "CmdSetDepthBias")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetDepthBias;
-    }
-    if (!strcmp(name, "CmdSetBlendConstants")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetBlendConstants;
-    }
-    if (!strcmp(name, "CmdSetDepthBounds")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetDepthBounds;
-    }
-    if (!strcmp(name, "CmdSetStencilCompareMask")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetStencilCompareMask;
-    }
-    if (!strcmp(name, "CmdSetStencilWriteMask")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetStencilWriteMask;
-    }
-    if (!strcmp(name, "CmdSetStencilReference")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetStencilReference;
-    }
-    if (!strcmp(name, "CmdBindIndexBuffer")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBindIndexBuffer;
-    }
-    if (!strcmp(name, "CmdBindVertexBuffers")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBindVertexBuffers;
-    }
-    if (!strcmp(name, "CmdDraw")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDraw;
-    }
-    if (!strcmp(name, "CmdDrawIndexed")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndexed;
-    }
-    if (!strcmp(name, "CmdDrawIndirect")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndirect;
-    }
-    if (!strcmp(name, "CmdDrawIndexedIndirect")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndexedIndirect;
-    }
-    if (!strcmp(name, "CmdBlitImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBlitImage;
-    }
-    if (!strcmp(name, "CmdClearDepthStencilImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdClearDepthStencilImage;
-    }
-    if (!strcmp(name, "CmdClearAttachments")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdClearAttachments;
-    }
-    if (!strcmp(name, "CmdResolveImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdResolveImage;
-    }
-    if (!strcmp(name, "CmdBeginRenderPass")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBeginRenderPass;
-    }
-    if (!strcmp(name, "CmdNextSubpass")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdNextSubpass;
-    }
-    if (!strcmp(name, "CmdEndRenderPass")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdEndRenderPass;
-    }
-    if (!strcmp(name, "BindBufferMemory2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->BindBufferMemory2;
-    }
-    if (!strcmp(name, "BindImageMemory2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->BindImageMemory2;
-    }
-    if (!strcmp(name, "GetDeviceGroupPeerMemoryFeatures")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDeviceGroupPeerMemoryFeatures;
-    }
-    if (!strcmp(name, "CmdSetDeviceMask")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdSetDeviceMask;
-    }
-    if (!strcmp(name, "GetImageMemoryRequirements2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetImageMemoryRequirements2;
-    }
-    if (!strcmp(name, "GetBufferMemoryRequirements2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetBufferMemoryRequirements2;
-    }
-    if (!strcmp(name, "GetDeviceQueue2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDeviceQueue2;
-    }
-    if (!strcmp(name, "CmdDispatchBase")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDispatchBase;
-    }
-    if (!strcmp(name, "GetDescriptorSetLayoutSupport")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDescriptorSetLayoutSupport;
-    }
-    if (!strcmp(name, "CreateSamplerYcbcrConversion")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateSamplerYcbcrConversion;
-    }
-    if (!strcmp(name, "DestroySamplerYcbcrConversion")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->DestroySamplerYcbcrConversion;
-    }
-    if (!strcmp(name, "ResetQueryPool")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->ResetQueryPool;
-    }
-    if (!strcmp(name, "GetSemaphoreCounterValue")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetSemaphoreCounterValue;
-    }
-    if (!strcmp(name, "WaitSemaphores")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->WaitSemaphores;
-    }
-    if (!strcmp(name, "SignalSemaphore")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->SignalSemaphore;
-    }
-    if (!strcmp(name, "GetBufferDeviceAddress")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetBufferDeviceAddress;
-    }
-    if (!strcmp(name, "GetBufferOpaqueCaptureAddress")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetBufferOpaqueCaptureAddress;
-    }
-    if (!strcmp(name, "GetDeviceMemoryOpaqueCaptureAddress")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetDeviceMemoryOpaqueCaptureAddress;
-    }
-    if (!strcmp(name, "CmdDrawIndirectCount")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndirectCount;
-    }
-    if (!strcmp(name, "CmdDrawIndexedIndirectCount")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdDrawIndexedIndirectCount;
-    }
-    if (!strcmp(name, "CreateRenderPass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CreateRenderPass2;
-    }
-    if (!strcmp(name, "CmdBeginRenderPass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdBeginRenderPass2;
-    }
-    if (!strcmp(name, "CmdNextSubpass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdNextSubpass2;
-    }
-    if (!strcmp(name, "CmdEndRenderPass2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->CmdEndRenderPass2;
-    }
+        // ---- Core Vulkan SC 1.0 commands
+        case 0x556f3e66u:
+            if (!strcmp(name, "GetDeviceProcAddr")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDeviceProcAddr;
+            }
+            break;
+        case 0xc3c245f3u:
+            if (!strcmp(name, "DestroyDevice")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyDevice;
+            }
+            break;
+        case 0xe828e700u:
+            if (!strcmp(name, "GetDeviceQueue")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDeviceQueue;
+            }
+            break;
+        case 0xf634aeb0u:
+            if (!strcmp(name, "QueueSubmit")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->QueueSubmit;
+            }
+            break;
+        case 0x30e5a4dfu:
+            if (!strcmp(name, "QueueWaitIdle")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->QueueWaitIdle;
+            }
+            break;
+        case 0x97ad82bcu:
+            if (!strcmp(name, "DeviceWaitIdle")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DeviceWaitIdle;
+            }
+            break;
+        case 0x1a48a22du:
+            if (!strcmp(name, "AllocateMemory")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->AllocateMemory;
+            }
+            break;
+        case 0x2b4a440au:
+            if (!strcmp(name, "MapMemory")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->MapMemory;
+            }
+            break;
+        case 0xdd78dd07u:
+            if (!strcmp(name, "UnmapMemory")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->UnmapMemory;
+            }
+            break;
+        case 0x04c06873u:
+            if (!strcmp(name, "FlushMappedMemoryRanges")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->FlushMappedMemoryRanges;
+            }
+            break;
+        case 0x42e40ec6u:
+            if (!strcmp(name, "InvalidateMappedMemoryRanges")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->InvalidateMappedMemoryRanges;
+            }
+            break;
+        case 0xb58c2237u:
+            if (!strcmp(name, "GetDeviceMemoryCommitment")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDeviceMemoryCommitment;
+            }
+            break;
+        case 0xf9d3e8bbu:
+            if (!strcmp(name, "BindBufferMemory")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->BindBufferMemory;
+            }
+            break;
+        case 0xa6ad4e7cu:
+            if (!strcmp(name, "BindImageMemory")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->BindImageMemory;
+            }
+            break;
+        case 0xdbd8f14eu:
+            if (!strcmp(name, "GetBufferMemoryRequirements")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetBufferMemoryRequirements;
+            }
+            break;
+        case 0xadd404fbu:
+            if (!strcmp(name, "GetImageMemoryRequirements")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetImageMemoryRequirements;
+            }
+            break;
+        case 0xb85cb06eu:
+            if (!strcmp(name, "CreateFence")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateFence;
+            }
+            break;
+        case 0xee059b16u:
+            if (!strcmp(name, "DestroyFence")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyFence;
+            }
+            break;
+        case 0x49e2bbfeu:
+            if (!strcmp(name, "ResetFences")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->ResetFences;
+            }
+            break;
+        case 0x27219372u:
+            if (!strcmp(name, "GetFenceStatus")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetFenceStatus;
+            }
+            break;
+        case 0x2701d8c1u:
+            if (!strcmp(name, "WaitForFences")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->WaitForFences;
+            }
+            break;
+        case 0x72a17f35u:
+            if (!strcmp(name, "CreateSemaphore")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateSemaphore;
+            }
+            break;
+        case 0x7a900dbdu:
+            if (!strcmp(name, "DestroySemaphore")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroySemaphore;
+            }
+            break;
+        case 0x1d052b99u:
+            if (!strcmp(name, "CreateQueryPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateQueryPool;
+            }
+            break;
+        case 0x2acc2043u:
+            if (!strcmp(name, "GetQueryPoolResults")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetQueryPoolResults;
+            }
+            break;
+        case 0x594c57f3u:
+            if (!strcmp(name, "CreateBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateBuffer;
+            }
+            break;
+        case 0x74b0eb7bu:
+            if (!strcmp(name, "DestroyBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyBuffer;
+            }
+            break;
+        case 0x1052ae42u:
+            if (!strcmp(name, "CreateImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateImage;
+            }
+            break;
+        case 0xe4d58afau:
+            if (!strcmp(name, "DestroyImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyImage;
+            }
+            break;
+        case 0x5bec9c60u:
+            if (!strcmp(name, "GetImageSubresourceLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetImageSubresourceLayout;
+            }
+            break;
+        case 0x98d3880bu:
+            if (!strcmp(name, "CreateImageView")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateImageView;
+            }
+            break;
+        case 0x3ac8cdd3u:
+            if (!strcmp(name, "DestroyImageView")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyImageView;
+            }
+            break;
+        case 0x5b4c1778u:
+            if (!strcmp(name, "CreateCommandPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateCommandPool;
+            }
+            break;
+        case 0xd1984e7fu:
+            if (!strcmp(name, "ResetCommandPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->ResetCommandPool;
+            }
+            break;
+        case 0x46e1a59eu:
+            if (!strcmp(name, "AllocateCommandBuffers")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->AllocateCommandBuffers;
+            }
+            break;
+        case 0x92a01f53u:
+            if (!strcmp(name, "FreeCommandBuffers")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->FreeCommandBuffers;
+            }
+            break;
+        case 0xd6878265u:
+            if (!strcmp(name, "BeginCommandBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->BeginCommandBuffer;
+            }
+            break;
+        case 0x00b4c891u:
+            if (!strcmp(name, "EndCommandBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->EndCommandBuffer;
+            }
+            break;
+        case 0xb4c6737fu:
+            if (!strcmp(name, "ResetCommandBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->ResetCommandBuffer;
+            }
+            break;
+        case 0x0c36d35cu:
+            if (!strcmp(name, "CmdCopyBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdCopyBuffer;
+            }
+            break;
+        case 0xc56ce137u:
+            if (!strcmp(name, "CmdCopyImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdCopyImage;
+            }
+            break;
+        case 0x37f8b1cau:
+            if (!strcmp(name, "CmdCopyBufferToImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdCopyBufferToImage;
+            }
+            break;
+        case 0xdd6c206cu:
+            if (!strcmp(name, "CmdCopyImageToBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdCopyImageToBuffer;
+            }
+            break;
+        case 0x004dd694u:
+            if (!strcmp(name, "CmdUpdateBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdUpdateBuffer;
+            }
+            break;
+        case 0x9c272074u:
+            if (!strcmp(name, "CmdFillBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdFillBuffer;
+            }
+            break;
+        case 0x99bb3b50u:
+            if (!strcmp(name, "CmdPipelineBarrier")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdPipelineBarrier;
+            }
+            break;
+        case 0x847b49f8u:
+            if (!strcmp(name, "CmdBeginQuery")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBeginQuery;
+            }
+            break;
+        case 0xa38ee8bcu:
+            if (!strcmp(name, "CmdEndQuery")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdEndQuery;
+            }
+            break;
+        case 0x4cd9424cu:
+            if (!strcmp(name, "CmdResetQueryPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdResetQueryPool;
+            }
+            break;
+        case 0x36056986u:
+            if (!strcmp(name, "CmdWriteTimestamp")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdWriteTimestamp;
+            }
+            break;
+        case 0x03cfd77au:
+            if (!strcmp(name, "CmdCopyQueryPoolResults")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdCopyQueryPoolResults;
+            }
+            break;
+        case 0xfc3b9de4u:
+            if (!strcmp(name, "CmdExecuteCommands")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdExecuteCommands;
+            }
+            break;
+        case 0x45545f97u:
+            if (!strcmp(name, "CreateEvent")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateEvent;
+            }
+            break;
+        case 0x2fb5259fu:
+            if (!strcmp(name, "DestroyEvent")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyEvent;
+            }
+            break;
+        case 0x30fcfaffu:
+            if (!strcmp(name, "GetEventStatus")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetEventStatus;
+            }
+            break;
+        case 0x519d96f1u:
+            if (!strcmp(name, "SetEvent")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->SetEvent;
+            }
+            break;
+        case 0x068fe748u:
+            if (!strcmp(name, "ResetEvent")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->ResetEvent;
+            }
+            break;
+        case 0xe8d8b0f6u:
+            if (!strcmp(name, "CreateBufferView")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateBufferView;
+            }
+            break;
+        case 0x4ccdf76eu:
+            if (!strcmp(name, "DestroyBufferView")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyBufferView;
+            }
+            break;
+        case 0x192270cfu:
+            if (!strcmp(name, "CreatePipelineCache")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreatePipelineCache;
+            }
+            break;
+        case 0x902ac897u:
+            if (!strcmp(name, "DestroyPipelineCache")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyPipelineCache;
+            }
+            break;
+        case 0xd2393b0du:
+            if (!strcmp(name, "CreateComputePipelines")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateComputePipelines;
+            }
+            break;
+        case 0x3a781083u:
+            if (!strcmp(name, "DestroyPipeline")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyPipeline;
+            }
+            break;
+        case 0x386cb351u:
+            if (!strcmp(name, "CreatePipelineLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreatePipelineLayout;
+            }
+            break;
+        case 0x24a65109u:
+            if (!strcmp(name, "DestroyPipelineLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyPipelineLayout;
+            }
+            break;
+        case 0x22611e57u:
+            if (!strcmp(name, "CreateSampler")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateSampler;
+            }
+            break;
+        case 0x66efd24fu:
+            if (!strcmp(name, "DestroySampler")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroySampler;
+            }
+            break;
+        case 0x0c59900eu:
+            if (!strcmp(name, "CreateDescriptorSetLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateDescriptorSetLayout;
+            }
+            break;
+        case 0xcdc1f4b6u:
+            if (!strcmp(name, "DestroyDescriptorSetLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyDescriptorSetLayout;
+            }
+            break;
+        case 0xe154a866u:
+            if (!strcmp(name, "CreateDescriptorPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateDescriptorPool;
+            }
+            break;
+        case 0xbd10cdc7u:
+            if (!strcmp(name, "ResetDescriptorPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->ResetDescriptorPool;
+            }
+            break;
+        case 0x8783e9eau:
+            if (!strcmp(name, "AllocateDescriptorSets")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->AllocateDescriptorSets;
+            }
+            break;
+        case 0xf6ab6a4bu:
+            if (!strcmp(name, "FreeDescriptorSets")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->FreeDescriptorSets;
+            }
+            break;
+        case 0x796a4db0u:
+            if (!strcmp(name, "UpdateDescriptorSets")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->UpdateDescriptorSets;
+            }
+            break;
+        case 0x0fea12b2u:
+            if (!strcmp(name, "CmdBindPipeline")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBindPipeline;
+            }
+            break;
+        case 0xbdecba10u:
+            if (!strcmp(name, "CmdBindDescriptorSets")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBindDescriptorSets;
+            }
+            break;
+        case 0x68e97180u:
+            if (!strcmp(name, "CmdClearColorImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdClearColorImage;
+            }
+            break;
+        case 0x0b58a221u:
+            if (!strcmp(name, "CmdDispatch")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDispatch;
+            }
+            break;
+        case 0x023cf383u:
+            if (!strcmp(name, "CmdDispatchIndirect")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDispatchIndirect;
+            }
+            break;
+        case 0xe0c49af3u:
+            if (!strcmp(name, "CmdSetEvent")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetEvent;
+            }
+            break;
+        case 0xab60a1d6u:
+            if (!strcmp(name, "CmdResetEvent")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdResetEvent;
+            }
+            break;
+        case 0x41fbe8a7u:
+            if (!strcmp(name, "CmdWaitEvents")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdWaitEvents;
+            }
+            break;
+        case 0xef4f8998u:
+            if (!strcmp(name, "CmdPushConstants")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdPushConstants;
+            }
+            break;
+        case 0x49120077u:
+            if (!strcmp(name, "CreateGraphicsPipelines")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateGraphicsPipelines;
+            }
+            break;
+        case 0xee253c88u:
+            if (!strcmp(name, "CreateFramebuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateFramebuffer;
+            }
+            break;
+        case 0x4edbdb50u:
+            if (!strcmp(name, "DestroyFramebuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyFramebuffer;
+            }
+            break;
+        case 0xc3352a08u:
+            if (!strcmp(name, "CreateRenderPass")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateRenderPass;
+            }
+            break;
+        case 0xea8843a0u:
+            if (!strcmp(name, "DestroyRenderPass")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroyRenderPass;
+            }
+            break;
+        case 0xbd702976u:
+            if (!strcmp(name, "GetRenderAreaGranularity")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetRenderAreaGranularity;
+            }
+            break;
+        case 0x60223eafu:
+            if (!strcmp(name, "CmdSetViewport")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetViewport;
+            }
+            break;
+        case 0x06645d65u:
+            if (!strcmp(name, "CmdSetScissor")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetScissor;
+            }
+            break;
+        case 0x028ebdd5u:
+            if (!strcmp(name, "CmdSetLineWidth")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetLineWidth;
+            }
+            break;
+        case 0x84edaf93u:
+            if (!strcmp(name, "CmdSetDepthBias")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetDepthBias;
+            }
+            break;
+        case 0x12c65e99u:
+            if (!strcmp(name, "CmdSetBlendConstants")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetBlendConstants;
+            }
+            break;
+        case 0xa6c6ccffu:
+            if (!strcmp(name, "CmdSetDepthBounds")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetDepthBounds;
+            }
+            break;
+        case 0xed6fff6eu:
+            if (!strcmp(name, "CmdSetStencilCompareMask")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetStencilCompareMask;
+            }
+            break;
+        case 0x1b99fe4au:
+            if (!strcmp(name, "CmdSetStencilWriteMask")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetStencilWriteMask;
+            }
+            break;
+        case 0x43a8794cu:
+            if (!strcmp(name, "CmdSetStencilReference")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetStencilReference;
+            }
+            break;
+        case 0x6113c7aau:
+            if (!strcmp(name, "CmdBindIndexBuffer")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBindIndexBuffer;
+            }
+            break;
+        case 0x8480280du:
+            if (!strcmp(name, "CmdBindVertexBuffers")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBindVertexBuffers;
+            }
+            break;
+        case 0x8c1fc0d9u:
+            if (!strcmp(name, "CmdDraw")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDraw;
+            }
+            break;
+        case 0xb1da916eu:
+            if (!strcmp(name, "CmdDrawIndexed")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDrawIndexed;
+            }
+            break;
+        case 0x44bd488bu:
+            if (!strcmp(name, "CmdDrawIndirect")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDrawIndirect;
+            }
+            break;
+        case 0xf026b8a0u:
+            if (!strcmp(name, "CmdDrawIndexedIndirect")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDrawIndexedIndirect;
+            }
+            break;
+        case 0x203c55edu:
+            if (!strcmp(name, "CmdBlitImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBlitImage;
+            }
+            break;
+        case 0x0a1abe14u:
+            if (!strcmp(name, "CmdClearDepthStencilImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdClearDepthStencilImage;
+            }
+            break;
+        case 0xf8912576u:
+            if (!strcmp(name, "CmdClearAttachments")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdClearAttachments;
+            }
+            break;
+        case 0x7d6ce9fau:
+            if (!strcmp(name, "CmdResolveImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdResolveImage;
+            }
+            break;
+        case 0x97aa36c5u:
+            if (!strcmp(name, "CmdBeginRenderPass")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBeginRenderPass;
+            }
+            break;
+        case 0x65711319u:
+            if (!strcmp(name, "CmdNextSubpass")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdNextSubpass;
+            }
+            break;
+        case 0x21535791u:
+            if (!strcmp(name, "CmdEndRenderPass")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdEndRenderPass;
+            }
+            break;
+        case 0xd1970fabu:
+            if (!strcmp(name, "BindBufferMemory2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->BindBufferMemory2;
+            }
+            break;
+        case 0xb0d244cau:
+            if (!strcmp(name, "BindImageMemory2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->BindImageMemory2;
+            }
+            break;
+        case 0x76cc3b34u:
+            if (!strcmp(name, "GetDeviceGroupPeerMemoryFeatures")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDeviceGroupPeerMemoryFeatures;
+            }
+            break;
+        case 0x7ce530b3u:
+            if (!strcmp(name, "CmdSetDeviceMask")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdSetDeviceMask;
+            }
+            break;
+        case 0x6dc3886bu:
+            if (!strcmp(name, "GetImageMemoryRequirements2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetImageMemoryRequirements2;
+            }
+            break;
+        case 0x92842634u:
+            if (!strcmp(name, "GetBufferMemoryRequirements2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetBufferMemoryRequirements2;
+            }
+            break;
+        case 0xaa63f3b6u:
+            if (!strcmp(name, "GetDeviceQueue2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDeviceQueue2;
+            }
+            break;
+        case 0xc39e3e2cu:
+            if (!strcmp(name, "CmdDispatchBase")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDispatchBase;
+            }
+            break;
+        case 0x74e1f8cfu:
+            if (!strcmp(name, "GetDescriptorSetLayoutSupport")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDescriptorSetLayoutSupport;
+            }
+            break;
+        case 0x452314aeu:
+            if (!strcmp(name, "CreateSamplerYcbcrConversion")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateSamplerYcbcrConversion;
+            }
+            break;
+        case 0xa5a844d6u:
+            if (!strcmp(name, "DestroySamplerYcbcrConversion")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->DestroySamplerYcbcrConversion;
+            }
+            break;
+        case 0xb0cc2abau:
+            if (!strcmp(name, "ResetQueryPool")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->ResetQueryPool;
+            }
+            break;
+        case 0x5a94735eu:
+            if (!strcmp(name, "GetSemaphoreCounterValue")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetSemaphoreCounterValue;
+            }
+            break;
+        case 0xec14fdebu:
+            if (!strcmp(name, "WaitSemaphores")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->WaitSemaphores;
+            }
+            break;
+        case 0x53897c39u:
+            if (!strcmp(name, "SignalSemaphore")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->SignalSemaphore;
+            }
+            break;
+        case 0x58b83869u:
+            if (!strcmp(name, "GetBufferDeviceAddress")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetBufferDeviceAddress;
+            }
+            break;
+        case 0x7878eaa4u:
+            if (!strcmp(name, "GetBufferOpaqueCaptureAddress")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetBufferOpaqueCaptureAddress;
+            }
+            break;
+        case 0x9a0eb25fu:
+            if (!strcmp(name, "GetDeviceMemoryOpaqueCaptureAddress")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetDeviceMemoryOpaqueCaptureAddress;
+            }
+            break;
+        case 0xe62a3a1au:
+            if (!strcmp(name, "CmdDrawIndirectCount")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDrawIndirectCount;
+            }
+            break;
+        case 0xf9fd358fu:
+            if (!strcmp(name, "CmdDrawIndexedIndirectCount")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdDrawIndexedIndirectCount;
+            }
+            break;
+        case 0x86b1794eu:
+            if (!strcmp(name, "CreateRenderPass2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CreateRenderPass2;
+            }
+            break;
+        case 0xb7f486d5u:
+            if (!strcmp(name, "CmdBeginRenderPass2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdBeginRenderPass2;
+            }
+            break;
+        case 0xdc012cb1u:
+            if (!strcmp(name, "CmdNextSubpass2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdNextSubpass2;
+            }
+            break;
+        case 0x1932f599u:
+            if (!strcmp(name, "CmdEndRenderPass2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->CmdEndRenderPass2;
+            }
+            break;
 
-    // ---- Core Vulkan 1.3 commands
-    if (!strcmp(name, "CreatePrivateDataSlot")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CreatePrivateDataSlot;
-    }
-    if (!strcmp(name, "DestroyPrivateDataSlot")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->DestroyPrivateDataSlot;
-    }
-    if (!strcmp(name, "SetPrivateData")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->SetPrivateData;
-    }
-    if (!strcmp(name, "GetPrivateData")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetPrivateData;
-    }
-    if (!strcmp(name, "CmdPipelineBarrier2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdPipelineBarrier2;
-    }
-    if (!strcmp(name, "CmdWriteTimestamp2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdWriteTimestamp2;
-    }
-    if (!strcmp(name, "QueueSubmit2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->QueueSubmit2;
-    }
-    if (!strcmp(name, "CmdCopyBuffer2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdCopyBuffer2;
-    }
-    if (!strcmp(name, "CmdCopyImage2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdCopyImage2;
-    }
-    if (!strcmp(name, "CmdCopyBufferToImage2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdCopyBufferToImage2;
-    }
-    if (!strcmp(name, "CmdCopyImageToBuffer2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdCopyImageToBuffer2;
-    }
-    if (!strcmp(name, "GetDeviceBufferMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetDeviceBufferMemoryRequirements;
-    }
-    if (!strcmp(name, "GetDeviceImageMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetDeviceImageMemoryRequirements;
-    }
-    if (!strcmp(name, "GetDeviceImageSparseMemoryRequirements")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->GetDeviceImageSparseMemoryRequirements;
-    }
-    if (!strcmp(name, "CmdSetEvent2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetEvent2;
-    }
-    if (!strcmp(name, "CmdResetEvent2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdResetEvent2;
-    }
-    if (!strcmp(name, "CmdWaitEvents2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdWaitEvents2;
-    }
-    if (!strcmp(name, "CmdBlitImage2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdBlitImage2;
-    }
-    if (!strcmp(name, "CmdResolveImage2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdResolveImage2;
-    }
-    if (!strcmp(name, "CmdBeginRendering")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdBeginRendering;
-    }
-    if (!strcmp(name, "CmdEndRendering")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdEndRendering;
-    }
-    if (!strcmp(name, "CmdSetCullMode")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetCullMode;
-    }
-    if (!strcmp(name, "CmdSetFrontFace")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetFrontFace;
-    }
-    if (!strcmp(name, "CmdSetPrimitiveTopology")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetPrimitiveTopology;
-    }
-    if (!strcmp(name, "CmdSetViewportWithCount")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetViewportWithCount;
-    }
-    if (!strcmp(name, "CmdSetScissorWithCount")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetScissorWithCount;
-    }
-    if (!strcmp(name, "CmdBindVertexBuffers2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdBindVertexBuffers2;
-    }
-    if (!strcmp(name, "CmdSetDepthTestEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetDepthTestEnable;
-    }
-    if (!strcmp(name, "CmdSetDepthWriteEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetDepthWriteEnable;
-    }
-    if (!strcmp(name, "CmdSetDepthCompareOp")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetDepthCompareOp;
-    }
-    if (!strcmp(name, "CmdSetDepthBoundsTestEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetDepthBoundsTestEnable;
-    }
-    if (!strcmp(name, "CmdSetStencilTestEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetStencilTestEnable;
-    }
-    if (!strcmp(name, "CmdSetStencilOp")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetStencilOp;
-    }
-    if (!strcmp(name, "CmdSetRasterizerDiscardEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetRasterizerDiscardEnable;
-    }
-    if (!strcmp(name, "CmdSetDepthBiasEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetDepthBiasEnable;
-    }
-    if (!strcmp(name, "CmdSetPrimitiveRestartEnable")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
-        return (void *)table->CmdSetPrimitiveRestartEnable;
-    }
+        // ---- Core Vulkan 1.3 commands
+        case 0x177d5920u:
+            if (!strcmp(name, "CreatePrivateDataSlot")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CreatePrivateDataSlot;
+            }
+            break;
+        case 0x7f21ff68u:
+            if (!strcmp(name, "DestroyPrivateDataSlot")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->DestroyPrivateDataSlot;
+            }
+            break;
+        case 0xe7f3b50eu:
+            if (!strcmp(name, "SetPrivateData")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->SetPrivateData;
+            }
+            break;
+        case 0xe2ac6662u:
+            if (!strcmp(name, "GetPrivateData")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->GetPrivateData;
+            }
+            break;
+        case 0x63be7b46u:
+            if (!strcmp(name, "CmdPipelineBarrier2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdPipelineBarrier2;
+            }
+            break;
+        case 0xbe85665cu:
+            if (!strcmp(name, "CmdWriteTimestamp2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdWriteTimestamp2;
+            }
+            break;
+        case 0x16eeb6a6u:
+            if (!strcmp(name, "QueueSubmit2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->QueueSubmit2;
+            }
+            break;
+        case 0xa84ed62au:
+            if (!strcmp(name, "CmdCopyBuffer2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdCopyBuffer2;
+            }
+            break;
+        case 0xcf663adfu:
+            if (!strcmp(name, "CmdCopyImage2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdCopyImage2;
+            }
+            break;
+        case 0x14802968u:
+            if (!strcmp(name, "CmdCopyBufferToImage2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdCopyBufferToImage2;
+            }
+            break;
+        case 0xef36f3fau:
+            if (!strcmp(name, "CmdCopyImageToBuffer2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdCopyImageToBuffer2;
+            }
+            break;
+        case 0xb708741cu:
+            if (!strcmp(name, "GetDeviceBufferMemoryRequirements")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->GetDeviceBufferMemoryRequirements;
+            }
+            break;
+        case 0xca328b99u:
+            if (!strcmp(name, "GetDeviceImageMemoryRequirements")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->GetDeviceImageMemoryRequirements;
+            }
+            break;
+        case 0x3fe21ac5u:
+            if (!strcmp(name, "GetDeviceImageSparseMemoryRequirements")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->GetDeviceImageSparseMemoryRequirements;
+            }
+            break;
+        case 0x967f9dd3u:
+            if (!strcmp(name, "CmdSetEvent2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetEvent2;
+            }
+            break;
+        case 0xad1ed9ecu:
+            if (!strcmp(name, "CmdResetEvent2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdResetEvent2;
+            }
+            break;
+        case 0x748f228fu:
+            if (!strcmp(name, "CmdWaitEvents2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdWaitEvents2;
+            }
+            break;
+        case 0x9dfb2e0du:
+            if (!strcmp(name, "CmdBlitImage2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdBlitImage2;
+            }
+            break;
+        case 0x3a7405d8u:
+            if (!strcmp(name, "CmdResolveImage2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdResolveImage2;
+            }
+            break;
+        case 0xaa8fee8cu:
+            if (!strcmp(name, "CmdBeginRendering")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdBeginRendering;
+            }
+            break;
+        case 0xee0f67d0u:
+            if (!strcmp(name, "CmdEndRendering")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdEndRendering;
+            }
+            break;
+        case 0x20a446deu:
+            if (!strcmp(name, "CmdSetCullMode")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetCullMode;
+            }
+            break;
+        case 0x414443d5u:
+            if (!strcmp(name, "CmdSetFrontFace")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetFrontFace;
+            }
+            break;
+        case 0x1a103db7u:
+            if (!strcmp(name, "CmdSetPrimitiveTopology")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetPrimitiveTopology;
+            }
+            break;
+        case 0xcba6442eu:
+            if (!strcmp(name, "CmdSetViewportWithCount")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetViewportWithCount;
+            }
+            break;
+        case 0x9d1ae5f0u:
+            if (!strcmp(name, "CmdSetScissorWithCount")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetScissorWithCount;
+            }
+            break;
+        case 0xd4bf5b2du:
+            if (!strcmp(name, "CmdBindVertexBuffers2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdBindVertexBuffers2;
+            }
+            break;
+        case 0xfdeb3f45u:
+            if (!strcmp(name, "CmdSetDepthTestEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetDepthTestEnable;
+            }
+            break;
+        case 0xeedd9e22u:
+            if (!strcmp(name, "CmdSetDepthWriteEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetDepthWriteEnable;
+            }
+            break;
+        case 0x56561e4au:
+            if (!strcmp(name, "CmdSetDepthCompareOp")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetDepthCompareOp;
+            }
+            break;
+        case 0x7948f434u:
+            if (!strcmp(name, "CmdSetDepthBoundsTestEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetDepthBoundsTestEnable;
+            }
+            break;
+        case 0xad756094u:
+            if (!strcmp(name, "CmdSetStencilTestEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetStencilTestEnable;
+            }
+            break;
+        case 0x1d9ffdc0u:
+            if (!strcmp(name, "CmdSetStencilOp")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetStencilOp;
+            }
+            break;
+        case 0xc64b8095u:
+            if (!strcmp(name, "CmdSetRasterizerDiscardEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetRasterizerDiscardEnable;
+            }
+            break;
+        case 0x4e9b6cfcu:
+            if (!strcmp(name, "CmdSetDepthBiasEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetDepthBiasEnable;
+            }
+            break;
+        case 0xd45e7f8eu:
+            if (!strcmp(name, "CmdSetPrimitiveRestartEnable")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_3) return NULL;
+                return (void *)table->CmdSetPrimitiveRestartEnable;
+            }
+            break;
 
-    // ---- Core Vulkan 1.4 commands
-    if (!strcmp(name, "MapMemory2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->MapMemory2;
-    }
-    if (!strcmp(name, "UnmapMemory2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->UnmapMemory2;
-    }
-    if (!strcmp(name, "GetDeviceImageSubresourceLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->GetDeviceImageSubresourceLayout;
-    }
-    if (!strcmp(name, "GetImageSubresourceLayout2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->GetImageSubresourceLayout2;
-    }
-    if (!strcmp(name, "CopyMemoryToImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CopyMemoryToImage;
-    }
-    if (!strcmp(name, "CopyImageToMemory")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CopyImageToMemory;
-    }
-    if (!strcmp(name, "CopyImageToImage")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CopyImageToImage;
-    }
-    if (!strcmp(name, "TransitionImageLayout")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->TransitionImageLayout;
-    }
-    if (!strcmp(name, "CmdPushDescriptorSet")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdPushDescriptorSet;
-    }
-    if (!strcmp(name, "CmdBindDescriptorSets2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdBindDescriptorSets2;
-    }
-    if (!strcmp(name, "CmdPushConstants2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdPushConstants2;
-    }
-    if (!strcmp(name, "CmdPushDescriptorSet2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdPushDescriptorSet2;
-    }
-    if (!strcmp(name, "CmdSetLineStipple")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdSetLineStipple;
-    }
-    if (!strcmp(name, "CmdBindIndexBuffer2")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdBindIndexBuffer2;
-    }
-    if (!strcmp(name, "GetRenderingAreaGranularity")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->GetRenderingAreaGranularity;
-    }
-    if (!strcmp(name, "CmdSetRenderingAttachmentLocations")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdSetRenderingAttachmentLocations;
-    }
-    if (!strcmp(name, "CmdSetRenderingInputAttachmentIndices")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
-        return (void *)table->CmdSetRenderingInputAttachmentIndices;
-    }
+        // ---- Core Vulkan 1.4 commands
+        case 0x5de96428u:
+            if (!strcmp(name, "MapMemory2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->MapMemory2;
+            }
+            break;
+        case 0xda443a6fu:
+            if (!strcmp(name, "UnmapMemory2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->UnmapMemory2;
+            }
+            break;
+        case 0x31e492fau:
+            if (!strcmp(name, "GetDeviceImageSubresourceLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->GetDeviceImageSubresourceLayout;
+            }
+            break;
+        case 0x077a1516u:
+            if (!strcmp(name, "GetImageSubresourceLayout2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->GetImageSubresourceLayout2;
+            }
+            break;
+        case 0xa305dfb7u:
+            if (!strcmp(name, "CopyMemoryToImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CopyMemoryToImage;
+            }
+            break;
+        case 0xc7c58193u:
+            if (!strcmp(name, "CopyImageToMemory")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CopyImageToMemory;
+            }
+            break;
+        case 0x07cb5f2du:
+            if (!strcmp(name, "CopyImageToImage")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CopyImageToImage;
+            }
+            break;
+        case 0x311876ddu:
+            if (!strcmp(name, "TransitionImageLayout")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->TransitionImageLayout;
+            }
+            break;
+        case 0xe6f62546u:
+            if (!strcmp(name, "CmdPushDescriptorSet")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdPushDescriptorSet;
+            }
+            break;
+        case 0x1da90386u:
+            if (!strcmp(name, "CmdBindDescriptorSets2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdBindDescriptorSets2;
+            }
+            break;
+        case 0x6435b69eu:
+            if (!strcmp(name, "CmdPushConstants2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdPushConstants2;
+            }
+            break;
+        case 0x097cf59cu:
+            if (!strcmp(name, "CmdPushDescriptorSet2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdPushDescriptorSet2;
+            }
+            break;
+        case 0x3e320cccu:
+            if (!strcmp(name, "CmdSetLineStipple")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdSetLineStipple;
+            }
+            break;
+        case 0x6a233448u:
+            if (!strcmp(name, "CmdBindIndexBuffer2")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdBindIndexBuffer2;
+            }
+            break;
+        case 0xe26f5990u:
+            if (!strcmp(name, "GetRenderingAreaGranularity")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->GetRenderingAreaGranularity;
+            }
+            break;
+        case 0xa1d575eeu:
+            if (!strcmp(name, "CmdSetRenderingAttachmentLocations")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdSetRenderingAttachmentLocations;
+            }
+            break;
+        case 0xf6408f2du:
+            if (!strcmp(name, "CmdSetRenderingInputAttachmentIndices")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VK_API_VERSION_1_4) return NULL;
+                return (void *)table->CmdSetRenderingInputAttachmentIndices;
+            }
+            break;
 
-    // ---- Core Vulkan SC 1.0 commands
-    if (!strcmp(name, "GetCommandPoolMemoryConsumption")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetCommandPoolMemoryConsumption;
-    }
-    if (!strcmp(name, "GetFaultData")) {
-        if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
-        return (void *)table->GetFaultData;
-    }
+        // ---- Core Vulkan SC 1.0 commands
+        case 0xa69b8094u:
+            if (!strcmp(name, "GetCommandPoolMemoryConsumption")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetCommandPoolMemoryConsumption;
+            }
+            break;
+        case 0x217e8321u:
+            if (!strcmp(name, "GetFaultData")) {
+                if (dev->should_ignore_device_commands_from_newer_version && api_version < VKSC_API_VERSION_1_0) return NULL;
+                return (void *)table->GetFaultData;
+            }
+            break;
 
-    // ---- VK_KHR_swapchain extension commands
-    if (!strcmp(name, "CreateSwapchainKHR")) return (void *)table->CreateSwapchainKHR;
-    if (!strcmp(name, "GetSwapchainImagesKHR")) return (void *)table->GetSwapchainImagesKHR;
-    if (!strcmp(name, "AcquireNextImageKHR")) return (void *)table->AcquireNextImageKHR;
-    if (!strcmp(name, "QueuePresentKHR")) return (void *)table->QueuePresentKHR;
-    if (!strcmp(name, "GetDeviceGroupPresentCapabilitiesKHR")) return (void *)table->GetDeviceGroupPresentCapabilitiesKHR;
-    if (!strcmp(name, "GetDeviceGroupSurfacePresentModesKHR")) return (void *)table->GetDeviceGroupSurfacePresentModesKHR;
-    if (!strcmp(name, "AcquireNextImage2KHR")) return (void *)table->AcquireNextImage2KHR;
+        // ---- VK_KHR_swapchain extension commands
+        case 0xe67ad416u:
+            if (!strcmp(name, "CreateSwapchainKHR")) return (void *)table->CreateSwapchainKHR;
+            break;
+        case 0x1beb0af2u:
+            if (!strcmp(name, "GetSwapchainImagesKHR")) return (void *)table->GetSwapchainImagesKHR;
+            break;
+        case 0x3cfee58au:
+            if (!strcmp(name, "AcquireNextImageKHR")) return (void *)table->AcquireNextImageKHR;
+            break;
+        case 0xe1fb6286u:
+            if (!strcmp(name, "QueuePresentKHR")) return (void *)table->QueuePresentKHR;
+            break;
+        case 0x50feefb4u:
+            if (!strcmp(name, "GetDeviceGroupPresentCapabilitiesKHR")) return (void *)table->GetDeviceGroupPresentCapabilitiesKHR;
+            break;
+        case 0x75cc4ee9u:
+            if (!strcmp(name, "GetDeviceGroupSurfacePresentModesKHR")) return (void *)table->GetDeviceGroupSurfacePresentModesKHR;
+            break;
+        case 0x89ecd932u:
+            if (!strcmp(name, "AcquireNextImage2KHR")) return (void *)table->AcquireNextImage2KHR;
+            break;
 
-    // ---- VK_KHR_display_swapchain extension commands
-    if (!strcmp(name, "CreateSharedSwapchainsKHR")) return (void *)table->CreateSharedSwapchainsKHR;
+        // ---- VK_KHR_display_swapchain extension commands
+        case 0x65d55da4u:
+            if (!strcmp(name, "CreateSharedSwapchainsKHR")) return (void *)table->CreateSharedSwapchainsKHR;
+            break;
 
-    // ---- VK_KHR_external_memory_fd extension commands
-    if (!strcmp(name, "GetMemoryFdKHR")) return (void *)table->GetMemoryFdKHR;
-    if (!strcmp(name, "GetMemoryFdPropertiesKHR")) return (void *)table->GetMemoryFdPropertiesKHR;
+        // ---- VK_KHR_external_memory_fd extension commands
+        case 0xf40b9fe1u:
+            if (!strcmp(name, "GetMemoryFdKHR")) return (void *)table->GetMemoryFdKHR;
+            break;
+        case 0x56495eaau:
+            if (!strcmp(name, "GetMemoryFdPropertiesKHR")) return (void *)table->GetMemoryFdPropertiesKHR;
+            break;
 
-    // ---- VK_KHR_external_semaphore_fd extension commands
-    if (!strcmp(name, "ImportSemaphoreFdKHR")) return (void *)table->ImportSemaphoreFdKHR;
-    if (!strcmp(name, "GetSemaphoreFdKHR")) return (void *)table->GetSemaphoreFdKHR;
+        // ---- VK_KHR_external_semaphore_fd extension commands
+        case 0x63f7079fu:
+            if (!strcmp(name, "ImportSemaphoreFdKHR")) return (void *)table->ImportSemaphoreFdKHR;
+            break;
+        case 0x68dc7f34u:
+            if (!strcmp(name, "GetSemaphoreFdKHR")) return (void *)table->GetSemaphoreFdKHR;
+            break;
 
-    // ---- VK_KHR_shared_presentable_image extension commands
-    if (!strcmp(name, "GetSwapchainStatusKHR")) return (void *)table->GetSwapchainStatusKHR;
+        // ---- VK_KHR_shared_presentable_image extension commands
+        case 0x7204d3eeu:
+            if (!strcmp(name, "GetSwapchainStatusKHR")) return (void *)table->GetSwapchainStatusKHR;
+            break;
 
-    // ---- VK_KHR_external_fence_fd extension commands
-    if (!strcmp(name, "ImportFenceFdKHR")) return (void *)table->ImportFenceFdKHR;
-    if (!strcmp(name, "GetFenceFdKHR")) return (void *)table->GetFenceFdKHR;
+        // ---- VK_KHR_external_fence_fd extension commands
+        case 0x8cdebc12u:
+            if (!strcmp(name, "ImportFenceFdKHR")) return (void *)table->ImportFenceFdKHR;
+            break;
+        case 0x5a3a2481u:
+            if (!strcmp(name, "GetFenceFdKHR")) return (void *)table->GetFenceFdKHR;
+            break;
 
-    // ---- VK_KHR_performance_query extension commands
-    if (!strcmp(name, "AcquireProfilingLockKHR")) return (void *)table->AcquireProfilingLockKHR;
-    if (!strcmp(name, "ReleaseProfilingLockKHR")) return (void *)table->ReleaseProfilingLockKHR;
+        // ---- VK_KHR_performance_query extension commands
+        case 0xf1c9f763u:
+            if (!strcmp(name, "AcquireProfilingLockKHR")) return (void *)table->AcquireProfilingLockKHR;
+            break;
+        case 0xebe8785eu:
+            if (!strcmp(name, "ReleaseProfilingLockKHR")) return (void *)table->ReleaseProfilingLockKHR;
+            break;
 
-    // ---- VK_KHR_fragment_shading_rate extension commands
-    if (!strcmp(name, "CmdSetFragmentShadingRateKHR")) return (void *)table->CmdSetFragmentShadingRateKHR;
+        // ---- VK_KHR_fragment_shading_rate extension commands
+        case 0x3fb07adeu:
+            if (!strcmp(name, "CmdSetFragmentShadingRateKHR")) return (void *)table->CmdSetFragmentShadingRateKHR;
+            break;
 
-    // ---- VK_KHR_object_refresh extension commands
-    if (!strcmp(name, "CmdRefreshObjectsKHR")) return (void *)table->CmdRefreshObjectsKHR;
+        // ---- VK_KHR_object_refresh extension commands
+        case 0x00d754b9u:
+            if (!strcmp(name, "CmdRefreshObjectsKHR")) return (void *)table->CmdRefreshObjectsKHR;
+            break;
 
-    // ---- VK_KHR_synchronization2 extension commands
-    if (!strcmp(name, "CmdSetEvent2KHR")) return (void *)table->CmdSetEvent2KHR;
-    if (!strcmp(name, "CmdResetEvent2KHR")) return (void *)table->CmdResetEvent2KHR;
-    if (!strcmp(name, "CmdWaitEvents2KHR")) return (void *)table->CmdWaitEvents2KHR;
-    if (!strcmp(name, "CmdPipelineBarrier2KHR")) return (void *)table->CmdPipelineBarrier2KHR;
-    if (!strcmp(name, "CmdWriteTimestamp2KHR")) return (void *)table->CmdWriteTimestamp2KHR;
-    if (!strcmp(name, "QueueSubmit2KHR")) return (void *)table->QueueSubmit2KHR;
+        // ---- VK_KHR_synchronization2 extension commands
+        case 0x5a728716u:
+            if (!strcmp(name, "CmdSetEvent2KHR")) return (void *)table->CmdSetEvent2KHR;
+            break;
+        case 0xa5b840dfu:
+            if (!strcmp(name, "CmdResetEvent2KHR")) return (void *)table->CmdResetEvent2KHR;
+            break;
+        case 0x91e1837au:
+            if (!strcmp(name, "CmdWaitEvents2KHR")) return (void *)table->CmdWaitEvents2KHR;
+            break;
+        case 0x1dfbddedu:
+            if (!strcmp(name, "CmdPipelineBarrier2KHR")) return (void *)table->CmdPipelineBarrier2KHR;
+            break;
+        case 0xe0d31c8fu:
+            if (!strcmp(name, "CmdWriteTimestamp2KHR")) return (void *)table->CmdWriteTimestamp2KHR;
+            break;
+        case 0x63783d0du:
+            if (!strcmp(name, "QueueSubmit2KHR")) return (void *)table->QueueSubmit2KHR;
+            break;
 
-    // ---- VK_KHR_copy_commands2 extension commands
-    if (!strcmp(name, "CmdCopyBuffer2KHR")) return (void *)table->CmdCopyBuffer2KHR;
-    if (!strcmp(name, "CmdCopyImage2KHR")) return (void *)table->CmdCopyImage2KHR;
-    if (!strcmp(name, "CmdCopyBufferToImage2KHR")) return (void *)table->CmdCopyBufferToImage2KHR;
-    if (!strcmp(name, "CmdCopyImageToBuffer2KHR")) return (void *)table->CmdCopyImageToBuffer2KHR;
-    if (!strcmp(name, "CmdBlitImage2KHR")) return (void *)table->CmdBlitImage2KHR;
-    if (!strcmp(name, "CmdResolveImage2KHR")) return (void *)table->CmdResolveImage2KHR;
+        // ---- VK_KHR_copy_commands2 extension commands
+        case 0x8ad79009u:
+            if (!strcmp(name, "CmdCopyBuffer2KHR")) return (void *)table->CmdCopyBuffer2KHR;
+            break;
+        case 0xb82dbd0au:
+            if (!strcmp(name, "CmdCopyImage2KHR")) return (void *)table->CmdCopyImage2KHR;
+            break;
+        case 0xac4cc803u:
+            if (!strcmp(name, "CmdCopyBufferToImage2KHR")) return (void *)table->CmdCopyBufferToImage2KHR;
+            break;
+        case 0xb3361a99u:
+            if (!strcmp(name, "CmdCopyImageToBuffer2KHR")) return (void *)table->CmdCopyImageToBuffer2KHR;
+            break;
+        case 0x6f8868d4u:
+            if (!strcmp(name, "CmdBlitImage2KHR")) return (void *)table->CmdBlitImage2KHR;
+            break;
+        case 0xd9427c73u:
+            if (!strcmp(name, "CmdResolveImage2KHR")) return (void *)table->CmdResolveImage2KHR;
+            break;
 
-    // ---- VK_KHR_line_rasterization extension commands
-    if (!strcmp(name, "CmdSetLineStippleKHR")) return (void *)table->CmdSetLineStippleKHR;
+        // ---- VK_KHR_line_rasterization extension commands
+        case 0x0968c67fu:
+            if (!strcmp(name, "CmdSetLineStippleKHR")) return (void *)table->CmdSetLineStippleKHR;
+            break;
 
-    // ---- VK_KHR_calibrated_timestamps extension commands
-    if (!strcmp(name, "GetCalibratedTimestampsKHR")) return (void *)table->GetCalibratedTimestampsKHR;
+        // ---- VK_KHR_calibrated_timestamps extension commands
+        case 0x6b882920u:
+            if (!strcmp(name, "GetCalibratedTimestampsKHR")) return (void *)table->GetCalibratedTimestampsKHR;
+            break;
 
-    // ---- VK_EXT_display_control extension commands
-    if (!strcmp(name, "DisplayPowerControlEXT")) return (void *)table->DisplayPowerControlEXT;
-    if (!strcmp(name, "RegisterDeviceEventEXT")) return (void *)table->RegisterDeviceEventEXT;
-    if (!strcmp(name, "RegisterDisplayEventEXT")) return (void *)table->RegisterDisplayEventEXT;
-    if (!strcmp(name, "GetSwapchainCounterEXT")) return (void *)table->GetSwapchainCounterEXT;
+        // ---- VK_EXT_display_control extension commands
+        case 0xcd3d83d6u:
+            if (!strcmp(name, "DisplayPowerControlEXT")) return (void *)table->DisplayPowerControlEXT;
+            break;
+        case 0x89eb83c5u:
+            if (!strcmp(name, "RegisterDeviceEventEXT")) return (void *)table->RegisterDeviceEventEXT;
+            break;
+        case 0x308cb801u:
+            if (!strcmp(name, "RegisterDisplayEventEXT")) return (void *)table->RegisterDisplayEventEXT;
+            break;
+        case 0x422be39au:
+            if (!strcmp(name, "GetSwapchainCounterEXT")) return (void *)table->GetSwapchainCounterEXT;
+            break;
 
-    // ---- VK_EXT_discard_rectangles extension commands
-    if (!strcmp(name, "CmdSetDiscardRectangleEXT")) return (void *)table->CmdSetDiscardRectangleEXT;
-    if (!strcmp(name, "CmdSetDiscardRectangleEnableEXT")) return (void *)table->CmdSetDiscardRectangleEnableEXT;
-    if (!strcmp(name, "CmdSetDiscardRectangleModeEXT")) return (void *)table->CmdSetDiscardRectangleModeEXT;
+        // ---- VK_EXT_discard_rectangles extension commands
+        case 0x494be225u:
+            if (!strcmp(name, "CmdSetDiscardRectangleEXT")) return (void *)table->CmdSetDiscardRectangleEXT;
+            break;
+        case 0xde952114u:
+            if (!strcmp(name, "CmdSetDiscardRectangleEnableEXT")) return (void *)table->CmdSetDiscardRectangleEnableEXT;
+            break;
+        case 0x0229a59cu:
+            if (!strcmp(name, "CmdSetDiscardRectangleModeEXT")) return (void *)table->CmdSetDiscardRectangleModeEXT;
+            break;
 
-    // ---- VK_EXT_hdr_metadata extension commands
-    if (!strcmp(name, "SetHdrMetadataEXT")) return (void *)table->SetHdrMetadataEXT;
+        // ---- VK_EXT_hdr_metadata extension commands
+        case 0x4c4c9e61u:
+            if (!strcmp(name, "SetHdrMetadataEXT")) return (void *)table->SetHdrMetadataEXT;
+            break;
 
-    // ---- VK_EXT_debug_utils extension commands
-    if (!strcmp(name, "SetDebugUtilsObjectNameEXT")) return dev->layer_extensions.ext_debug_utils_enabled ? (void *)SetDebugUtilsObjectNameEXT : NULL;
-    if (!strcmp(name, "SetDebugUtilsObjectTagEXT")) return dev->layer_extensions.ext_debug_utils_enabled ? (void *)SetDebugUtilsObjectTagEXT : NULL;
-    if (!strcmp(name, "QueueBeginDebugUtilsLabelEXT")) return (void *)table->QueueBeginDebugUtilsLabelEXT;
-    if (!strcmp(name, "QueueEndDebugUtilsLabelEXT")) return (void *)table->QueueEndDebugUtilsLabelEXT;
-    if (!strcmp(name, "QueueInsertDebugUtilsLabelEXT")) return (void *)table->QueueInsertDebugUtilsLabelEXT;
-    if (!strcmp(name, "CmdBeginDebugUtilsLabelEXT")) return (void *)table->CmdBeginDebugUtilsLabelEXT;
-    if (!strcmp(name, "CmdEndDebugUtilsLabelEXT")) return (void *)table->CmdEndDebugUtilsLabelEXT;
-    if (!strcmp(name, "CmdInsertDebugUtilsLabelEXT")) return (void *)table->CmdInsertDebugUtilsLabelEXT;
+        // ---- VK_EXT_debug_utils extension commands
+        case 0x773b4682u:
+            if (!strcmp(name, "SetDebugUtilsObjectNameEXT")) return dev->layer_extensions.ext_debug_utils_enabled ? (void *)SetDebugUtilsObjectNameEXT : NULL;
+            break;
+        case 0x357569a7u:
+            if (!strcmp(name, "SetDebugUtilsObjectTagEXT")) return dev->layer_extensions.ext_debug_utils_enabled ? (void *)SetDebugUtilsObjectTagEXT : NULL;
+            break;
+        case 0x17c2ff64u:
+            if (!strcmp(name, "QueueBeginDebugUtilsLabelEXT")) return (void *)table->QueueBeginDebugUtilsLabelEXT;
+            break;
+        case 0xdf00ddb4u:
+            if (!strcmp(name, "QueueEndDebugUtilsLabelEXT")) return (void *)table->QueueEndDebugUtilsLabelEXT;
+            break;
+        case 0x4e04da94u:
+            if (!strcmp(name, "QueueInsertDebugUtilsLabelEXT")) return (void *)table->QueueInsertDebugUtilsLabelEXT;
+            break;
+        case 0xc0ad7af9u:
+            if (!strcmp(name, "CmdBeginDebugUtilsLabelEXT")) return (void *)table->CmdBeginDebugUtilsLabelEXT;
+            break;
+        case 0x54548a95u:
+            if (!strcmp(name, "CmdEndDebugUtilsLabelEXT")) return (void *)table->CmdEndDebugUtilsLabelEXT;
+            break;
+        case 0x08691667u:
+            if (!strcmp(name, "CmdInsertDebugUtilsLabelEXT")) return (void *)table->CmdInsertDebugUtilsLabelEXT;
+            break;
 
-    // ---- VK_EXT_sample_locations extension commands
-    if (!strcmp(name, "CmdSetSampleLocationsEXT")) return (void *)table->CmdSetSampleLocationsEXT;
+        // ---- VK_EXT_sample_locations extension commands
+        case 0xd0bfab14u:
+            if (!strcmp(name, "CmdSetSampleLocationsEXT")) return (void *)table->CmdSetSampleLocationsEXT;
+            break;
 
-    // ---- VK_EXT_image_drm_format_modifier extension commands
-    if (!strcmp(name, "GetImageDrmFormatModifierPropertiesEXT")) return (void *)table->GetImageDrmFormatModifierPropertiesEXT;
+        // ---- VK_EXT_image_drm_format_modifier extension commands
+        case 0x0f35fea9u:
+            if (!strcmp(name, "GetImageDrmFormatModifierPropertiesEXT")) return (void *)table->GetImageDrmFormatModifierPropertiesEXT;
+            break;
 
-    // ---- VK_EXT_external_memory_host extension commands
-    if (!strcmp(name, "GetMemoryHostPointerPropertiesEXT")) return (void *)table->GetMemoryHostPointerPropertiesEXT;
+        // ---- VK_EXT_external_memory_host extension commands
+        case 0x969c0921u:
+            if (!strcmp(name, "GetMemoryHostPointerPropertiesEXT")) return (void *)table->GetMemoryHostPointerPropertiesEXT;
+            break;
 
-    // ---- VK_EXT_line_rasterization extension commands
-    if (!strcmp(name, "CmdSetLineStippleEXT")) return (void *)table->CmdSetLineStippleEXT;
+        // ---- VK_EXT_line_rasterization extension commands
+        case 0xad3668e7u:
+            if (!strcmp(name, "CmdSetLineStippleEXT")) return (void *)table->CmdSetLineStippleEXT;
+            break;
 
-    // ---- VK_EXT_extended_dynamic_state extension commands
-    if (!strcmp(name, "CmdSetCullModeEXT")) return (void *)table->CmdSetCullModeEXT;
-    if (!strcmp(name, "CmdSetFrontFaceEXT")) return (void *)table->CmdSetFrontFaceEXT;
-    if (!strcmp(name, "CmdSetPrimitiveTopologyEXT")) return (void *)table->CmdSetPrimitiveTopologyEXT;
-    if (!strcmp(name, "CmdSetViewportWithCountEXT")) return (void *)table->CmdSetViewportWithCountEXT;
-    if (!strcmp(name, "CmdSetScissorWithCountEXT")) return (void *)table->CmdSetScissorWithCountEXT;
-    if (!strcmp(name, "CmdBindVertexBuffers2EXT")) return (void *)table->CmdBindVertexBuffers2EXT;
-    if (!strcmp(name, "CmdSetDepthTestEnableEXT")) return (void *)table->CmdSetDepthTestEnableEXT;
-    if (!strcmp(name, "CmdSetDepthWriteEnableEXT")) return (void *)table->CmdSetDepthWriteEnableEXT;
-    if (!strcmp(name, "CmdSetDepthCompareOpEXT")) return (void *)table->CmdSetDepthCompareOpEXT;
-    if (!strcmp(name, "CmdSetDepthBoundsTestEnableEXT")) return (void *)table->CmdSetDepthBoundsTestEnableEXT;
-    if (!strcmp(name, "CmdSetStencilTestEnableEXT")) return (void *)table->CmdSetStencilTestEnableEXT;
-    if (!strcmp(name, "CmdSetStencilOpEXT")) return (void *)table->CmdSetStencilOpEXT;
+        // ---- VK_EXT_extended_dynamic_state extension commands
+        case 0xab9b765du:
+            if (!strcmp(name, "CmdSetCullModeEXT")) return (void *)table->CmdSetCullModeEXT;
+            break;
+        case 0xf2289404u:
+            if (!strcmp(name, "CmdSetFrontFaceEXT")) return (void *)table->CmdSetFrontFaceEXT;
+            break;
+        case 0x64cba91au:
+            if (!strcmp(name, "CmdSetPrimitiveTopologyEXT")) return (void *)table->CmdSetPrimitiveTopologyEXT;
+            break;
+        case 0xf0fcf30du:
+            if (!strcmp(name, "CmdSetViewportWithCountEXT")) return (void *)table->CmdSetViewportWithCountEXT;
+            break;
+        case 0xe7925953u:
+            if (!strcmp(name, "CmdSetScissorWithCountEXT")) return (void *)table->CmdSetScissorWithCountEXT;
+            break;
+        case 0xb4cd241cu:
+            if (!strcmp(name, "CmdBindVertexBuffers2EXT")) return (void *)table->CmdBindVertexBuffers2EXT;
+            break;
+        case 0xdfd30d54u:
+            if (!strcmp(name, "CmdSetDepthTestEnableEXT")) return (void *)table->CmdSetDepthTestEnableEXT;
+            break;
+        case 0x10132f69u:
+            if (!strcmp(name, "CmdSetDepthWriteEnableEXT")) return (void *)table->CmdSetDepthWriteEnableEXT;
+            break;
+        case 0x421cb111u:
+            if (!strcmp(name, "CmdSetDepthCompareOpEXT")) return (void *)table->CmdSetDepthCompareOpEXT;
+            break;
+        case 0x6a6d3a6fu:
+            if (!strcmp(name, "CmdSetDepthBoundsTestEnableEXT")) return (void *)table->CmdSetDepthBoundsTestEnableEXT;
+            break;
+        case 0x62b54f0fu:
+            if (!strcmp(name, "CmdSetStencilTestEnableEXT")) return (void *)table->CmdSetStencilTestEnableEXT;
+            break;
+        case 0xc2c7a883u:
+            if (!strcmp(name, "CmdSetStencilOpEXT")) return (void *)table->CmdSetStencilOpEXT;
+            break;
 
-    // ---- VK_EXT_vertex_input_dynamic_state extension commands
-    if (!strcmp(name, "CmdSetVertexInputEXT")) return (void *)table->CmdSetVertexInputEXT;
+        // ---- VK_EXT_vertex_input_dynamic_state extension commands
+        case 0x8005af30u:
+            if (!strcmp(name, "CmdSetVertexInputEXT")) return (void *)table->CmdSetVertexInputEXT;
+            break;
 
-    // ---- VK_NV_external_sci_sync extension commands
+        // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetFenceSciSyncFenceNV")) return (void *)table->GetFenceSciSyncFenceNV;
+        case 0x48abd33bu:
+            if (!strcmp(name, "GetFenceSciSyncFenceNV")) return (void *)table->GetFenceSciSyncFenceNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetFenceSciSyncObjNV")) return (void *)table->GetFenceSciSyncObjNV;
+        case 0x00d4b6e7u:
+            if (!strcmp(name, "GetFenceSciSyncObjNV")) return (void *)table->GetFenceSciSyncObjNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "ImportFenceSciSyncFenceNV")) return (void *)table->ImportFenceSciSyncFenceNV;
+        case 0xc2a49162u:
+            if (!strcmp(name, "ImportFenceSciSyncFenceNV")) return (void *)table->ImportFenceSciSyncFenceNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "ImportFenceSciSyncObjNV")) return (void *)table->ImportFenceSciSyncObjNV;
+        case 0x0a315cb6u:
+            if (!strcmp(name, "ImportFenceSciSyncObjNV")) return (void *)table->ImportFenceSciSyncObjNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetSemaphoreSciSyncObjNV")) return (void *)table->GetSemaphoreSciSyncObjNV;
+        case 0xb5c53a50u:
+            if (!strcmp(name, "GetSemaphoreSciSyncObjNV")) return (void *)table->GetSemaphoreSciSyncObjNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "ImportSemaphoreSciSyncObjNV")) return (void *)table->ImportSemaphoreSciSyncObjNV;
+        case 0xe9c047d5u:
+            if (!strcmp(name, "ImportSemaphoreSciSyncObjNV")) return (void *)table->ImportSemaphoreSciSyncObjNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 
-    // ---- VK_NV_external_memory_sci_buf extension commands
+        // ---- VK_NV_external_memory_sci_buf extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetMemorySciBufNV")) return (void *)table->GetMemorySciBufNV;
+        case 0xa0ad2156u:
+            if (!strcmp(name, "GetMemorySciBufNV")) return (void *)table->GetMemorySciBufNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 
-    // ---- VK_EXT_extended_dynamic_state2 extension commands
-    if (!strcmp(name, "CmdSetPatchControlPointsEXT")) return (void *)table->CmdSetPatchControlPointsEXT;
-    if (!strcmp(name, "CmdSetRasterizerDiscardEnableEXT")) return (void *)table->CmdSetRasterizerDiscardEnableEXT;
-    if (!strcmp(name, "CmdSetDepthBiasEnableEXT")) return (void *)table->CmdSetDepthBiasEnableEXT;
-    if (!strcmp(name, "CmdSetLogicOpEXT")) return (void *)table->CmdSetLogicOpEXT;
-    if (!strcmp(name, "CmdSetPrimitiveRestartEnableEXT")) return (void *)table->CmdSetPrimitiveRestartEnableEXT;
+        // ---- VK_EXT_extended_dynamic_state2 extension commands
+        case 0xe3cf69c8u:
+            if (!strcmp(name, "CmdSetPatchControlPointsEXT")) return (void *)table->CmdSetPatchControlPointsEXT;
+            break;
+        case 0x015d47c4u:
+            if (!strcmp(name, "CmdSetRasterizerDiscardEnableEXT")) return (void *)table->CmdSetRasterizerDiscardEnableEXT;
+            break;
+        case 0xd526ddf7u:
+            if (!strcmp(name, "CmdSetDepthBiasEnableEXT")) return (void *)table->CmdSetDepthBiasEnableEXT;
+            break;
+        case 0xe76c2231u:
+            if (!strcmp(name, "CmdSetLogicOpEXT")) return (void *)table->CmdSetLogicOpEXT;
+            break;
+        case 0x69f6e32du:
+            if (!strcmp(name, "CmdSetPrimitiveRestartEnableEXT")) return (void *)table->CmdSetPrimitiveRestartEnableEXT;
+            break;
 
-    // ---- VK_EXT_color_write_enable extension commands
-    if (!strcmp(name, "CmdSetColorWriteEnableEXT")) return (void *)table->CmdSetColorWriteEnableEXT;
+        // ---- VK_EXT_color_write_enable extension commands
+        case 0x88b42aefu:
+            if (!strcmp(name, "CmdSetColorWriteEnableEXT")) return (void *)table->CmdSetColorWriteEnableEXT;
+            break;
 
-    // ---- VK_NV_external_sci_sync2 extension commands
+        // ---- VK_NV_external_sci_sync2 extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "CreateSemaphoreSciSyncPoolNV")) return (void *)table->CreateSemaphoreSciSyncPoolNV;
+        case 0xb880962bu:
+            if (!strcmp(name, "CreateSemaphoreSciSyncPoolNV")) return (void *)table->CreateSemaphoreSciSyncPoolNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 
-    // ---- VK_QNX_external_memory_screen_buffer extension commands
+        // ---- VK_QNX_external_memory_screen_buffer extension commands
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
-    if (!strcmp(name, "GetScreenBufferPropertiesQNX")) return (void *)table->GetScreenBufferPropertiesQNX;
+        case 0xb6bc3d65u:
+            if (!strcmp(name, "GetScreenBufferPropertiesQNX")) return (void *)table->GetScreenBufferPropertiesQNX;
+            break;
 #endif // VK_USE_PLATFORM_SCREEN_QNX
+        default:
+            break;
+    }
 
     *found_name = false;
     return NULL;
@@ -1665,112 +2212,233 @@ VKAPI_ATTR void* VKAPI_CALL loader_lookup_instance_dispatch_table(const VkLayerI
 
     *found_name = true;
     name += 2;
+    const uint32_t name_hash = loader_hash_string(name);
+    switch (name_hash) {
 
-    // ---- Core Vulkan SC 1.0 commands
-    if (!strcmp(name, "DestroyInstance")) return (void *)table->DestroyInstance;
-    if (!strcmp(name, "EnumeratePhysicalDevices")) return (void *)table->EnumeratePhysicalDevices;
-    if (!strcmp(name, "GetPhysicalDeviceFeatures")) return (void *)table->GetPhysicalDeviceFeatures;
-    if (!strcmp(name, "GetPhysicalDeviceFormatProperties")) return (void *)table->GetPhysicalDeviceFormatProperties;
-    if (!strcmp(name, "GetPhysicalDeviceImageFormatProperties")) return (void *)table->GetPhysicalDeviceImageFormatProperties;
-    if (!strcmp(name, "GetPhysicalDeviceProperties")) return (void *)table->GetPhysicalDeviceProperties;
-    if (!strcmp(name, "GetPhysicalDeviceQueueFamilyProperties")) return (void *)table->GetPhysicalDeviceQueueFamilyProperties;
-    if (!strcmp(name, "GetPhysicalDeviceMemoryProperties")) return (void *)table->GetPhysicalDeviceMemoryProperties;
-    if (!strcmp(name, "GetInstanceProcAddr")) return (void *)table->GetInstanceProcAddr;
-    if (!strcmp(name, "EnumerateDeviceExtensionProperties")) return (void *)table->EnumerateDeviceExtensionProperties;
-    if (!strcmp(name, "EnumerateDeviceLayerProperties")) return (void *)table->EnumerateDeviceLayerProperties;
-    if (!strcmp(name, "EnumeratePhysicalDeviceGroups")) return (void *)table->EnumeratePhysicalDeviceGroups;
-    if (!strcmp(name, "GetPhysicalDeviceFeatures2")) return (void *)table->GetPhysicalDeviceFeatures2;
-    if (!strcmp(name, "GetPhysicalDeviceProperties2")) return (void *)table->GetPhysicalDeviceProperties2;
-    if (!strcmp(name, "GetPhysicalDeviceFormatProperties2")) return (void *)table->GetPhysicalDeviceFormatProperties2;
-    if (!strcmp(name, "GetPhysicalDeviceImageFormatProperties2")) return (void *)table->GetPhysicalDeviceImageFormatProperties2;
-    if (!strcmp(name, "GetPhysicalDeviceQueueFamilyProperties2")) return (void *)table->GetPhysicalDeviceQueueFamilyProperties2;
-    if (!strcmp(name, "GetPhysicalDeviceMemoryProperties2")) return (void *)table->GetPhysicalDeviceMemoryProperties2;
-    if (!strcmp(name, "GetPhysicalDeviceExternalBufferProperties")) return (void *)table->GetPhysicalDeviceExternalBufferProperties;
-    if (!strcmp(name, "GetPhysicalDeviceExternalFenceProperties")) return (void *)table->GetPhysicalDeviceExternalFenceProperties;
-    if (!strcmp(name, "GetPhysicalDeviceExternalSemaphoreProperties")) return (void *)table->GetPhysicalDeviceExternalSemaphoreProperties;
+        // ---- Core Vulkan SC 1.0 commands
+        case 0x72bac092u:
+            if (!strcmp(name, "DestroyInstance")) return (void *)table->DestroyInstance;
+            break;
+        case 0x47707f5bu:
+            if (!strcmp(name, "EnumeratePhysicalDevices")) return (void *)table->EnumeratePhysicalDevices;
+            break;
+        case 0x1f85ee93u:
+            if (!strcmp(name, "GetPhysicalDeviceFeatures")) return (void *)table->GetPhysicalDeviceFeatures;
+            break;
+        case 0x74a5d8deu:
+            if (!strcmp(name, "GetPhysicalDeviceFormatProperties")) return (void *)table->GetPhysicalDeviceFormatProperties;
+            break;
+        case 0x8451aa6bu:
+            if (!strcmp(name, "GetPhysicalDeviceImageFormatProperties")) return (void *)table->GetPhysicalDeviceImageFormatProperties;
+            break;
+        case 0x1de4f4b9u:
+            if (!strcmp(name, "GetPhysicalDeviceProperties")) return (void *)table->GetPhysicalDeviceProperties;
+            break;
+        case 0x027f4f12u:
+            if (!strcmp(name, "GetPhysicalDeviceQueueFamilyProperties")) return (void *)table->GetPhysicalDeviceQueueFamilyProperties;
+            break;
+        case 0x1c0f4f2eu:
+            if (!strcmp(name, "GetPhysicalDeviceMemoryProperties")) return (void *)table->GetPhysicalDeviceMemoryProperties;
+            break;
+        case 0x2d3c8c27u:
+            if (!strcmp(name, "GetInstanceProcAddr")) return (void *)table->GetInstanceProcAddr;
+            break;
+        case 0xd83dfc59u:
+            if (!strcmp(name, "EnumerateDeviceExtensionProperties")) return (void *)table->EnumerateDeviceExtensionProperties;
+            break;
+        case 0x74122e01u:
+            if (!strcmp(name, "EnumerateDeviceLayerProperties")) return (void *)table->EnumerateDeviceLayerProperties;
+            break;
+        case 0xf777380au:
+            if (!strcmp(name, "EnumeratePhysicalDeviceGroups")) return (void *)table->EnumeratePhysicalDeviceGroups;
+            break;
+        case 0x40d6a773u:
+            if (!strcmp(name, "GetPhysicalDeviceFeatures2")) return (void *)table->GetPhysicalDeviceFeatures2;
+            break;
+        case 0x9a6cf6d1u:
+            if (!strcmp(name, "GetPhysicalDeviceProperties2")) return (void *)table->GetPhysicalDeviceProperties2;
+            break;
+        case 0x8d147b84u:
+            if (!strcmp(name, "GetPhysicalDeviceFormatProperties2")) return (void *)table->GetPhysicalDeviceFormatProperties2;
+            break;
+        case 0xa58f2a1bu:
+            if (!strcmp(name, "GetPhysicalDeviceImageFormatProperties2")) return (void *)table->GetPhysicalDeviceImageFormatProperties2;
+            break;
+        case 0x0e698f60u:
+            if (!strcmp(name, "GetPhysicalDeviceQueueFamilyProperties2")) return (void *)table->GetPhysicalDeviceQueueFamilyProperties2;
+            break;
+        case 0x48198914u:
+            if (!strcmp(name, "GetPhysicalDeviceMemoryProperties2")) return (void *)table->GetPhysicalDeviceMemoryProperties2;
+            break;
+        case 0x457cf6d0u:
+            if (!strcmp(name, "GetPhysicalDeviceExternalBufferProperties")) return (void *)table->GetPhysicalDeviceExternalBufferProperties;
+            break;
+        case 0xae7670e9u:
+            if (!strcmp(name, "GetPhysicalDeviceExternalFenceProperties")) return (void *)table->GetPhysicalDeviceExternalFenceProperties;
+            break;
+        case 0xc95e77dau:
+            if (!strcmp(name, "GetPhysicalDeviceExternalSemaphoreProperties")) return (void *)table->GetPhysicalDeviceExternalSemaphoreProperties;
+            break;
 
-    // ---- Core Vulkan 1.3 commands
-    if (!strcmp(name, "GetPhysicalDeviceToolProperties")) return (void *)table->GetPhysicalDeviceToolProperties;
+        // ---- Core Vulkan 1.3 commands
+        case 0xbf928f7bu:
+            if (!strcmp(name, "GetPhysicalDeviceToolProperties")) return (void *)table->GetPhysicalDeviceToolProperties;
+            break;
 
-    // ---- VK_KHR_surface extension commands
-    if (!strcmp(name, "DestroySurfaceKHR")) return (void *)table->DestroySurfaceKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceSupportKHR")) return (void *)table->GetPhysicalDeviceSurfaceSupportKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilitiesKHR")) return (void *)table->GetPhysicalDeviceSurfaceCapabilitiesKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceFormatsKHR")) return (void *)table->GetPhysicalDeviceSurfaceFormatsKHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfacePresentModesKHR")) return (void *)table->GetPhysicalDeviceSurfacePresentModesKHR;
+        // ---- VK_KHR_surface extension commands
+        case 0xa055626fu:
+            if (!strcmp(name, "DestroySurfaceKHR")) return (void *)table->DestroySurfaceKHR;
+            break;
+        case 0xeddb22e9u:
+            if (!strcmp(name, "GetPhysicalDeviceSurfaceSupportKHR")) return (void *)table->GetPhysicalDeviceSurfaceSupportKHR;
+            break;
+        case 0x35be348cu:
+            if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilitiesKHR")) return (void *)table->GetPhysicalDeviceSurfaceCapabilitiesKHR;
+            break;
+        case 0xcbc23c60u:
+            if (!strcmp(name, "GetPhysicalDeviceSurfaceFormatsKHR")) return (void *)table->GetPhysicalDeviceSurfaceFormatsKHR;
+            break;
+        case 0xc3bb5079u:
+            if (!strcmp(name, "GetPhysicalDeviceSurfacePresentModesKHR")) return (void *)table->GetPhysicalDeviceSurfacePresentModesKHR;
+            break;
 
-    // ---- VK_KHR_swapchain extension commands
-    if (!strcmp(name, "GetPhysicalDevicePresentRectanglesKHR")) return (void *)table->GetPhysicalDevicePresentRectanglesKHR;
+        // ---- VK_KHR_swapchain extension commands
+        case 0x7f1cbd5cu:
+            if (!strcmp(name, "GetPhysicalDevicePresentRectanglesKHR")) return (void *)table->GetPhysicalDevicePresentRectanglesKHR;
+            break;
 
-    // ---- VK_KHR_display extension commands
-    if (!strcmp(name, "GetPhysicalDeviceDisplayPropertiesKHR")) return (void *)table->GetPhysicalDeviceDisplayPropertiesKHR;
-    if (!strcmp(name, "GetPhysicalDeviceDisplayPlanePropertiesKHR")) return (void *)table->GetPhysicalDeviceDisplayPlanePropertiesKHR;
-    if (!strcmp(name, "GetDisplayPlaneSupportedDisplaysKHR")) return (void *)table->GetDisplayPlaneSupportedDisplaysKHR;
-    if (!strcmp(name, "GetDisplayModePropertiesKHR")) return (void *)table->GetDisplayModePropertiesKHR;
-    if (!strcmp(name, "CreateDisplayModeKHR")) return (void *)table->CreateDisplayModeKHR;
-    if (!strcmp(name, "GetDisplayPlaneCapabilitiesKHR")) return (void *)table->GetDisplayPlaneCapabilitiesKHR;
-    if (!strcmp(name, "CreateDisplayPlaneSurfaceKHR")) return (void *)table->CreateDisplayPlaneSurfaceKHR;
+        // ---- VK_KHR_display extension commands
+        case 0x6ae00b02u:
+            if (!strcmp(name, "GetPhysicalDeviceDisplayPropertiesKHR")) return (void *)table->GetPhysicalDeviceDisplayPropertiesKHR;
+            break;
+        case 0x74256fc0u:
+            if (!strcmp(name, "GetPhysicalDeviceDisplayPlanePropertiesKHR")) return (void *)table->GetPhysicalDeviceDisplayPlanePropertiesKHR;
+            break;
+        case 0x069c6c3bu:
+            if (!strcmp(name, "GetDisplayPlaneSupportedDisplaysKHR")) return (void *)table->GetDisplayPlaneSupportedDisplaysKHR;
+            break;
+        case 0x7fb98644u:
+            if (!strcmp(name, "GetDisplayModePropertiesKHR")) return (void *)table->GetDisplayModePropertiesKHR;
+            break;
+        case 0x9565f3f9u:
+            if (!strcmp(name, "CreateDisplayModeKHR")) return (void *)table->CreateDisplayModeKHR;
+            break;
+        case 0x1ff22654u:
+            if (!strcmp(name, "GetDisplayPlaneCapabilitiesKHR")) return (void *)table->GetDisplayPlaneCapabilitiesKHR;
+            break;
+        case 0xdd4f3c17u:
+            if (!strcmp(name, "CreateDisplayPlaneSurfaceKHR")) return (void *)table->CreateDisplayPlaneSurfaceKHR;
+            break;
 
-    // ---- VK_KHR_performance_query extension commands
-    if (!strcmp(name, "EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR")) return (void *)table->EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
-    if (!strcmp(name, "GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR")) return (void *)table->GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR;
+        // ---- VK_KHR_performance_query extension commands
+        case 0xdd2c038du:
+            if (!strcmp(name, "EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR")) return (void *)table->EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
+            break;
+        case 0x204022a7u:
+            if (!strcmp(name, "GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR")) return (void *)table->GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR;
+            break;
 
-    // ---- VK_KHR_get_surface_capabilities2 extension commands
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilities2KHR")) return (void *)table->GetPhysicalDeviceSurfaceCapabilities2KHR;
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceFormats2KHR")) return (void *)table->GetPhysicalDeviceSurfaceFormats2KHR;
+        // ---- VK_KHR_get_surface_capabilities2 extension commands
+        case 0xfc0babdcu:
+            if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilities2KHR")) return (void *)table->GetPhysicalDeviceSurfaceCapabilities2KHR;
+            break;
+        case 0xbeb71818u:
+            if (!strcmp(name, "GetPhysicalDeviceSurfaceFormats2KHR")) return (void *)table->GetPhysicalDeviceSurfaceFormats2KHR;
+            break;
 
-    // ---- VK_KHR_get_display_properties2 extension commands
-    if (!strcmp(name, "GetPhysicalDeviceDisplayProperties2KHR")) return (void *)table->GetPhysicalDeviceDisplayProperties2KHR;
-    if (!strcmp(name, "GetPhysicalDeviceDisplayPlaneProperties2KHR")) return (void *)table->GetPhysicalDeviceDisplayPlaneProperties2KHR;
-    if (!strcmp(name, "GetDisplayModeProperties2KHR")) return (void *)table->GetDisplayModeProperties2KHR;
-    if (!strcmp(name, "GetDisplayPlaneCapabilities2KHR")) return (void *)table->GetDisplayPlaneCapabilities2KHR;
+        // ---- VK_KHR_get_display_properties2 extension commands
+        case 0x6267683au:
+            if (!strcmp(name, "GetPhysicalDeviceDisplayProperties2KHR")) return (void *)table->GetPhysicalDeviceDisplayProperties2KHR;
+            break;
+        case 0x2693ff78u:
+            if (!strcmp(name, "GetPhysicalDeviceDisplayPlaneProperties2KHR")) return (void *)table->GetPhysicalDeviceDisplayPlaneProperties2KHR;
+            break;
+        case 0x91ff80e4u:
+            if (!strcmp(name, "GetDisplayModeProperties2KHR")) return (void *)table->GetDisplayModeProperties2KHR;
+            break;
+        case 0x2769b7b4u:
+            if (!strcmp(name, "GetDisplayPlaneCapabilities2KHR")) return (void *)table->GetDisplayPlaneCapabilities2KHR;
+            break;
 
-    // ---- VK_KHR_fragment_shading_rate extension commands
-    if (!strcmp(name, "GetPhysicalDeviceFragmentShadingRatesKHR")) return (void *)table->GetPhysicalDeviceFragmentShadingRatesKHR;
+        // ---- VK_KHR_fragment_shading_rate extension commands
+        case 0x5c375044u:
+            if (!strcmp(name, "GetPhysicalDeviceFragmentShadingRatesKHR")) return (void *)table->GetPhysicalDeviceFragmentShadingRatesKHR;
+            break;
 
-    // ---- VK_KHR_object_refresh extension commands
-    if (!strcmp(name, "GetPhysicalDeviceRefreshableObjectTypesKHR")) return (void *)table->GetPhysicalDeviceRefreshableObjectTypesKHR;
+        // ---- VK_KHR_object_refresh extension commands
+        case 0x6fe481d0u:
+            if (!strcmp(name, "GetPhysicalDeviceRefreshableObjectTypesKHR")) return (void *)table->GetPhysicalDeviceRefreshableObjectTypesKHR;
+            break;
 
-    // ---- VK_KHR_calibrated_timestamps extension commands
-    if (!strcmp(name, "GetPhysicalDeviceCalibrateableTimeDomainsKHR")) return (void *)table->GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+        // ---- VK_KHR_calibrated_timestamps extension commands
+        case 0x5e5a476cu:
+            if (!strcmp(name, "GetPhysicalDeviceCalibrateableTimeDomainsKHR")) return (void *)table->GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+            break;
 
-    // ---- VK_EXT_direct_mode_display extension commands
-    if (!strcmp(name, "ReleaseDisplayEXT")) return (void *)table->ReleaseDisplayEXT;
+        // ---- VK_EXT_direct_mode_display extension commands
+        case 0x8981a5c7u:
+            if (!strcmp(name, "ReleaseDisplayEXT")) return (void *)table->ReleaseDisplayEXT;
+            break;
 
-    // ---- VK_EXT_display_surface_counter extension commands
-    if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilities2EXT")) return (void *)table->GetPhysicalDeviceSurfaceCapabilities2EXT;
+        // ---- VK_EXT_display_surface_counter extension commands
+        case 0xd1bdfdd4u:
+            if (!strcmp(name, "GetPhysicalDeviceSurfaceCapabilities2EXT")) return (void *)table->GetPhysicalDeviceSurfaceCapabilities2EXT;
+            break;
 
-    // ---- VK_EXT_debug_utils extension commands
-    if (!strcmp(name, "CreateDebugUtilsMessengerEXT")) return (void *)table->CreateDebugUtilsMessengerEXT;
-    if (!strcmp(name, "DestroyDebugUtilsMessengerEXT")) return (void *)table->DestroyDebugUtilsMessengerEXT;
-    if (!strcmp(name, "SubmitDebugUtilsMessageEXT")) return (void *)table->SubmitDebugUtilsMessageEXT;
+        // ---- VK_EXT_debug_utils extension commands
+        case 0xda987a67u:
+            if (!strcmp(name, "CreateDebugUtilsMessengerEXT")) return (void *)table->CreateDebugUtilsMessengerEXT;
+            break;
+        case 0xc22d235fu:
+            if (!strcmp(name, "DestroyDebugUtilsMessengerEXT")) return (void *)table->DestroyDebugUtilsMessengerEXT;
+            break;
+        case 0xa4e5a25fu:
+            if (!strcmp(name, "SubmitDebugUtilsMessageEXT")) return (void *)table->SubmitDebugUtilsMessageEXT;
+            break;
 
-    // ---- VK_EXT_sample_locations extension commands
-    if (!strcmp(name, "GetPhysicalDeviceMultisamplePropertiesEXT")) return (void *)table->GetPhysicalDeviceMultisamplePropertiesEXT;
+        // ---- VK_EXT_sample_locations extension commands
+        case 0x91fd6da9u:
+            if (!strcmp(name, "GetPhysicalDeviceMultisamplePropertiesEXT")) return (void *)table->GetPhysicalDeviceMultisamplePropertiesEXT;
+            break;
 
-    // ---- VK_EXT_headless_surface extension commands
-    if (!strcmp(name, "CreateHeadlessSurfaceEXT")) return (void *)table->CreateHeadlessSurfaceEXT;
+        // ---- VK_EXT_headless_surface extension commands
+        case 0xd35abb2cu:
+            if (!strcmp(name, "CreateHeadlessSurfaceEXT")) return (void *)table->CreateHeadlessSurfaceEXT;
+            break;
 
-    // ---- VK_NV_acquire_winrt_display extension commands
+        // ---- VK_NV_acquire_winrt_display extension commands
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-    if (!strcmp(name, "AcquireWinrtDisplayNV")) return (void *)table->AcquireWinrtDisplayNV;
+        case 0xcef6a005u:
+            if (!strcmp(name, "AcquireWinrtDisplayNV")) return (void *)table->AcquireWinrtDisplayNV;
+            break;
 #endif // VK_USE_PLATFORM_WIN32_KHR
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-    if (!strcmp(name, "GetWinrtDisplayNV")) return (void *)table->GetWinrtDisplayNV;
+        case 0xd5127861u:
+            if (!strcmp(name, "GetWinrtDisplayNV")) return (void *)table->GetWinrtDisplayNV;
+            break;
 #endif // VK_USE_PLATFORM_WIN32_KHR
 
-    // ---- VK_NV_external_sci_sync extension commands
+        // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetPhysicalDeviceSciSyncAttributesNV")) return (void *)table->GetPhysicalDeviceSciSyncAttributesNV;
+        case 0x3f042c9bu:
+            if (!strcmp(name, "GetPhysicalDeviceSciSyncAttributesNV")) return (void *)table->GetPhysicalDeviceSciSyncAttributesNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 
-    // ---- VK_NV_external_memory_sci_buf extension commands
+        // ---- VK_NV_external_memory_sci_buf extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetPhysicalDeviceExternalMemorySciBufPropertiesNV")) return (void *)table->GetPhysicalDeviceExternalMemorySciBufPropertiesNV;
+        case 0x2fda62dbu:
+            if (!strcmp(name, "GetPhysicalDeviceExternalMemorySciBufPropertiesNV")) return (void *)table->GetPhysicalDeviceExternalMemorySciBufPropertiesNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp(name, "GetPhysicalDeviceSciBufAttributesNV")) return (void *)table->GetPhysicalDeviceSciBufAttributesNV;
+        case 0xad036203u:
+            if (!strcmp(name, "GetPhysicalDeviceSciBufAttributesNV")) return (void *)table->GetPhysicalDeviceSciBufAttributesNV;
+            break;
 #endif // VK_USE_PLATFORM_SCI
+        default:
+            break;
+    }
 
     *found_name = false;
     return NULL;
@@ -1783,13 +2451,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryFdKHR(
     VkDevice                                    device,
     const VkMemoryGetFdInfoKHR*                 pGetFdInfo,
     int*                                        pFd) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetMemoryFdKHR: Invalid device "
-                   "[VUID-vkGetMemoryFdKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetMemoryFdKHR");
     return disp->GetMemoryFdKHR(device, pGetFdInfo, pFd);
 }
 
@@ -1798,13 +2460,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryFdPropertiesKHR(
     VkExternalMemoryHandleTypeFlagBits          handleType,
     int                                         fd,
     VkMemoryFdPropertiesKHR*                    pMemoryFdProperties) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetMemoryFdPropertiesKHR: Invalid device "
-                   "[VUID-vkGetMemoryFdPropertiesKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetMemoryFdPropertiesKHR");
     return disp->GetMemoryFdPropertiesKHR(device, handleType, fd, pMemoryFdProperties);
 }
 
@@ -1814,13 +2470,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryFdPropertiesKHR(
 VKAPI_ATTR VkResult VKAPI_CALL ImportSemaphoreFdKHR(
     VkDevice                                    device,
     const VkImportSemaphoreFdInfoKHR*           pImportSemaphoreFdInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkImportSemaphoreFdKHR: Invalid device "
-                   "[VUID-vkImportSemaphoreFdKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkImportSemaphoreFdKHR");
     return disp->ImportSemaphoreFdKHR(device, pImportSemaphoreFdInfo);
 }
 
@@ -1828,13 +2478,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetSemaphoreFdKHR(
     VkDevice                                    device,
     const VkSemaphoreGetFdInfoKHR*              pGetFdInfo,
     int*                                        pFd) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetSemaphoreFdKHR: Invalid device "
-                   "[VUID-vkGetSemaphoreFdKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetSemaphoreFdKHR");
     return disp->GetSemaphoreFdKHR(device, pGetFdInfo, pFd);
 }
 
@@ -1844,13 +2488,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetSemaphoreFdKHR(
 VKAPI_ATTR VkResult VKAPI_CALL GetSwapchainStatusKHR(
     VkDevice                                    device,
     VkSwapchainKHR                              swapchain) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetSwapchainStatusKHR: Invalid device "
-                   "[VUID-vkGetSwapchainStatusKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetSwapchainStatusKHR");
     return disp->GetSwapchainStatusKHR(device, swapchain);
 }
 
@@ -1860,13 +2498,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetSwapchainStatusKHR(
 VKAPI_ATTR VkResult VKAPI_CALL ImportFenceFdKHR(
     VkDevice                                    device,
     const VkImportFenceFdInfoKHR*               pImportFenceFdInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkImportFenceFdKHR: Invalid device "
-                   "[VUID-vkImportFenceFdKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkImportFenceFdKHR");
     return disp->ImportFenceFdKHR(device, pImportFenceFdInfo);
 }
 
@@ -1874,13 +2506,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetFenceFdKHR(
     VkDevice                                    device,
     const VkFenceGetFdInfoKHR*                  pGetFdInfo,
     int*                                        pFd) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetFenceFdKHR: Invalid device "
-                   "[VUID-vkGetFenceFdKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetFenceFdKHR");
     return disp->GetFenceFdKHR(device, pGetFdInfo, pFd);
 }
 
@@ -1894,13 +2520,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumeratePhysicalDeviceQueueFamilyPerformanceQuer
     VkPerformanceCounterKHR*                    pCounters,
     VkPerformanceCounterDescriptionKHR*         pCounterDescriptions) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR: Invalid physicalDevice "
-                   "[VUID-vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(unwrapped_phys_dev, queueFamilyIndex, pCounterCount, pCounters, pCounterDescriptions);
 }
@@ -1926,13 +2546,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR
     const VkQueryPoolPerformanceCreateInfoKHR*  pPerformanceQueryCreateInfo,
     uint32_t*                                   pNumPasses) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     disp->GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(unwrapped_phys_dev, pPerformanceQueryCreateInfo, pNumPasses);
 }
@@ -1954,25 +2568,13 @@ VKAPI_ATTR void VKAPI_CALL terminator_GetPhysicalDeviceQueueFamilyPerformanceQue
 VKAPI_ATTR VkResult VKAPI_CALL AcquireProfilingLockKHR(
     VkDevice                                    device,
     const VkAcquireProfilingLockInfoKHR*        pInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkAcquireProfilingLockKHR: Invalid device "
-                   "[VUID-vkAcquireProfilingLockKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkAcquireProfilingLockKHR");
     return disp->AcquireProfilingLockKHR(device, pInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL ReleaseProfilingLockKHR(
     VkDevice                                    device) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkReleaseProfilingLockKHR: Invalid device "
-                   "[VUID-vkReleaseProfilingLockKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkReleaseProfilingLockKHR");
     disp->ReleaseProfilingLockKHR(device);
 }
 
@@ -1984,13 +2586,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceFragmentShadingRatesKHR(
     uint32_t*                                   pFragmentShadingRateCount,
     VkPhysicalDeviceFragmentShadingRateKHR*     pFragmentShadingRates) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceFragmentShadingRatesKHR: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceFragmentShadingRatesKHR-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceFragmentShadingRatesKHR");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetPhysicalDeviceFragmentShadingRatesKHR(unwrapped_phys_dev, pFragmentShadingRateCount, pFragmentShadingRates);
 }
@@ -2013,13 +2609,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetFragmentShadingRateKHR(
     VkCommandBuffer                             commandBuffer,
     const VkExtent2D*                           pFragmentSize,
     const VkFragmentShadingRateCombinerOpKHR    combinerOps[2]) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetFragmentShadingRateKHR: Invalid commandBuffer "
-                   "[VUID-vkCmdSetFragmentShadingRateKHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetFragmentShadingRateKHR");
     disp->CmdSetFragmentShadingRateKHR(commandBuffer, pFragmentSize, combinerOps);
 }
 
@@ -2029,13 +2619,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetFragmentShadingRateKHR(
 VKAPI_ATTR void VKAPI_CALL CmdRefreshObjectsKHR(
     VkCommandBuffer                             commandBuffer,
     const VkRefreshObjectListKHR*               pRefreshObjects) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdRefreshObjectsKHR: Invalid commandBuffer "
-                   "[VUID-vkCmdRefreshObjectsKHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdRefreshObjectsKHR");
     disp->CmdRefreshObjectsKHR(commandBuffer, pRefreshObjects);
 }
 
@@ -2044,13 +2628,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceRefreshableObjectTypesKHR(
     uint32_t*                                   pRefreshableObjectTypeCount,
     VkObjectType*                               pRefreshableObjectTypes) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceRefreshableObjectTypesKHR: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceRefreshableObjectTypesKHR-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceRefreshableObjectTypesKHR");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetPhysicalDeviceRefreshableObjectTypesKHR(unwrapped_phys_dev, pRefreshableObjectTypeCount, pRefreshableObjectTypes);
 }
@@ -2076,13 +2654,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetEvent2KHR(
     VkCommandBuffer                             commandBuffer,
     VkEvent                                     event,
     const VkDependencyInfo*                     pDependencyInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetEvent2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdSetEvent2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetEvent2KHR");
     disp->CmdSetEvent2KHR(commandBuffer, event, pDependencyInfo);
 }
 
@@ -2090,13 +2662,7 @@ VKAPI_ATTR void VKAPI_CALL CmdResetEvent2KHR(
     VkCommandBuffer                             commandBuffer,
     VkEvent                                     event,
     VkPipelineStageFlags2                       stageMask) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdResetEvent2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdResetEvent2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdResetEvent2KHR");
     disp->CmdResetEvent2KHR(commandBuffer, event, stageMask);
 }
 
@@ -2105,26 +2671,14 @@ VKAPI_ATTR void VKAPI_CALL CmdWaitEvents2KHR(
     uint32_t                                    eventCount,
     const VkEvent*                              pEvents,
     const VkDependencyInfo*                     pDependencyInfos) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdWaitEvents2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdWaitEvents2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdWaitEvents2KHR");
     disp->CmdWaitEvents2KHR(commandBuffer, eventCount, pEvents, pDependencyInfos);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdPipelineBarrier2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkDependencyInfo*                     pDependencyInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdPipelineBarrier2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdPipelineBarrier2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdPipelineBarrier2KHR");
     disp->CmdPipelineBarrier2KHR(commandBuffer, pDependencyInfo);
 }
 
@@ -2133,13 +2687,7 @@ VKAPI_ATTR void VKAPI_CALL CmdWriteTimestamp2KHR(
     VkPipelineStageFlags2                       stage,
     VkQueryPool                                 queryPool,
     uint32_t                                    query) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdWriteTimestamp2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdWriteTimestamp2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdWriteTimestamp2KHR");
     disp->CmdWriteTimestamp2KHR(commandBuffer, stage, queryPool, query);
 }
 
@@ -2148,13 +2696,7 @@ VKAPI_ATTR VkResult VKAPI_CALL QueueSubmit2KHR(
     uint32_t                                    submitCount,
     const VkSubmitInfo2*                        pSubmits,
     VkFence                                     fence) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkQueueSubmit2KHR: Invalid queue "
-                   "[VUID-vkQueueSubmit2KHR-queue-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_queue_dispatch(queue, "vkQueueSubmit2KHR");
     return disp->QueueSubmit2KHR(queue, submitCount, pSubmits, fence);
 }
 
@@ -2164,78 +2706,42 @@ VKAPI_ATTR VkResult VKAPI_CALL QueueSubmit2KHR(
 VKAPI_ATTR void VKAPI_CALL CmdCopyBuffer2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkCopyBufferInfo2*                    pCopyBufferInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdCopyBuffer2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdCopyBuffer2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdCopyBuffer2KHR");
     disp->CmdCopyBuffer2KHR(commandBuffer, pCopyBufferInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyImage2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkCopyImageInfo2*                     pCopyImageInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdCopyImage2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdCopyImage2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdCopyImage2KHR");
     disp->CmdCopyImage2KHR(commandBuffer, pCopyImageInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyBufferToImage2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkCopyBufferToImageInfo2*             pCopyBufferToImageInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdCopyBufferToImage2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdCopyBufferToImage2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdCopyBufferToImage2KHR");
     disp->CmdCopyBufferToImage2KHR(commandBuffer, pCopyBufferToImageInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdCopyImageToBuffer2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkCopyImageToBufferInfo2*             pCopyImageToBufferInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdCopyImageToBuffer2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdCopyImageToBuffer2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdCopyImageToBuffer2KHR");
     disp->CmdCopyImageToBuffer2KHR(commandBuffer, pCopyImageToBufferInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdBlitImage2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkBlitImageInfo2*                     pBlitImageInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdBlitImage2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdBlitImage2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdBlitImage2KHR");
     disp->CmdBlitImage2KHR(commandBuffer, pBlitImageInfo);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdResolveImage2KHR(
     VkCommandBuffer                             commandBuffer,
     const VkResolveImageInfo2*                  pResolveImageInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdResolveImage2KHR: Invalid commandBuffer "
-                   "[VUID-vkCmdResolveImage2KHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdResolveImage2KHR");
     disp->CmdResolveImage2KHR(commandBuffer, pResolveImageInfo);
 }
 
@@ -2246,13 +2752,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetLineStippleKHR(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    lineStippleFactor,
     uint16_t                                    lineStipplePattern) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetLineStippleKHR: Invalid commandBuffer "
-                   "[VUID-vkCmdSetLineStippleKHR-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetLineStippleKHR");
     disp->CmdSetLineStippleKHR(commandBuffer, lineStippleFactor, lineStipplePattern);
 }
 
@@ -2264,13 +2764,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceCalibrateableTimeDomainsKHR(
     uint32_t*                                   pTimeDomainCount,
     VkTimeDomainKHR*                            pTimeDomains) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceCalibrateableTimeDomainsKHR-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetPhysicalDeviceCalibrateableTimeDomainsKHR(unwrapped_phys_dev, pTimeDomainCount, pTimeDomains);
 }
@@ -2295,13 +2789,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetCalibratedTimestampsKHR(
     const VkCalibratedTimestampInfoKHR*         pTimestampInfos,
     uint64_t*                                   pTimestamps,
     uint64_t*                                   pMaxDeviation) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetCalibratedTimestampsKHR: Invalid device "
-                   "[VUID-vkGetCalibratedTimestampsKHR-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetCalibratedTimestampsKHR");
     return disp->GetCalibratedTimestampsKHR(device, timestampCount, pTimestampInfos, pTimestamps, pMaxDeviation);
 }
 
@@ -2312,13 +2800,7 @@ VKAPI_ATTR VkResult VKAPI_CALL DisplayPowerControlEXT(
     VkDevice                                    device,
     VkDisplayKHR                                display,
     const VkDisplayPowerInfoEXT*                pDisplayPowerInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkDisplayPowerControlEXT: Invalid device "
-                   "[VUID-vkDisplayPowerControlEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkDisplayPowerControlEXT");
     return disp->DisplayPowerControlEXT(device, display, pDisplayPowerInfo);
 }
 
@@ -2327,13 +2809,7 @@ VKAPI_ATTR VkResult VKAPI_CALL RegisterDeviceEventEXT(
     const VkDeviceEventInfoEXT*                 pDeviceEventInfo,
     const VkAllocationCallbacks*                pAllocator,
     VkFence*                                    pFence) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkRegisterDeviceEventEXT: Invalid device "
-                   "[VUID-vkRegisterDeviceEventEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkRegisterDeviceEventEXT");
     return disp->RegisterDeviceEventEXT(device, pDeviceEventInfo, pAllocator, pFence);
 }
 
@@ -2343,13 +2819,7 @@ VKAPI_ATTR VkResult VKAPI_CALL RegisterDisplayEventEXT(
     const VkDisplayEventInfoEXT*                pDisplayEventInfo,
     const VkAllocationCallbacks*                pAllocator,
     VkFence*                                    pFence) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkRegisterDisplayEventEXT: Invalid device "
-                   "[VUID-vkRegisterDisplayEventEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkRegisterDisplayEventEXT");
     return disp->RegisterDisplayEventEXT(device, display, pDisplayEventInfo, pAllocator, pFence);
 }
 
@@ -2358,13 +2828,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetSwapchainCounterEXT(
     VkSwapchainKHR                              swapchain,
     VkSurfaceCounterFlagBitsEXT                 counter,
     uint64_t*                                   pCounterValue) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetSwapchainCounterEXT: Invalid device "
-                   "[VUID-vkGetSwapchainCounterEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetSwapchainCounterEXT");
     return disp->GetSwapchainCounterEXT(device, swapchain, counter, pCounterValue);
 }
 
@@ -2376,39 +2840,21 @@ VKAPI_ATTR void VKAPI_CALL CmdSetDiscardRectangleEXT(
     uint32_t                                    firstDiscardRectangle,
     uint32_t                                    discardRectangleCount,
     const VkRect2D*                             pDiscardRectangles) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDiscardRectangleEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDiscardRectangleEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDiscardRectangleEXT");
     disp->CmdSetDiscardRectangleEXT(commandBuffer, firstDiscardRectangle, discardRectangleCount, pDiscardRectangles);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDiscardRectangleEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    discardRectangleEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDiscardRectangleEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDiscardRectangleEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDiscardRectangleEnableEXT");
     disp->CmdSetDiscardRectangleEnableEXT(commandBuffer, discardRectangleEnable);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDiscardRectangleModeEXT(
     VkCommandBuffer                             commandBuffer,
     VkDiscardRectangleModeEXT                   discardRectangleMode) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDiscardRectangleModeEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDiscardRectangleModeEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDiscardRectangleModeEXT");
     disp->CmdSetDiscardRectangleModeEXT(commandBuffer, discardRectangleMode);
 }
 
@@ -2420,13 +2866,7 @@ VKAPI_ATTR void VKAPI_CALL SetHdrMetadataEXT(
     uint32_t                                    swapchainCount,
     const VkSwapchainKHR*                       pSwapchains,
     const VkHdrMetadataEXT*                     pMetadata) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkSetHdrMetadataEXT: Invalid device "
-                   "[VUID-vkSetHdrMetadataEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkSetHdrMetadataEXT");
     disp->SetHdrMetadataEXT(device, swapchainCount, pSwapchains, pMetadata);
 }
 
@@ -2436,13 +2876,7 @@ VKAPI_ATTR void VKAPI_CALL SetHdrMetadataEXT(
 VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectNameEXT(
     VkDevice                                    device,
     const VkDebugUtilsObjectNameInfoEXT*        pNameInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkSetDebugUtilsObjectNameEXT: Invalid device "
-                   "[VUID-vkSetDebugUtilsObjectNameEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkSetDebugUtilsObjectNameEXT");
     VkDebugUtilsObjectNameInfoEXT local_name_info;
     memcpy(&local_name_info, pNameInfo, sizeof(VkDebugUtilsObjectNameInfoEXT));
     // If this is a physical device, we have to replace it with the proper one for the next call.
@@ -2498,13 +2932,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_SetDebugUtilsObjectNameEXT(
 VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectTagEXT(
     VkDevice                                    device,
     const VkDebugUtilsObjectTagInfoEXT*         pTagInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkSetDebugUtilsObjectTagEXT: Invalid device "
-                   "[VUID-vkSetDebugUtilsObjectTagEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkSetDebugUtilsObjectTagEXT");
     VkDebugUtilsObjectTagInfoEXT local_tag_info;
     memcpy(&local_tag_info, pTagInfo, sizeof(VkDebugUtilsObjectTagInfoEXT));
     // If this is a physical device, we have to replace it with the proper one for the next call.
@@ -2560,13 +2988,7 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_SetDebugUtilsObjectTagEXT(
 VKAPI_ATTR void VKAPI_CALL QueueBeginDebugUtilsLabelEXT(
     VkQueue                                     queue,
     const VkDebugUtilsLabelEXT*                 pLabelInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkQueueBeginDebugUtilsLabelEXT: Invalid queue "
-                   "[VUID-vkQueueBeginDebugUtilsLabelEXT-queue-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_queue_dispatch(queue, "vkQueueBeginDebugUtilsLabelEXT");
     if (disp->QueueBeginDebugUtilsLabelEXT != NULL) {
         disp->QueueBeginDebugUtilsLabelEXT(queue, pLabelInfo);
     }
@@ -2587,13 +3009,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_QueueBeginDebugUtilsLabelEXT(
 
 VKAPI_ATTR void VKAPI_CALL QueueEndDebugUtilsLabelEXT(
     VkQueue                                     queue) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkQueueEndDebugUtilsLabelEXT: Invalid queue "
-                   "[VUID-vkQueueEndDebugUtilsLabelEXT-queue-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_queue_dispatch(queue, "vkQueueEndDebugUtilsLabelEXT");
     if (disp->QueueEndDebugUtilsLabelEXT != NULL) {
         disp->QueueEndDebugUtilsLabelEXT(queue);
     }
@@ -2614,13 +3030,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_QueueEndDebugUtilsLabelEXT(
 VKAPI_ATTR void VKAPI_CALL QueueInsertDebugUtilsLabelEXT(
     VkQueue                                     queue,
     const VkDebugUtilsLabelEXT*                 pLabelInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(queue);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkQueueInsertDebugUtilsLabelEXT: Invalid queue "
-                   "[VUID-vkQueueInsertDebugUtilsLabelEXT-queue-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_queue_dispatch(queue, "vkQueueInsertDebugUtilsLabelEXT");
     if (disp->QueueInsertDebugUtilsLabelEXT != NULL) {
         disp->QueueInsertDebugUtilsLabelEXT(queue, pLabelInfo);
     }
@@ -2642,13 +3052,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_QueueInsertDebugUtilsLabelEXT(
 VKAPI_ATTR void VKAPI_CALL CmdBeginDebugUtilsLabelEXT(
     VkCommandBuffer                             commandBuffer,
     const VkDebugUtilsLabelEXT*                 pLabelInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdBeginDebugUtilsLabelEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdBeginDebugUtilsLabelEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdBeginDebugUtilsLabelEXT");
     if (disp->CmdBeginDebugUtilsLabelEXT != NULL) {
         disp->CmdBeginDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
     }
@@ -2669,13 +3073,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_CmdBeginDebugUtilsLabelEXT(
 
 VKAPI_ATTR void VKAPI_CALL CmdEndDebugUtilsLabelEXT(
     VkCommandBuffer                             commandBuffer) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdEndDebugUtilsLabelEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdEndDebugUtilsLabelEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdEndDebugUtilsLabelEXT");
     if (disp->CmdEndDebugUtilsLabelEXT != NULL) {
         disp->CmdEndDebugUtilsLabelEXT(commandBuffer);
     }
@@ -2696,13 +3094,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_CmdEndDebugUtilsLabelEXT(
 VKAPI_ATTR void VKAPI_CALL CmdInsertDebugUtilsLabelEXT(
     VkCommandBuffer                             commandBuffer,
     const VkDebugUtilsLabelEXT*                 pLabelInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdInsertDebugUtilsLabelEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdInsertDebugUtilsLabelEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdInsertDebugUtilsLabelEXT");
     if (disp->CmdInsertDebugUtilsLabelEXT != NULL) {
         disp->CmdInsertDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
     }
@@ -2727,13 +3119,7 @@ VKAPI_ATTR void VKAPI_CALL terminator_CmdInsertDebugUtilsLabelEXT(
 VKAPI_ATTR void VKAPI_CALL CmdSetSampleLocationsEXT(
     VkCommandBuffer                             commandBuffer,
     const VkSampleLocationsInfoEXT*             pSampleLocationsInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetSampleLocationsEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetSampleLocationsEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetSampleLocationsEXT");
     disp->CmdSetSampleLocationsEXT(commandBuffer, pSampleLocationsInfo);
 }
 
@@ -2742,13 +3128,7 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceMultisamplePropertiesEXT(
     VkSampleCountFlagBits                       samples,
     VkMultisamplePropertiesEXT*                 pMultisampleProperties) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceMultisamplePropertiesEXT: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceMultisamplePropertiesEXT-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceMultisamplePropertiesEXT");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     disp->GetPhysicalDeviceMultisamplePropertiesEXT(unwrapped_phys_dev, samples, pMultisampleProperties);
 }
@@ -2774,13 +3154,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetImageDrmFormatModifierPropertiesEXT(
     VkDevice                                    device,
     VkImage                                     image,
     VkImageDrmFormatModifierPropertiesEXT*      pProperties) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetImageDrmFormatModifierPropertiesEXT: Invalid device "
-                   "[VUID-vkGetImageDrmFormatModifierPropertiesEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetImageDrmFormatModifierPropertiesEXT");
     return disp->GetImageDrmFormatModifierPropertiesEXT(device, image, pProperties);
 }
 
@@ -2792,13 +3166,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemoryHostPointerPropertiesEXT(
     VkExternalMemoryHandleTypeFlagBits          handleType,
     const void*                                 pHostPointer,
     VkMemoryHostPointerPropertiesEXT*           pMemoryHostPointerProperties) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetMemoryHostPointerPropertiesEXT: Invalid device "
-                   "[VUID-vkGetMemoryHostPointerPropertiesEXT-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetMemoryHostPointerPropertiesEXT");
     return disp->GetMemoryHostPointerPropertiesEXT(device, handleType, pHostPointer, pMemoryHostPointerProperties);
 }
 
@@ -2809,13 +3177,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetLineStippleEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    lineStippleFactor,
     uint16_t                                    lineStipplePattern) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetLineStippleEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetLineStippleEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetLineStippleEXT");
     disp->CmdSetLineStippleEXT(commandBuffer, lineStippleFactor, lineStipplePattern);
 }
 
@@ -2825,39 +3187,21 @@ VKAPI_ATTR void VKAPI_CALL CmdSetLineStippleEXT(
 VKAPI_ATTR void VKAPI_CALL CmdSetCullModeEXT(
     VkCommandBuffer                             commandBuffer,
     VkCullModeFlags                             cullMode) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetCullModeEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetCullModeEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetCullModeEXT");
     disp->CmdSetCullModeEXT(commandBuffer, cullMode);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetFrontFaceEXT(
     VkCommandBuffer                             commandBuffer,
     VkFrontFace                                 frontFace) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetFrontFaceEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetFrontFaceEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetFrontFaceEXT");
     disp->CmdSetFrontFaceEXT(commandBuffer, frontFace);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetPrimitiveTopologyEXT(
     VkCommandBuffer                             commandBuffer,
     VkPrimitiveTopology                         primitiveTopology) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetPrimitiveTopologyEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetPrimitiveTopologyEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetPrimitiveTopologyEXT");
     disp->CmdSetPrimitiveTopologyEXT(commandBuffer, primitiveTopology);
 }
 
@@ -2865,13 +3209,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetViewportWithCountEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    viewportCount,
     const VkViewport*                           pViewports) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetViewportWithCountEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetViewportWithCountEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetViewportWithCountEXT");
     disp->CmdSetViewportWithCountEXT(commandBuffer, viewportCount, pViewports);
 }
 
@@ -2879,13 +3217,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetScissorWithCountEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    scissorCount,
     const VkRect2D*                             pScissors) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetScissorWithCountEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetScissorWithCountEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetScissorWithCountEXT");
     disp->CmdSetScissorWithCountEXT(commandBuffer, scissorCount, pScissors);
 }
 
@@ -2897,78 +3229,42 @@ VKAPI_ATTR void VKAPI_CALL CmdBindVertexBuffers2EXT(
     const VkDeviceSize*                         pOffsets,
     const VkDeviceSize*                         pSizes,
     const VkDeviceSize*                         pStrides) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdBindVertexBuffers2EXT: Invalid commandBuffer "
-                   "[VUID-vkCmdBindVertexBuffers2EXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdBindVertexBuffers2EXT");
     disp->CmdBindVertexBuffers2EXT(commandBuffer, firstBinding, bindingCount, pBuffers, pOffsets, pSizes, pStrides);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDepthTestEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    depthTestEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDepthTestEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDepthTestEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDepthTestEnableEXT");
     disp->CmdSetDepthTestEnableEXT(commandBuffer, depthTestEnable);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDepthWriteEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    depthWriteEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDepthWriteEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDepthWriteEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDepthWriteEnableEXT");
     disp->CmdSetDepthWriteEnableEXT(commandBuffer, depthWriteEnable);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDepthCompareOpEXT(
     VkCommandBuffer                             commandBuffer,
     VkCompareOp                                 depthCompareOp) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDepthCompareOpEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDepthCompareOpEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDepthCompareOpEXT");
     disp->CmdSetDepthCompareOpEXT(commandBuffer, depthCompareOp);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDepthBoundsTestEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    depthBoundsTestEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDepthBoundsTestEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDepthBoundsTestEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDepthBoundsTestEnableEXT");
     disp->CmdSetDepthBoundsTestEnableEXT(commandBuffer, depthBoundsTestEnable);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetStencilTestEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    stencilTestEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetStencilTestEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetStencilTestEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetStencilTestEnableEXT");
     disp->CmdSetStencilTestEnableEXT(commandBuffer, stencilTestEnable);
 }
 
@@ -2979,13 +3275,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetStencilOpEXT(
     VkStencilOp                                 passOp,
     VkStencilOp                                 depthFailOp,
     VkCompareOp                                 compareOp) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetStencilOpEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetStencilOpEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetStencilOpEXT");
     disp->CmdSetStencilOpEXT(commandBuffer, faceMask, failOp, passOp, depthFailOp, compareOp);
 }
 
@@ -2997,13 +3287,7 @@ VKAPI_ATTR VkResult VKAPI_CALL AcquireWinrtDisplayNV(
     VkPhysicalDevice                            physicalDevice,
     VkDisplayKHR                                display) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkAcquireWinrtDisplayNV: Invalid physicalDevice "
-                   "[VUID-vkAcquireWinrtDisplayNV-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkAcquireWinrtDisplayNV");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->AcquireWinrtDisplayNV(unwrapped_phys_dev, display);
 }
@@ -3028,13 +3312,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetWinrtDisplayNV(
     uint32_t                                    deviceRelativeId,
     VkDisplayKHR*                               pDisplay) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetWinrtDisplayNV: Invalid physicalDevice "
-                   "[VUID-vkGetWinrtDisplayNV-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetWinrtDisplayNV");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetWinrtDisplayNV(unwrapped_phys_dev, deviceRelativeId, pDisplay);
 }
@@ -3063,13 +3341,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetVertexInputEXT(
     const VkVertexInputBindingDescription2EXT*  pVertexBindingDescriptions,
     uint32_t                                    vertexAttributeDescriptionCount,
     const VkVertexInputAttributeDescription2EXT* pVertexAttributeDescriptions) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetVertexInputEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetVertexInputEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetVertexInputEXT");
     disp->CmdSetVertexInputEXT(commandBuffer, vertexBindingDescriptionCount, pVertexBindingDescriptions, vertexAttributeDescriptionCount, pVertexAttributeDescriptions);
 }
 
@@ -3081,13 +3353,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetFenceSciSyncFenceNV(
     VkDevice                                    device,
     const VkFenceGetSciSyncInfoNV*              pGetSciSyncHandleInfo,
     void*                                       pHandle) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetFenceSciSyncFenceNV: Invalid device "
-                   "[VUID-vkGetFenceSciSyncFenceNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetFenceSciSyncFenceNV");
     return disp->GetFenceSciSyncFenceNV(device, pGetSciSyncHandleInfo, pHandle);
 }
 
@@ -3097,13 +3363,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetFenceSciSyncObjNV(
     VkDevice                                    device,
     const VkFenceGetSciSyncInfoNV*              pGetSciSyncHandleInfo,
     void*                                       pHandle) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetFenceSciSyncObjNV: Invalid device "
-                   "[VUID-vkGetFenceSciSyncObjNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetFenceSciSyncObjNV");
     return disp->GetFenceSciSyncObjNV(device, pGetSciSyncHandleInfo, pHandle);
 }
 
@@ -3112,13 +3372,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetFenceSciSyncObjNV(
 VKAPI_ATTR VkResult VKAPI_CALL ImportFenceSciSyncFenceNV(
     VkDevice                                    device,
     const VkImportFenceSciSyncInfoNV*           pImportFenceSciSyncInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkImportFenceSciSyncFenceNV: Invalid device "
-                   "[VUID-vkImportFenceSciSyncFenceNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkImportFenceSciSyncFenceNV");
     return disp->ImportFenceSciSyncFenceNV(device, pImportFenceSciSyncInfo);
 }
 
@@ -3127,13 +3381,7 @@ VKAPI_ATTR VkResult VKAPI_CALL ImportFenceSciSyncFenceNV(
 VKAPI_ATTR VkResult VKAPI_CALL ImportFenceSciSyncObjNV(
     VkDevice                                    device,
     const VkImportFenceSciSyncInfoNV*           pImportFenceSciSyncInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkImportFenceSciSyncObjNV: Invalid device "
-                   "[VUID-vkImportFenceSciSyncObjNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkImportFenceSciSyncObjNV");
     return disp->ImportFenceSciSyncObjNV(device, pImportFenceSciSyncInfo);
 }
 
@@ -3144,13 +3392,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceSciSyncAttributesNV(
     const VkSciSyncAttributesInfoNV*            pSciSyncAttributesInfo,
     NvSciSyncAttrList                           pAttributes) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceSciSyncAttributesNV: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceSciSyncAttributesNV-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceSciSyncAttributesNV");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetPhysicalDeviceSciSyncAttributesNV(unwrapped_phys_dev, pSciSyncAttributesInfo, pAttributes);
 }
@@ -3175,13 +3417,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetSemaphoreSciSyncObjNV(
     VkDevice                                    device,
     const VkSemaphoreGetSciSyncInfoNV*          pGetSciSyncInfo,
     void*                                       pHandle) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetSemaphoreSciSyncObjNV: Invalid device "
-                   "[VUID-vkGetSemaphoreSciSyncObjNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetSemaphoreSciSyncObjNV");
     return disp->GetSemaphoreSciSyncObjNV(device, pGetSciSyncInfo, pHandle);
 }
 
@@ -3190,13 +3426,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetSemaphoreSciSyncObjNV(
 VKAPI_ATTR VkResult VKAPI_CALL ImportSemaphoreSciSyncObjNV(
     VkDevice                                    device,
     const VkImportSemaphoreSciSyncInfoNV*       pImportSemaphoreSciSyncInfo) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkImportSemaphoreSciSyncObjNV: Invalid device "
-                   "[VUID-vkImportSemaphoreSciSyncObjNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkImportSemaphoreSciSyncObjNV");
     return disp->ImportSemaphoreSciSyncObjNV(device, pImportSemaphoreSciSyncInfo);
 }
 
@@ -3209,13 +3439,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetMemorySciBufNV(
     VkDevice                                    device,
     const VkMemoryGetSciBufInfoNV*              pGetSciBufInfo,
     NvSciBufObj*                                pHandle) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetMemorySciBufNV: Invalid device "
-                   "[VUID-vkGetMemorySciBufNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetMemorySciBufNV");
     return disp->GetMemorySciBufNV(device, pGetSciBufInfo, pHandle);
 }
 
@@ -3227,13 +3451,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceExternalMemorySciBufPropertiesNV
     NvSciBufObj                                 handle,
     VkMemorySciBufPropertiesNV*                 pMemorySciBufProperties) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetPhysicalDeviceExternalMemorySciBufPropertiesNV(unwrapped_phys_dev, handleType, handle, pMemorySciBufProperties);
 }
@@ -3259,13 +3477,7 @@ VKAPI_ATTR VkResult VKAPI_CALL GetPhysicalDeviceSciBufAttributesNV(
     VkPhysicalDevice                            physicalDevice,
     NvSciBufAttrList                            pAttributes) {
     const VkLayerInstanceDispatchTable *disp;
-    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice);
-    if (VK_NULL_HANDLE == unwrapped_phys_dev) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetPhysicalDeviceSciBufAttributesNV: Invalid physicalDevice "
-                   "[VUID-vkGetPhysicalDeviceSciBufAttributesNV-physicalDevice-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device(physicalDevice, "vkGetPhysicalDeviceSciBufAttributesNV");
     disp = loader_get_instance_layer_dispatch(physicalDevice);
     return disp->GetPhysicalDeviceSciBufAttributesNV(unwrapped_phys_dev, pAttributes);
 }
@@ -3290,65 +3502,35 @@ VKAPI_ATTR VkResult VKAPI_CALL terminator_GetPhysicalDeviceSciBufAttributesNV(
 VKAPI_ATTR void VKAPI_CALL CmdSetPatchControlPointsEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    patchControlPoints) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetPatchControlPointsEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetPatchControlPointsEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetPatchControlPointsEXT");
     disp->CmdSetPatchControlPointsEXT(commandBuffer, patchControlPoints);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetRasterizerDiscardEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    rasterizerDiscardEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetRasterizerDiscardEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetRasterizerDiscardEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetRasterizerDiscardEnableEXT");
     disp->CmdSetRasterizerDiscardEnableEXT(commandBuffer, rasterizerDiscardEnable);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetDepthBiasEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    depthBiasEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetDepthBiasEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetDepthBiasEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetDepthBiasEnableEXT");
     disp->CmdSetDepthBiasEnableEXT(commandBuffer, depthBiasEnable);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetLogicOpEXT(
     VkCommandBuffer                             commandBuffer,
     VkLogicOp                                   logicOp) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetLogicOpEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetLogicOpEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetLogicOpEXT");
     disp->CmdSetLogicOpEXT(commandBuffer, logicOp);
 }
 
 VKAPI_ATTR void VKAPI_CALL CmdSetPrimitiveRestartEnableEXT(
     VkCommandBuffer                             commandBuffer,
     VkBool32                                    primitiveRestartEnable) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetPrimitiveRestartEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetPrimitiveRestartEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetPrimitiveRestartEnableEXT");
     disp->CmdSetPrimitiveRestartEnableEXT(commandBuffer, primitiveRestartEnable);
 }
 
@@ -3359,13 +3541,7 @@ VKAPI_ATTR void VKAPI_CALL CmdSetColorWriteEnableEXT(
     VkCommandBuffer                             commandBuffer,
     uint32_t                                    attachmentCount,
     const VkBool32*                             pColorWriteEnables) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(commandBuffer);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCmdSetColorWriteEnableEXT: Invalid commandBuffer "
-                   "[VUID-vkCmdSetColorWriteEnableEXT-commandBuffer-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch(commandBuffer, "vkCmdSetColorWriteEnableEXT");
     disp->CmdSetColorWriteEnableEXT(commandBuffer, attachmentCount, pColorWriteEnables);
 }
 
@@ -3378,13 +3554,7 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateSemaphoreSciSyncPoolNV(
     const VkSemaphoreSciSyncPoolCreateInfoNV*   pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
     VkSemaphoreSciSyncPoolNV*                   pSemaphorePool) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkCreateSemaphoreSciSyncPoolNV: Invalid device "
-                   "[VUID-vkCreateSemaphoreSciSyncPoolNV-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkCreateSemaphoreSciSyncPoolNV");
     return disp->CreateSemaphoreSciSyncPoolNV(device, pCreateInfo, pAllocator, pSemaphorePool);
 }
 
@@ -3397,473 +3567,643 @@ VKAPI_ATTR VkResult VKAPI_CALL GetScreenBufferPropertiesQNX(
     VkDevice                                    device,
     const struct _screen_buffer*                buffer,
     VkScreenBufferPropertiesQNX*                pProperties) {
-    const VkLayerDispatchTable *disp = loader_get_dispatch(device);
-    if (NULL == disp) {
-        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,
-                   "vkGetScreenBufferPropertiesQNX: Invalid device "
-                   "[VUID-vkGetScreenBufferPropertiesQNX-device-parameter]");
-        abort(); /* Intentionally fail so user can correct issue. */
-    }
+    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch(device, "vkGetScreenBufferPropertiesQNX");
     return disp->GetScreenBufferPropertiesQNX(device, buffer, pProperties);
 }
 
 #endif // VK_USE_PLATFORM_SCREEN_QNX
 // GPA helpers for extensions
-bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr) {
+// name_hash must be loader_hash_string(name) - passed in by the caller so it is only computed once per lookup.
+bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, uint32_t name_hash, void **addr) {
     *addr = NULL;
+    switch (name_hash) {
 
+        // ---- VK_KHR_external_memory_fd extension commands
+        case 0xdad4337au:
+            if (!strcmp("vkGetMemoryFdKHR", name)) {
+                *addr = (void *)GetMemoryFdKHR;
+                return true;
+            }
+            break;
+        case 0x040c9cadu:
+            if (!strcmp("vkGetMemoryFdPropertiesKHR", name)) {
+                *addr = (void *)GetMemoryFdPropertiesKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_external_memory_fd extension commands
-    if (!strcmp("vkGetMemoryFdKHR", name)) {
-        *addr = (void *)GetMemoryFdKHR;
-        return true;
-    }
-    if (!strcmp("vkGetMemoryFdPropertiesKHR", name)) {
-        *addr = (void *)GetMemoryFdPropertiesKHR;
-        return true;
-    }
+        // ---- VK_KHR_external_semaphore_fd extension commands
+        case 0xc07a1bd8u:
+            if (!strcmp("vkImportSemaphoreFdKHR", name)) {
+                *addr = (void *)ImportSemaphoreFdKHR;
+                return true;
+            }
+            break;
+        case 0x119d3c25u:
+            if (!strcmp("vkGetSemaphoreFdKHR", name)) {
+                *addr = (void *)GetSemaphoreFdKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_external_semaphore_fd extension commands
-    if (!strcmp("vkImportSemaphoreFdKHR", name)) {
-        *addr = (void *)ImportSemaphoreFdKHR;
-        return true;
-    }
-    if (!strcmp("vkGetSemaphoreFdKHR", name)) {
-        *addr = (void *)GetSemaphoreFdKHR;
-        return true;
-    }
+        // ---- VK_KHR_shared_presentable_image extension commands
+        case 0x5596f083u:
+            if (!strcmp("vkGetSwapchainStatusKHR", name)) {
+                *addr = (void *)GetSwapchainStatusKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_shared_presentable_image extension commands
-    if (!strcmp("vkGetSwapchainStatusKHR", name)) {
-        *addr = (void *)GetSwapchainStatusKHR;
-        return true;
-    }
+        // ---- VK_KHR_external_fence_fd extension commands
+        case 0xdc1dfab5u:
+            if (!strcmp("vkImportFenceFdKHR", name)) {
+                *addr = (void *)ImportFenceFdKHR;
+                return true;
+            }
+            break;
+        case 0xbfa75230u:
+            if (!strcmp("vkGetFenceFdKHR", name)) {
+                *addr = (void *)GetFenceFdKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_external_fence_fd extension commands
-    if (!strcmp("vkImportFenceFdKHR", name)) {
-        *addr = (void *)ImportFenceFdKHR;
-        return true;
-    }
-    if (!strcmp("vkGetFenceFdKHR", name)) {
-        *addr = (void *)GetFenceFdKHR;
-        return true;
-    }
+        // ---- VK_KHR_performance_query extension commands
+        case 0x426d36bcu:
+            if (!strcmp("vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR", name)) {
+                *addr = (void *)EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
+                return true;
+            }
+            break;
+        case 0x479085d6u:
+            if (!strcmp("vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR", name)) {
+                *addr = (void *)GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR;
+                return true;
+            }
+            break;
+        case 0xbf49690eu:
+            if (!strcmp("vkAcquireProfilingLockKHR", name)) {
+                *addr = (void *)AcquireProfilingLockKHR;
+                return true;
+            }
+            break;
+        case 0xf4fdd0b7u:
+            if (!strcmp("vkReleaseProfilingLockKHR", name)) {
+                *addr = (void *)ReleaseProfilingLockKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_performance_query extension commands
-    if (!strcmp("vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR", name)) {
-        *addr = (void *)EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
-        return true;
-    }
-    if (!strcmp("vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR", name)) {
-        *addr = (void *)GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR;
-        return true;
-    }
-    if (!strcmp("vkAcquireProfilingLockKHR", name)) {
-        *addr = (void *)AcquireProfilingLockKHR;
-        return true;
-    }
-    if (!strcmp("vkReleaseProfilingLockKHR", name)) {
-        *addr = (void *)ReleaseProfilingLockKHR;
-        return true;
-    }
+        // ---- VK_KHR_fragment_shading_rate extension commands
+        case 0x9e1664efu:
+            if (!strcmp("vkGetPhysicalDeviceFragmentShadingRatesKHR", name)) {
+                *addr = (void *)GetPhysicalDeviceFragmentShadingRatesKHR;
+                return true;
+            }
+            break;
+        case 0xe95260c9u:
+            if (!strcmp("vkCmdSetFragmentShadingRateKHR", name)) {
+                *addr = (void *)CmdSetFragmentShadingRateKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_fragment_shading_rate extension commands
-    if (!strcmp("vkGetPhysicalDeviceFragmentShadingRatesKHR", name)) {
-        *addr = (void *)GetPhysicalDeviceFragmentShadingRatesKHR;
-        return true;
-    }
-    if (!strcmp("vkCmdSetFragmentShadingRateKHR", name)) {
-        *addr = (void *)CmdSetFragmentShadingRateKHR;
-        return true;
-    }
+        // ---- VK_KHR_object_refresh extension commands
+        case 0x74779216u:
+            if (!strcmp("vkCmdRefreshObjectsKHR", name)) {
+                *addr = (void *)CmdRefreshObjectsKHR;
+                return true;
+            }
+            break;
+        case 0xf942b41bu:
+            if (!strcmp("vkGetPhysicalDeviceRefreshableObjectTypesKHR", name)) {
+                *addr = (void *)GetPhysicalDeviceRefreshableObjectTypesKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_object_refresh extension commands
-    if (!strcmp("vkCmdRefreshObjectsKHR", name)) {
-        *addr = (void *)CmdRefreshObjectsKHR;
-        return true;
-    }
-    if (!strcmp("vkGetPhysicalDeviceRefreshableObjectTypesKHR", name)) {
-        *addr = (void *)GetPhysicalDeviceRefreshableObjectTypesKHR;
-        return true;
-    }
+        // ---- VK_KHR_synchronization2 extension commands
+        case 0x92a07673u:
+            if (!strcmp("vkCmdSetEvent2KHR", name)) {
+                *addr = (void *)CmdSetEvent2KHR;
+                return true;
+            }
+            break;
+        case 0xa1fb0bf6u:
+            if (!strcmp("vkCmdResetEvent2KHR", name)) {
+                *addr = (void *)CmdResetEvent2KHR;
+                return true;
+            }
+            break;
+        case 0x8f02f937u:
+            if (!strcmp("vkCmdWaitEvents2KHR", name)) {
+                *addr = (void *)CmdWaitEvents2KHR;
+                return true;
+            }
+            break;
+        case 0x76af21b6u:
+            if (!strcmp("vkCmdPipelineBarrier2KHR", name)) {
+                *addr = (void *)CmdPipelineBarrier2KHR;
+                return true;
+            }
+            break;
+        case 0xb4125402u:
+            if (!strcmp("vkCmdWriteTimestamp2KHR", name)) {
+                *addr = (void *)CmdWriteTimestamp2KHR;
+                return true;
+            }
+            break;
+        case 0x60afde40u:
+            if (!strcmp("vkQueueSubmit2KHR", name)) {
+                *addr = (void *)QueueSubmit2KHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_synchronization2 extension commands
-    if (!strcmp("vkCmdSetEvent2KHR", name)) {
-        *addr = (void *)CmdSetEvent2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdResetEvent2KHR", name)) {
-        *addr = (void *)CmdResetEvent2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdWaitEvents2KHR", name)) {
-        *addr = (void *)CmdWaitEvents2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdPipelineBarrier2KHR", name)) {
-        *addr = (void *)CmdPipelineBarrier2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdWriteTimestamp2KHR", name)) {
-        *addr = (void *)CmdWriteTimestamp2KHR;
-        return true;
-    }
-    if (!strcmp("vkQueueSubmit2KHR", name)) {
-        *addr = (void *)QueueSubmit2KHR;
-        return true;
-    }
+        // ---- VK_KHR_copy_commands2 extension commands
+        case 0xa0c8b948u:
+            if (!strcmp("vkCmdCopyBuffer2KHR", name)) {
+                *addr = (void *)CmdCopyBuffer2KHR;
+                return true;
+            }
+            break;
+        case 0x589da3cdu:
+            if (!strcmp("vkCmdCopyImage2KHR", name)) {
+                *addr = (void *)CmdCopyImage2KHR;
+                return true;
+            }
+            break;
+        case 0x866f8fe4u:
+            if (!strcmp("vkCmdCopyBufferToImage2KHR", name)) {
+                *addr = (void *)CmdCopyBufferToImage2KHR;
+                return true;
+            }
+            break;
+        case 0x03ac3d82u:
+            if (!strcmp("vkCmdCopyImageToBuffer2KHR", name)) {
+                *addr = (void *)CmdCopyImageToBuffer2KHR;
+                return true;
+            }
+            break;
+        case 0x9c4f6ffbu:
+            if (!strcmp("vkCmdBlitImage2KHR", name)) {
+                *addr = (void *)CmdBlitImage2KHR;
+                return true;
+            }
+            break;
+        case 0xefa437aeu:
+            if (!strcmp("vkCmdResolveImage2KHR", name)) {
+                *addr = (void *)CmdResolveImage2KHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_copy_commands2 extension commands
-    if (!strcmp("vkCmdCopyBuffer2KHR", name)) {
-        *addr = (void *)CmdCopyBuffer2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdCopyImage2KHR", name)) {
-        *addr = (void *)CmdCopyImage2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdCopyBufferToImage2KHR", name)) {
-        *addr = (void *)CmdCopyBufferToImage2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdCopyImageToBuffer2KHR", name)) {
-        *addr = (void *)CmdCopyImageToBuffer2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdBlitImage2KHR", name)) {
-        *addr = (void *)CmdBlitImage2KHR;
-        return true;
-    }
-    if (!strcmp("vkCmdResolveImage2KHR", name)) {
-        *addr = (void *)CmdResolveImage2KHR;
-        return true;
-    }
+        // ---- VK_KHR_line_rasterization extension commands
+        case 0x4819f988u:
+            if (!strcmp("vkCmdSetLineStippleKHR", name)) {
+                *addr = (void *)CmdSetLineStippleKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_line_rasterization extension commands
-    if (!strcmp("vkCmdSetLineStippleKHR", name)) {
-        *addr = (void *)CmdSetLineStippleKHR;
-        return true;
-    }
+        // ---- VK_KHR_calibrated_timestamps extension commands
+        case 0xda63f0cbu:
+            if (!strcmp("vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", name)) {
+                *addr = (void *)GetPhysicalDeviceCalibrateableTimeDomainsKHR;
+                return true;
+            }
+            break;
+        case 0x4a8edbdfu:
+            if (!strcmp("vkGetCalibratedTimestampsKHR", name)) {
+                *addr = (void *)GetCalibratedTimestampsKHR;
+                return true;
+            }
+            break;
 
-    // ---- VK_KHR_calibrated_timestamps extension commands
-    if (!strcmp("vkGetPhysicalDeviceCalibrateableTimeDomainsKHR", name)) {
-        *addr = (void *)GetPhysicalDeviceCalibrateableTimeDomainsKHR;
-        return true;
-    }
-    if (!strcmp("vkGetCalibratedTimestampsKHR", name)) {
-        *addr = (void *)GetCalibratedTimestampsKHR;
-        return true;
-    }
+        // ---- VK_EXT_direct_mode_display extension commands
+        case 0x8a28db5au:
+            if (!strcmp("vkReleaseDisplayEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_direct_mode_display == 1)
+                             ? (void *)ReleaseDisplayEXT
+                             : NULL;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_direct_mode_display extension commands
-    if (!strcmp("vkReleaseDisplayEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_direct_mode_display == 1)
-                     ? (void *)ReleaseDisplayEXT
-                     : NULL;
-        return true;
-    }
+        // ---- VK_EXT_display_surface_counter extension commands
+        case 0xb811cc3bu:
+            if (!strcmp("vkGetPhysicalDeviceSurfaceCapabilities2EXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_display_surface_counter == 1)
+                             ? (void *)GetPhysicalDeviceSurfaceCapabilities2EXT
+                             : NULL;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_display_surface_counter extension commands
-    if (!strcmp("vkGetPhysicalDeviceSurfaceCapabilities2EXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_display_surface_counter == 1)
-                     ? (void *)GetPhysicalDeviceSurfaceCapabilities2EXT
-                     : NULL;
-        return true;
-    }
+        // ---- VK_EXT_display_control extension commands
+        case 0xf97f8b25u:
+            if (!strcmp("vkDisplayPowerControlEXT", name)) {
+                *addr = (void *)DisplayPowerControlEXT;
+                return true;
+            }
+            break;
+        case 0x2effdcc2u:
+            if (!strcmp("vkRegisterDeviceEventEXT", name)) {
+                *addr = (void *)RegisterDeviceEventEXT;
+                return true;
+            }
+            break;
+        case 0xadc421e4u:
+            if (!strcmp("vkRegisterDisplayEventEXT", name)) {
+                *addr = (void *)RegisterDisplayEventEXT;
+                return true;
+            }
+            break;
+        case 0x302569e5u:
+            if (!strcmp("vkGetSwapchainCounterEXT", name)) {
+                *addr = (void *)GetSwapchainCounterEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_display_control extension commands
-    if (!strcmp("vkDisplayPowerControlEXT", name)) {
-        *addr = (void *)DisplayPowerControlEXT;
-        return true;
-    }
-    if (!strcmp("vkRegisterDeviceEventEXT", name)) {
-        *addr = (void *)RegisterDeviceEventEXT;
-        return true;
-    }
-    if (!strcmp("vkRegisterDisplayEventEXT", name)) {
-        *addr = (void *)RegisterDisplayEventEXT;
-        return true;
-    }
-    if (!strcmp("vkGetSwapchainCounterEXT", name)) {
-        *addr = (void *)GetSwapchainCounterEXT;
-        return true;
-    }
+        // ---- VK_EXT_discard_rectangles extension commands
+        case 0x746a9b6cu:
+            if (!strcmp("vkCmdSetDiscardRectangleEXT", name)) {
+                *addr = (void *)CmdSetDiscardRectangleEXT;
+                return true;
+            }
+            break;
+        case 0x228ac2c5u:
+            if (!strcmp("vkCmdSetDiscardRectangleEnableEXT", name)) {
+                *addr = (void *)CmdSetDiscardRectangleEnableEXT;
+                return true;
+            }
+            break;
+        case 0xe2eab3f1u:
+            if (!strcmp("vkCmdSetDiscardRectangleModeEXT", name)) {
+                *addr = (void *)CmdSetDiscardRectangleModeEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_discard_rectangles extension commands
-    if (!strcmp("vkCmdSetDiscardRectangleEXT", name)) {
-        *addr = (void *)CmdSetDiscardRectangleEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDiscardRectangleEnableEXT", name)) {
-        *addr = (void *)CmdSetDiscardRectangleEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDiscardRectangleModeEXT", name)) {
-        *addr = (void *)CmdSetDiscardRectangleModeEXT;
-        return true;
-    }
+        // ---- VK_EXT_hdr_metadata extension commands
+        case 0x04d97c94u:
+            if (!strcmp("vkSetHdrMetadataEXT", name)) {
+                *addr = (void *)SetHdrMetadataEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_hdr_metadata extension commands
-    if (!strcmp("vkSetHdrMetadataEXT", name)) {
-        *addr = (void *)SetHdrMetadataEXT;
-        return true;
-    }
+        // ---- VK_EXT_debug_utils extension commands
+        case 0xd89ff139u:
+            if (!strcmp("vkSetDebugUtilsObjectNameEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)SetDebugUtilsObjectNameEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x5e0dab22u:
+            if (!strcmp("vkSetDebugUtilsObjectTagEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)SetDebugUtilsObjectTagEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x46b78797u:
+            if (!strcmp("vkQueueBeginDebugUtilsLabelEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)QueueBeginDebugUtilsLabelEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x6aea05b3u:
+            if (!strcmp("vkQueueEndDebugUtilsLabelEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)QueueEndDebugUtilsLabelEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x963e0d79u:
+            if (!strcmp("vkQueueInsertDebugUtilsLabelEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)QueueInsertDebugUtilsLabelEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x26ebe05au:
+            if (!strcmp("vkCmdBeginDebugUtilsLabelEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)CmdBeginDebugUtilsLabelEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x8cc22c12u:
+            if (!strcmp("vkCmdEndDebugUtilsLabelEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)CmdEndDebugUtilsLabelEXT
+                             : NULL;
+                return true;
+            }
+            break;
+        case 0x95502ba6u:
+            if (!strcmp("vkCmdInsertDebugUtilsLabelEXT", name)) {
+                *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
+                             ? (void *)CmdInsertDebugUtilsLabelEXT
+                             : NULL;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_debug_utils extension commands
-    if (!strcmp("vkSetDebugUtilsObjectNameEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)SetDebugUtilsObjectNameEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkSetDebugUtilsObjectTagEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)SetDebugUtilsObjectTagEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkQueueBeginDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)QueueBeginDebugUtilsLabelEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkQueueEndDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)QueueEndDebugUtilsLabelEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkQueueInsertDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)QueueInsertDebugUtilsLabelEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkCmdBeginDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)CmdBeginDebugUtilsLabelEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkCmdEndDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)CmdEndDebugUtilsLabelEXT
-                     : NULL;
-        return true;
-    }
-    if (!strcmp("vkCmdInsertDebugUtilsLabelEXT", name)) {
-        *addr = (ptr_instance->enabled_extensions.ext_debug_utils == 1)
-                     ? (void *)CmdInsertDebugUtilsLabelEXT
-                     : NULL;
-        return true;
-    }
+        // ---- VK_EXT_sample_locations extension commands
+        case 0x893ad3bbu:
+            if (!strcmp("vkCmdSetSampleLocationsEXT", name)) {
+                *addr = (void *)CmdSetSampleLocationsEXT;
+                return true;
+            }
+            break;
+        case 0x84f1eedcu:
+            if (!strcmp("vkGetPhysicalDeviceMultisamplePropertiesEXT", name)) {
+                *addr = (void *)GetPhysicalDeviceMultisamplePropertiesEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_sample_locations extension commands
-    if (!strcmp("vkCmdSetSampleLocationsEXT", name)) {
-        *addr = (void *)CmdSetSampleLocationsEXT;
-        return true;
-    }
-    if (!strcmp("vkGetPhysicalDeviceMultisamplePropertiesEXT", name)) {
-        *addr = (void *)GetPhysicalDeviceMultisamplePropertiesEXT;
-        return true;
-    }
+        // ---- VK_EXT_image_drm_format_modifier extension commands
+        case 0xe442e9b6u:
+            if (!strcmp("vkGetImageDrmFormatModifierPropertiesEXT", name)) {
+                *addr = (void *)GetImageDrmFormatModifierPropertiesEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_image_drm_format_modifier extension commands
-    if (!strcmp("vkGetImageDrmFormatModifierPropertiesEXT", name)) {
-        *addr = (void *)GetImageDrmFormatModifierPropertiesEXT;
-        return true;
-    }
+        // ---- VK_EXT_external_memory_host extension commands
+        case 0x21c55ba0u:
+            if (!strcmp("vkGetMemoryHostPointerPropertiesEXT", name)) {
+                *addr = (void *)GetMemoryHostPointerPropertiesEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_external_memory_host extension commands
-    if (!strcmp("vkGetMemoryHostPointerPropertiesEXT", name)) {
-        *addr = (void *)GetMemoryHostPointerPropertiesEXT;
-        return true;
-    }
+        // ---- VK_EXT_line_rasterization extension commands
+        case 0x7c80d680u:
+            if (!strcmp("vkCmdSetLineStippleEXT", name)) {
+                *addr = (void *)CmdSetLineStippleEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_line_rasterization extension commands
-    if (!strcmp("vkCmdSetLineStippleEXT", name)) {
-        *addr = (void *)CmdSetLineStippleEXT;
-        return true;
-    }
+        // ---- VK_EXT_extended_dynamic_state extension commands
+        case 0x74f8fcccu:
+            if (!strcmp("vkCmdSetCullModeEXT", name)) {
+                *addr = (void *)CmdSetCullModeEXT;
+                return true;
+            }
+            break;
+        case 0xeb32bae3u:
+            if (!strcmp("vkCmdSetFrontFaceEXT", name)) {
+                *addr = (void *)CmdSetFrontFaceEXT;
+                return true;
+            }
+            break;
+        case 0x5965de89u:
+            if (!strcmp("vkCmdSetPrimitiveTopologyEXT", name)) {
+                *addr = (void *)CmdSetPrimitiveTopologyEXT;
+                return true;
+            }
+            break;
+        case 0x3574db42u:
+            if (!strcmp("vkCmdSetViewportWithCountEXT", name)) {
+                *addr = (void *)CmdSetViewportWithCountEXT;
+                return true;
+            }
+            break;
+        case 0x0e3b094eu:
+            if (!strcmp("vkCmdSetScissorWithCountEXT", name)) {
+                *addr = (void *)CmdSetScissorWithCountEXT;
+                return true;
+            }
+            break;
+        case 0x481f705bu:
+            if (!strcmp("vkCmdBindVertexBuffers2EXT", name)) {
+                *addr = (void *)CmdBindVertexBuffers2EXT;
+                return true;
+            }
+            break;
+        case 0xa9d85657u:
+            if (!strcmp("vkCmdSetDepthTestEnableEXT", name)) {
+                *addr = (void *)CmdSetDepthTestEnableEXT;
+                return true;
+            }
+            break;
+        case 0x612d1f30u:
+            if (!strcmp("vkCmdSetDepthWriteEnableEXT", name)) {
+                *addr = (void *)CmdSetDepthWriteEnableEXT;
+                return true;
+            }
+            break;
+        case 0x5d725d28u:
+            if (!strcmp("vkCmdSetDepthCompareOpEXT", name)) {
+                *addr = (void *)CmdSetDepthCompareOpEXT;
+                return true;
+            }
+            break;
+        case 0x02593548u:
+            if (!strcmp("vkCmdSetDepthBoundsTestEnableEXT", name)) {
+                *addr = (void *)CmdSetDepthBoundsTestEnableEXT;
+                return true;
+            }
+            break;
+        case 0xf481ae18u:
+            if (!strcmp("vkCmdSetStencilTestEnableEXT", name)) {
+                *addr = (void *)CmdSetStencilTestEnableEXT;
+                return true;
+            }
+            break;
+        case 0xdc736664u:
+            if (!strcmp("vkCmdSetStencilOpEXT", name)) {
+                *addr = (void *)CmdSetStencilOpEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_EXT_extended_dynamic_state extension commands
-    if (!strcmp("vkCmdSetCullModeEXT", name)) {
-        *addr = (void *)CmdSetCullModeEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetFrontFaceEXT", name)) {
-        *addr = (void *)CmdSetFrontFaceEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetPrimitiveTopologyEXT", name)) {
-        *addr = (void *)CmdSetPrimitiveTopologyEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetViewportWithCountEXT", name)) {
-        *addr = (void *)CmdSetViewportWithCountEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetScissorWithCountEXT", name)) {
-        *addr = (void *)CmdSetScissorWithCountEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdBindVertexBuffers2EXT", name)) {
-        *addr = (void *)CmdBindVertexBuffers2EXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDepthTestEnableEXT", name)) {
-        *addr = (void *)CmdSetDepthTestEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDepthWriteEnableEXT", name)) {
-        *addr = (void *)CmdSetDepthWriteEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDepthCompareOpEXT", name)) {
-        *addr = (void *)CmdSetDepthCompareOpEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDepthBoundsTestEnableEXT", name)) {
-        *addr = (void *)CmdSetDepthBoundsTestEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetStencilTestEnableEXT", name)) {
-        *addr = (void *)CmdSetStencilTestEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetStencilOpEXT", name)) {
-        *addr = (void *)CmdSetStencilOpEXT;
-        return true;
-    }
-
-    // ---- VK_NV_acquire_winrt_display extension commands
+        // ---- VK_NV_acquire_winrt_display extension commands
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-    if (!strcmp("vkAcquireWinrtDisplayNV", name)) {
-        *addr = (void *)AcquireWinrtDisplayNV;
-        return true;
-    }
+        case 0x6a89f660u:
+            if (!strcmp("vkAcquireWinrtDisplayNV", name)) {
+                *addr = (void *)AcquireWinrtDisplayNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_WIN32_KHR
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-    if (!strcmp("vkGetWinrtDisplayNV", name)) {
-        *addr = (void *)GetWinrtDisplayNV;
-        return true;
-    }
+        case 0x6f0cbf1cu:
+            if (!strcmp("vkGetWinrtDisplayNV", name)) {
+                *addr = (void *)GetWinrtDisplayNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_WIN32_KHR
 
-    // ---- VK_EXT_vertex_input_dynamic_state extension commands
-    if (!strcmp("vkCmdSetVertexInputEXT", name)) {
-        *addr = (void *)CmdSetVertexInputEXT;
-        return true;
-    }
+        // ---- VK_EXT_vertex_input_dynamic_state extension commands
+        case 0x3298ff83u:
+            if (!strcmp("vkCmdSetVertexInputEXT", name)) {
+                *addr = (void *)CmdSetVertexInputEXT;
+                return true;
+            }
+            break;
 
-    // ---- VK_NV_external_sci_sync extension commands
+        // ---- VK_NV_external_sci_sync extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetFenceSciSyncFenceNV", name)) {
-        *addr = (void *)GetFenceSciSyncFenceNV;
-        return true;
-    }
+        case 0x6f0eae70u:
+            if (!strcmp("vkGetFenceSciSyncFenceNV", name)) {
+                *addr = (void *)GetFenceSciSyncFenceNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetFenceSciSyncObjNV", name)) {
-        *addr = (void *)GetFenceSciSyncObjNV;
-        return true;
-    }
+        case 0x73236404u:
+            if (!strcmp("vkGetFenceSciSyncObjNV", name)) {
+                *addr = (void *)GetFenceSciSyncObjNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkImportFenceSciSyncFenceNV", name)) {
-        *addr = (void *)ImportFenceSciSyncFenceNV;
-        return true;
-    }
+        case 0xe7f9bd6fu:
+            if (!strcmp("vkImportFenceSciSyncFenceNV", name)) {
+                *addr = (void *)ImportFenceSciSyncFenceNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkImportFenceSciSyncObjNV", name)) {
-        *addr = (void *)ImportFenceSciSyncObjNV;
-        return true;
-    }
+        case 0xe6743703u:
+            if (!strcmp("vkImportFenceSciSyncObjNV", name)) {
+                *addr = (void *)ImportFenceSciSyncObjNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetPhysicalDeviceSciSyncAttributesNV", name)) {
-        *addr = (void *)GetPhysicalDeviceSciSyncAttributesNV;
-        return true;
-    }
+        case 0x2dac6910u:
+            if (!strcmp("vkGetPhysicalDeviceSciSyncAttributesNV", name)) {
+                *addr = (void *)GetPhysicalDeviceSciSyncAttributesNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetSemaphoreSciSyncObjNV", name)) {
-        *addr = (void *)GetSemaphoreSciSyncObjNV;
-        return true;
-    }
+        case 0x5982b4f3u:
+            if (!strcmp("vkGetSemaphoreSciSyncObjNV", name)) {
+                *addr = (void *)GetSemaphoreSciSyncObjNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkImportSemaphoreSciSyncObjNV", name)) {
-        *addr = (void *)ImportSemaphoreSciSyncObjNV;
-        return true;
-    }
-#endif // VK_USE_PLATFORM_SCI
-
-    // ---- VK_NV_external_memory_sci_buf extension commands
-#if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetMemorySciBufNV", name)) {
-        *addr = (void *)GetMemorySciBufNV;
-        return true;
-    }
-#endif // VK_USE_PLATFORM_SCI
-#if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV", name)) {
-        *addr = (void *)GetPhysicalDeviceExternalMemorySciBufPropertiesNV;
-        return true;
-    }
-#endif // VK_USE_PLATFORM_SCI
-#if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkGetPhysicalDeviceSciBufAttributesNV", name)) {
-        *addr = (void *)GetPhysicalDeviceSciBufAttributesNV;
-        return true;
-    }
+        case 0x160dc67cu:
+            if (!strcmp("vkImportSemaphoreSciSyncObjNV", name)) {
+                *addr = (void *)ImportSemaphoreSciSyncObjNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 
-    // ---- VK_EXT_extended_dynamic_state2 extension commands
-    if (!strcmp("vkCmdSetPatchControlPointsEXT", name)) {
-        *addr = (void *)CmdSetPatchControlPointsEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetRasterizerDiscardEnableEXT", name)) {
-        *addr = (void *)CmdSetRasterizerDiscardEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetDepthBiasEnableEXT", name)) {
-        *addr = (void *)CmdSetDepthBiasEnableEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetLogicOpEXT", name)) {
-        *addr = (void *)CmdSetLogicOpEXT;
-        return true;
-    }
-    if (!strcmp("vkCmdSetPrimitiveRestartEnableEXT", name)) {
-        *addr = (void *)CmdSetPrimitiveRestartEnableEXT;
-        return true;
-    }
-
-    // ---- VK_EXT_color_write_enable extension commands
-    if (!strcmp("vkCmdSetColorWriteEnableEXT", name)) {
-        *addr = (void *)CmdSetColorWriteEnableEXT;
-        return true;
-    }
-
-    // ---- VK_NV_external_sci_sync2 extension commands
+        // ---- VK_NV_external_memory_sci_buf extension commands
 #if defined(VK_USE_PLATFORM_SCI)
-    if (!strcmp("vkCreateSemaphoreSciSyncPoolNV", name)) {
-        *addr = (void *)CreateSemaphoreSciSyncPoolNV;
-        return true;
-    }
+        case 0xa4485397u:
+            if (!strcmp("vkGetMemorySciBufNV", name)) {
+                *addr = (void *)GetMemorySciBufNV;
+                return true;
+            }
+            break;
+#endif // VK_USE_PLATFORM_SCI
+#if defined(VK_USE_PLATFORM_SCI)
+        case 0x3429362au:
+            if (!strcmp("vkGetPhysicalDeviceExternalMemorySciBufPropertiesNV", name)) {
+                *addr = (void *)GetPhysicalDeviceExternalMemorySciBufPropertiesNV;
+                return true;
+            }
+            break;
+#endif // VK_USE_PLATFORM_SCI
+#if defined(VK_USE_PLATFORM_SCI)
+        case 0x2b3e7766u:
+            if (!strcmp("vkGetPhysicalDeviceSciBufAttributesNV", name)) {
+                *addr = (void *)GetPhysicalDeviceSciBufAttributesNV;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCI
 
-    // ---- VK_QNX_external_memory_screen_buffer extension commands
+        // ---- VK_EXT_extended_dynamic_state2 extension commands
+        case 0x2c78d559u:
+            if (!strcmp("vkCmdSetPatchControlPointsEXT", name)) {
+                *addr = (void *)CmdSetPatchControlPointsEXT;
+                return true;
+            }
+            break;
+        case 0x711bc26fu:
+            if (!strcmp("vkCmdSetRasterizerDiscardEnableEXT", name)) {
+                *addr = (void *)CmdSetRasterizerDiscardEnableEXT;
+                return true;
+            }
+            break;
+        case 0xad4bca4cu:
+            if (!strcmp("vkCmdSetDepthBiasEnableEXT", name)) {
+                *addr = (void *)CmdSetDepthBiasEnableEXT;
+                return true;
+            }
+            break;
+        case 0x0eefc5f6u:
+            if (!strcmp("vkCmdSetLogicOpEXT", name)) {
+                *addr = (void *)CmdSetLogicOpEXT;
+                return true;
+            }
+            break;
+        case 0x29891200u:
+            if (!strcmp("vkCmdSetPrimitiveRestartEnableEXT", name)) {
+                *addr = (void *)CmdSetPrimitiveRestartEnableEXT;
+                return true;
+            }
+            break;
+
+        // ---- VK_EXT_color_write_enable extension commands
+        case 0x2151479au:
+            if (!strcmp("vkCmdSetColorWriteEnableEXT", name)) {
+                *addr = (void *)CmdSetColorWriteEnableEXT;
+                return true;
+            }
+            break;
+
+        // ---- VK_NV_external_sci_sync2 extension commands
+#if defined(VK_USE_PLATFORM_SCI)
+        case 0xbff08f80u:
+            if (!strcmp("vkCreateSemaphoreSciSyncPoolNV", name)) {
+                *addr = (void *)CreateSemaphoreSciSyncPoolNV;
+                return true;
+            }
+            break;
+#endif // VK_USE_PLATFORM_SCI
+
+        // ---- VK_QNX_external_memory_screen_buffer extension commands
 #if defined(VK_USE_PLATFORM_SCREEN_QNX)
-    if (!strcmp("vkGetScreenBufferPropertiesQNX", name)) {
-        *addr = (void *)GetScreenBufferPropertiesQNX;
-        return true;
-    }
+        case 0xfed75262u:
+            if (!strcmp("vkGetScreenBufferPropertiesQNX", name)) {
+                *addr = (void *)GetScreenBufferPropertiesQNX;
+                return true;
+            }
+            break;
 #endif // VK_USE_PLATFORM_SCREEN_QNX
+        default:
+            break;
+    }
     return false;
 }
 

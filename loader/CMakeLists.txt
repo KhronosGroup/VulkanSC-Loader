@@ -55,14 +55,10 @@ if(WIN32)
         configure_file(loader.rc.in ${CMAKE_CURRENT_BINARY_DIR}/loader.rc)
     endif()
 else()
-    # Used to make alloca() and secure_getenv() available
+    # Used to make secure_getenv() available
     target_compile_definitions(loader_specific_options INTERFACE _GNU_SOURCE)
     if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
         target_compile_definitions(loader_specific_options INTERFACE __BSD_VISIBLE=1)
-    endif()
-    check_include_file("alloca.h" HAVE_ALLOCA_H)
-    if(HAVE_ALLOCA_H)
-        target_compile_definitions(loader_specific_options INTERFACE HAVE_ALLOCA_H)
     endif()
 
     set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -94,9 +90,22 @@ set(NORMAL_LOADER_SRCS
     trampoline.c
     unknown_function_handling.c
     unknown_function_handling.h
+    vk_loader_platform.c
+    vk_loader_platform.h
     wsi.c
     wsi.h
     )
+
+# Add generated files
+if(VULKANSC)
+    list(APPEND NORMAL_LOADER_SRCS
+        generated-vksc/vk_loader_core_trampolines.c
+        )
+else()
+    list(APPEND NORMAL_LOADER_SRCS
+        generated/vk_loader_core_trampolines.c
+        )
+endif()
 
 if(WIN32)
     list(APPEND NORMAL_LOADER_SRCS loader_windows.c dirent_on_windows.c)
@@ -543,6 +552,12 @@ target_link_libraries(vulkan PRIVATE loader_specific_options)
 
 target_link_libraries(vulkan PRIVATE Vulkan::Headers)
 add_library(Vulkan::Loader ALIAS vulkan)
+
+if (USE_CLANG_TIDY)
+    set_target_properties(vulkan PROPERTIES C_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+    # cJSON is vendored third-party code; don't hold it to this project's clang-tidy checks.
+    set_source_files_properties(cJSON.c PROPERTIES SKIP_LINTING ON)
+endif()
 
 if (UNKNOWN_FUNCTIONS_SUPPORTED)
     target_compile_definitions(vulkan PRIVATE UNKNOWN_FUNCTIONS_SUPPORTED)

@@ -51,6 +51,6 @@ typedef struct VkLayerDbgFunctionNode_ {
 #endif  // VULKANSC
         VkDebugUtilsMessengerContent messenger;
     };
-    void *pUserData;
-    struct VkLayerDbgFunctionNode_ *pNext;
+    void* pUserData;
+    struct VkLayerDbgFunctionNode_* pNext;
 } VkLayerDbgFunctionNode;

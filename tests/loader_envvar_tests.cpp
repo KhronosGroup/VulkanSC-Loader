@@ -25,7 +25,7 @@
  * USE OR OTHER DEALINGS IN THE MATERIALS.
  *
  * Author: Charles Giessen <charles@lunarg.com>
- * Author: Mark Young <markylunarg.com>
+ * Author: Mark Young <marky@lunarg.com>
  */
 
 #include "manifest_builders.h"
@@ -128,9 +128,9 @@ TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVar) {
     ASSERT_EQ(phys_dev_count, 5U);
 }
 
-// Test VK_DRIVER_FILES environment variable with elelvated privileges
+// Test VK_DRIVER_FILES environment variable with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarRunningWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_EXPORT_NONE, ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::env_var));
     env.get_test_icd(0).add_physical_device("pd0");
 
@@ -179,9 +179,34 @@ TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarInFolder) {
     ASSERT_EQ(inst2->vkEnumeratePhysicalDevices(inst2.inst, &phys_dev_count, phys_devs_array.data()), VK_SUCCESS);
     ASSERT_EQ(phys_dev_count, 5U);
 }
+// REPRO for issue #1874: one ICD added by folder, two more added by file name in that same
+// folder. The loader scans the folder (finding all three) and then also processes the two
+// explicit file paths, so those two ICDs are loaded twice and their devices reported twice.
+TEST(EnvVarICDOverrideSetup, DirAndFileOverlapDoesNotDuplicate) {
+    FrameworkEnvironment env{};
+    // added by directory
+    env.add_icd(TEST_ICD_PATH_EXPORT_NONE, ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::env_var).set_is_dir(true))
+        .add_physical_device("pd0");
+    // added by file name, into the very same folder
+    for (uint32_t add = 0; add < 2; ++add) {
+        env.add_icd(TEST_ICD_PATH_EXPORT_NONE,
+                    ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::env_var).set_is_dir(false))
+            .add_physical_device("pd" + std::to_string(add) + "0")
+            .add_physical_device("pd" + std::to_string(add) + "1");
+    }
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.set_api_version(VK_API_VERSION_1_1);
+    inst.CheckCreate();
+
+    uint32_t phys_dev_count = 0;
+    ASSERT_EQ(inst->vkEnumeratePhysicalDevices(inst.inst, &phys_dev_count, nullptr), VK_SUCCESS);
+    EXPECT_EQ(phys_dev_count, 5U);
+}
+
 // Test VK_DRIVER_FILES environment variable containing a path to a folder  with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarInFolderWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_EXPORT_NONE, ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::env_var).set_is_dir(true));
     env.get_test_icd(0).add_physical_device("pd0");
 
@@ -196,6 +221,32 @@ TEST(EnvVarICDOverrideSetup, TestOnlyDriverEnvVarInFolderWithElevatedPrivileges)
     inst.CheckCreate(VK_ERROR_INCOMPATIBLE_DRIVER);
 
     EXPECT_TRUE(env.debug_log.find("vkCreateInstance: Found no drivers!"));
+}
+
+// Make sure that a loader_log() call combining a severity bit with VULKAN_LOADER_LAYER_BIT (e.g. the
+// "forced enabled due to env var" message emitted by VK_LOADER_LAYERS_ENABLE) maps to that severity
+// (WARNING) in the debug utils messenger callback, rather than being downgraded to the LAYER_BIT-only
+// fallback severity (INFO). Filtering the logger to WARNING only means the message will only show up
+// if the loader picked the correct (higher priority) branch.
+TEST(EnvVarICDOverrideSetup, LayersEnableLogsAtWarningSeverity) {
+    FrameworkEnvironment env{};
+    env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device("physical_device_0");
+
+    const char* explicit_layer_name = "VK_LAYER_LUNARG_test_layer";
+    env.add_explicit_layer(ManifestOptions{}.set_json_name("test_layer.json"),
+                           ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                         .set_name(explicit_layer_name)
+                                                         .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                         .set_api_version(VK_MAKE_API_VERSION(0, 1, 0, 0))));
+
+    EnvVarWrapper layers_enable_env_var{"VK_LOADER_LAYERS_ENABLE", explicit_layer_name};
+
+    DebugUtilsLogger log{VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT};
+    InstWrapper inst{env.vulkan_functions};
+    FillDebugUtilsCreateDetails(inst.create_info, log);
+    inst.CheckCreate();
+
+    EXPECT_TRUE(log.find_prefix_then_postfix(explicit_layer_name, "forced enabled due to env var"));
 }
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__GNU__) || defined(__QNX__)
@@ -281,9 +332,9 @@ TEST(EnvVarICDOverrideSetup, TestOnlyAddDriverEnvVar) {
     ASSERT_EQ(phys_dev_count, 1U);
 }
 
-// Test VK_ADD_DRIVER_FILES environment variable with elelvated privileges
+// Test VK_ADD_DRIVER_FILES environment variable with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyAddDriverEnvVarRunningWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_EXPORT_NONE, ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::add_env_var));
     env.get_test_icd(0).add_and_get_physical_device("pd0");
 
@@ -348,7 +399,7 @@ TEST(EnvVarICDOverrideSetup, TestOnlyLayerEnvVar) {
 }
 // Test VK_LAYER_PATH environment variable with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyLayerEnvVarRunningWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device("physical_device_0");
     env.file_system_manager.add_path_redirect("/tmp/carol", ManifestLocation::explicit_layer_env_var);
 
@@ -409,7 +460,7 @@ TEST(EnvVarICDOverrideSetup, TestOnlyAddLayerEnvVar) {
 
 // Test VK_ADD_LAYER_PATH environment variable with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyAddLayerEnvVarRunningWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device("physical_device_0");
     env.file_system_manager.add_path_redirect("/tmp/carol", ManifestLocation::explicit_layer_add_env_var);
 
@@ -472,7 +523,7 @@ TEST(EnvVarICDOverrideSetup, TestOnlyImplicitLayerEnvVar) {
 
 // Test VK_IMPLICIT_LAYER_PATH environment variable run with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyImplicitLayerEnvVarRunningWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device("physical_device_0");
     env.file_system_manager.add_path_redirect("/tmp/carol", ManifestLocation::implicit_layer_env_var);
 
@@ -539,7 +590,7 @@ TEST(EnvVarICDOverrideSetup, TestOnlyAddImplicitLayerEnvVar) {
 
 // Test VK_ADD_IMPLICIT_LAYER_PATH environment variable running with elevated privileges
 TEST(EnvVarICDOverrideSetup, TestOnlyAddImplicitLayerEnvVarWithElevatedPrivileges) {
-    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privleges(true)};
+    FrameworkEnvironment env{FrameworkSettings{}.set_run_as_if_with_elevated_privileges(true)};
     env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA).add_physical_device("physical_device_0");
     env.file_system_manager.add_path_redirect("/tmp/carol", ManifestLocation::implicit_layer_add_env_var);
 
@@ -723,6 +774,51 @@ TEST(EnvVarICDOverrideSetup, FilterSelectDriver) {
     ASSERT_TRUE(env.debug_log.find_prefix_then_postfix("Found ICD manifest file", "CDE_ICD.json"));
     ASSERT_TRUE(env.debug_log.find_prefix_then_postfix("CDE_ICD.json", "ignored because not selected by env var"));
     ASSERT_FALSE(env.debug_log.find_prefix_then_postfix("CDE_ICD.json", "ignored because it was disabled by env var"));
+}
+
+// '**' is one of the three documented whole-wildcard forms, alongside '*' and '~all~', and a two character glob such as
+// "A*" is an ordinary prefix match. Both were classified as something else entirely and matched no manifest name at all.
+TEST(EnvVarICDOverrideSetup, FilterDriverDoubleStarAndShortPrefix) {
+    FrameworkEnvironment env{};
+    EnvVarWrapper filter_select_env_var{"VK_LOADER_DRIVERS_SELECT"};
+    EnvVarWrapper filter_disable_env_var{"VK_LOADER_DRIVERS_DISABLE"};
+
+    env.add_icd(TEST_ICD_PATH_VERSION_6, ManifestOptions{}.set_json_name("ABC_ICD.json"));
+    env.add_icd(TEST_ICD_PATH_VERSION_6, ManifestOptions{}.set_json_name("BCD_ICD.json"),
+                ManifestICD{}.set_api_version(VK_API_VERSION_1_2));
+
+    // '**' selects every driver, the same as '*' and '~all~' do.
+    filter_select_env_var.set_new_value("**");
+    {
+        InstWrapper inst{env.vulkan_functions};
+        FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
+        inst.CheckCreate();
+        ASSERT_FALSE(env.debug_log.find_prefix_then_postfix("ABC_ICD.json", "ignored because not selected by env var"));
+        ASSERT_FALSE(env.debug_log.find_prefix_then_postfix("BCD_ICD.json", "ignored because not selected by env var"));
+    }
+
+    // A two character prefix glob matches on its single leading character.
+    env.debug_log.clear();
+    filter_select_env_var.set_new_value("A*");
+    {
+        InstWrapper inst{env.vulkan_functions};
+        FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
+        inst.CheckCreate();
+        ASSERT_FALSE(env.debug_log.find_prefix_then_postfix("ABC_ICD.json", "ignored because not selected by env var"));
+        ASSERT_TRUE(env.debug_log.find_prefix_then_postfix("BCD_ICD.json", "ignored because not selected by env var"));
+    }
+
+    // '**' on the disable filter drops every driver, leaving no usable ICD.
+    env.debug_log.clear();
+    filter_select_env_var.remove_value();
+    filter_disable_env_var.set_new_value("**");
+    {
+        InstWrapper inst{env.vulkan_functions};
+        FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
+        inst.CheckCreate(VK_ERROR_INCOMPATIBLE_DRIVER);
+        ASSERT_TRUE(env.debug_log.find_prefix_then_postfix("ABC_ICD.json", "ignored because it was disabled by env var"));
+        ASSERT_TRUE(env.debug_log.find_prefix_then_postfix("BCD_ICD.json", "ignored because it was disabled by env var"));
+    }
 }
 
 // Exercise the driver select/disable filters against a manifest name that is much longer than VK_MAX_EXTENSION_NAME_SIZE

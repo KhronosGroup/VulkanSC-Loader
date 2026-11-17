@@ -94,6 +94,13 @@ typedef struct loader_settings {
     char* settings_file_path;
 } loader_settings;
 
+#if COMMON_UNIX_PLATFORMS
+// Check each PATH_SEPARATOR separated segment of base for the file at segment + suffix, returning the first path that exists in
+// settings_file_path
+TEST_FUNCTION_EXPORT VkResult check_if_settings_path_exists(const struct loader_instance* inst, const char* base,
+                                                            const char* suffix, char** settings_file_path);
+#endif
+
 // Call this function to get the current settings that the loader should use.
 // It will open up the current loader settings file and return a loader_settings in out_loader_settings if it.
 // It should be called on every call to the global functions excluding vkGetInstanceProcAddr
@@ -129,11 +136,8 @@ VkResult combine_settings_layers_with_regular_layers(const struct loader_instanc
 
 // Fill out activated_layer_list with the layers that should be activated, based on environment variables, VkInstanceCreateInfo, and
 // the settings
-VkResult enable_correct_layers_from_settings(const struct loader_instance* inst, const struct loader_envvar_all_filters* filters,
-                                             uint32_t app_enabled_name_count, const char* const* app_enabled_names,
-                                             const struct loader_layer_list* instance_layers,
-                                             struct loader_pointer_layer_list* target_layer_list,
-                                             struct loader_pointer_layer_list* activated_layer_list);
+VkResult enable_correct_layers_from_settings(struct loader_instance* inst, const struct loader_envvar_all_filters* filters,
+                                             uint32_t app_enabled_name_count, const char* const* app_enabled_names);
 
 // Add any drivers that the loader settings file contains to the out_files list. If the additional_drivers_use_exclusively field is
 // true, clear the out_files list before adding any additional drivers

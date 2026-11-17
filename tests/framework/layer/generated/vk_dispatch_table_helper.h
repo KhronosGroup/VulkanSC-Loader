@@ -607,6 +607,13 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CmdDispatchTileQCOM = (PFN_vkCmdDispatchTileQCOM)gpa(device, "vkCmdDispatchTileQCOM");
     table->CmdBeginPerTileExecutionQCOM = (PFN_vkCmdBeginPerTileExecutionQCOM)gpa(device, "vkCmdBeginPerTileExecutionQCOM");
     table->CmdEndPerTileExecutionQCOM = (PFN_vkCmdEndPerTileExecutionQCOM)gpa(device, "vkCmdEndPerTileExecutionQCOM");
+    table->SetLatencySleepModeLegacyNV = (PFN_vkSetLatencySleepModeLegacyNV)gpa(device, "vkSetLatencySleepModeLegacyNV");
+    table->LatencySleepLegacyNV = (PFN_vkLatencySleepLegacyNV)gpa(device, "vkLatencySleepLegacyNV");
+    table->SetLatencyMarkerLegacyNV = (PFN_vkSetLatencyMarkerLegacyNV)gpa(device, "vkSetLatencyMarkerLegacyNV");
+    table->GetLatencyTimingsLegacyNV = (PFN_vkGetLatencyTimingsLegacyNV)gpa(device, "vkGetLatencyTimingsLegacyNV");
+    table->QueueNotifyOutOfBandLegacyNV = (PFN_vkQueueNotifyOutOfBandLegacyNV)gpa(device, "vkQueueNotifyOutOfBandLegacyNV");
+    table->GetSleepStatusLegacyNV = (PFN_vkGetSleepStatusLegacyNV)gpa(device, "vkGetSleepStatusLegacyNV");
+    table->ShutdownLatencyDeviceLegacyNV = (PFN_vkShutdownLatencyDeviceLegacyNV)gpa(device, "vkShutdownLatencyDeviceLegacyNV");
 #if defined(VK_USE_PLATFORM_METAL_EXT)
     table->ExportMetalObjectsEXT = (PFN_vkExportMetalObjectsEXT)gpa(device, "vkExportMetalObjectsEXT");
 #endif  // VK_USE_PLATFORM_METAL_EXT
@@ -806,6 +813,9 @@ static inline void layer_init_device_dispatch_table(VkDevice device, VkLayerDisp
     table->CmdEndRendering2EXT = (PFN_vkCmdEndRendering2EXT)gpa(device, "vkCmdEndRendering2EXT");
     table->CmdBeginCustomResolveEXT = (PFN_vkCmdBeginCustomResolveEXT)gpa(device, "vkCmdBeginCustomResolveEXT");
     table->CmdSetComputeOccupancyPriorityNV = (PFN_vkCmdSetComputeOccupancyPriorityNV)gpa(device, "vkCmdSetComputeOccupancyPriorityNV");
+    table->GetDeviceInternalHandleNV = (PFN_vkGetDeviceInternalHandleNV)gpa(device, "vkGetDeviceInternalHandleNV");
+    table->GetQueueInternalHandleNV = (PFN_vkGetQueueInternalHandleNV)gpa(device, "vkGetQueueInternalHandleNV");
+    table->GetCommandBufferInternalHandleNV = (PFN_vkGetCommandBufferInternalHandleNV)gpa(device, "vkGetCommandBufferInternalHandleNV");
     table->CmdSetPrimitiveRestartIndexEXT = (PFN_vkCmdSetPrimitiveRestartIndexEXT)gpa(device, "vkCmdSetPrimitiveRestartIndexEXT");
     table->CreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR)gpa(device, "vkCreateAccelerationStructureKHR");
     table->DestroyAccelerationStructureKHR = (PFN_vkDestroyAccelerationStructureKHR)gpa(device, "vkDestroyAccelerationStructureKHR");
@@ -1010,11 +1020,13 @@ static inline void layer_init_instance_dispatch_table(VkInstance instance, VkLay
     table->EnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM = (PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM)gpa(instance, "vkEnumeratePhysicalDeviceQueueFamilyPerformanceCountersByRegionARM");
     table->EnumeratePhysicalDeviceShaderInstrumentationMetricsARM = (PFN_vkEnumeratePhysicalDeviceShaderInstrumentationMetricsARM)gpa(instance, "vkEnumeratePhysicalDeviceShaderInstrumentationMetricsARM");
     table->GetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM = (PFN_vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM)gpa(instance, "vkGetPhysicalDeviceQueueFamilyDataGraphOpticalFlowImageFormatsARM");
+    table->GetPhysicalDeviceCooperativeMatrixProperties2EXT = (PFN_vkGetPhysicalDeviceCooperativeMatrixProperties2EXT)gpa(instance, "vkGetPhysicalDeviceCooperativeMatrixProperties2EXT");
 #if defined(VK_USE_PLATFORM_UBM_SEC)
     table->CreateUbmSurfaceSEC = (PFN_vkCreateUbmSurfaceSEC)gpa(instance, "vkCreateUbmSurfaceSEC");
 #endif  // VK_USE_PLATFORM_UBM_SEC
 #if defined(VK_USE_PLATFORM_UBM_SEC)
     table->GetPhysicalDeviceUbmPresentationSupportSEC = (PFN_vkGetPhysicalDeviceUbmPresentationSupportSEC)gpa(instance, "vkGetPhysicalDeviceUbmPresentationSupportSEC");
 #endif  // VK_USE_PLATFORM_UBM_SEC
+    table->GetPhysicalDeviceInternalHandleNV = (PFN_vkGetPhysicalDeviceInternalHandleNV)gpa(instance, "vkGetPhysicalDeviceInternalHandleNV");
     // clang-format on
 }

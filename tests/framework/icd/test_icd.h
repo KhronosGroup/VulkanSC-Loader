@@ -116,7 +116,13 @@ struct PhysicalDevice {
 
     BUILDER_VECTOR(Extension, extensions, extension)
 
+    // When non-zero, vkEnumerateDeviceExtensionProperties reports this many device extensions on the fill
+    // call (pProperties != nullptr) and returns VK_SUCCESS, ignoring the caller's buffer size. Models a
+    // driver that writes back a count larger than the storage it was handed.
+    BUILDER_VALUE_WITH_DEFAULT(uint32_t, over_reported_device_extension_count, 0)
+
     BUILDER_VALUE(VkSurfaceCapabilitiesKHR, surface_capabilities)
+    BUILDER_VALUE_WITH_DEFAULT(VkResult, surface_capabilities_result, VK_SUCCESS)
     BUILDER_VECTOR(VkSurfaceFormatKHR, surface_formats, surface_format)
     BUILDER_VECTOR(VkPresentModeKHR, surface_present_modes, surface_present_mode)
     BUILDER_VALUE(VkSurfacePresentScalingCapabilitiesEXT, surface_present_scaling_capabilities)
@@ -186,6 +192,13 @@ struct CreatedDeviceDetails {
     std::vector<DispatchableHandle<VkCommandBuffer>> allocated_command_buffers;
 
     std::vector<uint64_t> swapchain_handles;
+
+    // Speedup function loading by storing whether some extensions were enabled during device creation
+    bool ext_enabled_VK_EXT_debug_marker{};
+    bool ext_enabled_VK_EXT_debug_utils{};
+    bool ext_enabled_VK_KHR_device_group{};
+    bool ext_enabled_VK_KHR_display_swapchain{};
+    bool ext_enabled_VK_KHR_swapchain{};
 };
 
 struct CreatedPhysicalDeviceDetails {
@@ -206,6 +219,19 @@ struct CreatedInstanceDetails {
 
     // Store the handles here in order for EnumeratePhysicalDevices
     std::vector<VkPhysicalDevice> physical_devices;
+
+    // Speedup function loading by storing whether some extensions were enabled during device creation
+    bool ext_enabled_VK_KHR_surface{};
+    bool ext_enabled_VK_KHR_get_surface_capabilities2{};
+    bool ext_enabled_VK_KHR_display{};
+    bool ext_enabled_VK_EXT_acquire_drm_display{};
+    bool ext_enabled_VK_EXT_debug_utils{};
+    bool ext_enabled_VK_EXT_debug_report{};
+    bool ext_enabled_VK_KHR_get_physical_device_properties2{};
+    bool ext_enabled_VK_KHR_external_memory_capabilities{};
+    bool ext_enabled_VK_KHR_external_semaphore_capabilities{};
+    bool ext_enabled_VK_KHR_external_fence_capabilities{};
+    bool ext_enabled_VK_KHR_device_group_creation{};
 };
 struct TestICD {
     std::recursive_mutex mutex;
@@ -300,7 +326,7 @@ struct TestICD {
     BUILDER_VALUE(bool, supports_internal_function)
 
 #ifndef VULKANSC  // VK_EXT_tooling_info is not supported in Vulkan SC
-    // Must explicitely state support for the tooling info extension, that way we can control if vkGetInstanceProcAddr returns a
+    // Must explicitly state support for the tooling info extension, that way we can control if vkGetInstanceProcAddr returns a
     // function pointer for vkGetPhysicalDeviceToolPropertiesEXT or vkGetPhysicalDeviceToolProperties (core version)
     BUILDER_VALUE(bool, supports_tooling_info_ext);
     BUILDER_VALUE(bool, supports_tooling_info_core);
@@ -314,6 +340,10 @@ struct TestICD {
 
     BUILDER_VALUE_WITH_DEFAULT(VkResult, enum_physical_devices_return_code, VK_SUCCESS);
     BUILDER_VALUE_WITH_DEFAULT(VkResult, enum_adapter_physical_devices_return_code, VK_SUCCESS);
+    // When not VK_SUCCESS, vkEnumerateDeviceExtensionProperties returns this code without writing pPropertyCount or pProperties
+    BUILDER_VALUE_WITH_DEFAULT(VkResult, enum_device_extension_properties_return_code, VK_SUCCESS);
+    // When not VK_SUCCESS, vkEnumerateInstanceExtensionProperties returns this code without writing pPropertyCount or pProperties
+    BUILDER_VALUE_WITH_DEFAULT(VkResult, enum_instance_extension_properties_return_code, VK_SUCCESS);
 
     InstanceCreateInfo GetVkInstanceCreateInfo() {
         InstanceCreateInfo info;

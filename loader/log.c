@@ -40,7 +40,8 @@
 uint32_t g_loader_debug = 0;
 
 void loader_init_global_debug_level(void) {
-    char *env, *orig;
+    char* env;
+    char* orig;
 
     if (g_loader_debug > 0) return;
 
@@ -49,7 +50,7 @@ void loader_init_global_debug_level(void) {
     // Parse comma-separated debug options
     orig = env = loader_getenv("VK_LOADER_DEBUG", NULL);
     while (env) {
-        char *p = strchr(env, ',');
+        char* p = strchr(env, ',');
         size_t len;
 
         if (p) {
@@ -88,7 +89,8 @@ void loader_init_global_debug_level(void) {
 
 void loader_set_global_debug_level(uint32_t new_loader_debug) { g_loader_debug = new_loader_debug; }
 
-void generate_debug_flag_str(VkFlags msg_type, size_t cmd_line_size, char *cmd_line_msg) {
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - msg_type/cmd_line_size are convertible types, always passed in this order
+void generate_debug_flag_str(VkFlags msg_type, size_t cmd_line_size, char* cmd_line_msg) {
     cmd_line_msg[0] = '\0';
 
     if ((msg_type & VULKAN_LOADER_ERROR_BIT) != 0) {
@@ -134,25 +136,31 @@ void generate_debug_flag_str(VkFlags msg_type, size_t cmd_line_size, char *cmd_l
 #undef STRNCAT_TO_BUFFER
 }
 
+#define MESSAGE_BUFFER_LEN 512
+#define CMD_LINE_MESSAGE_BUFFER_LEN 64
+
 void DECORATE_PRINTF(4, 5)
-    loader_log(const struct loader_instance *inst, VkFlags msg_type, int32_t msg_code, const char *format, ...) {
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - msg_type/msg_code (unused) are convertible types; public API order
+    loader_log(const struct loader_instance* inst, VkFlags msg_type, int32_t msg_code, const char* format, ...) {
     (void)msg_code;
-    char msg[512] = {0};
+    char msg[MESSAGE_BUFFER_LEN] = {0};
 
     va_list ap;
     va_start(ap, format);
-    int ret = vsnprintf(msg, sizeof(msg), format, ap);
-    if ((ret >= (int)sizeof(msg)) || ret < 0) {
-        msg[sizeof(msg) - 1] = '\0';
+    int ret = vsnprintf(msg, MESSAGE_BUFFER_LEN, format, ap);
+    if ((ret >= (int)MESSAGE_BUFFER_LEN) || ret < 0) {
+        msg[MESSAGE_BUFFER_LEN - 1] = '\0';
     }
     va_end(ap);
 
     if (inst) {
+        // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange) - external Vulkan enum, has no zero value we can add
         VkDebugUtilsMessageSeverityFlagBitsEXT severity = 0;
         VkDebugUtilsMessageTypeFlagsEXT type = 0;
         VkDebugUtilsMessengerCallbackDataEXT callback_data = {0};
         VkDebugUtilsObjectNameInfoEXT object_name = {0};
 
+        // NOLINTNEXTLINE(bugprone-branch-clone) - duplicated so combined bit calls (e.g. WARN_BIT|LAYER_BIT) match first branch
         if ((msg_type & VULKAN_LOADER_INFO_BIT) != 0) {
             severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
         } else if ((msg_type & VULKAN_LOADER_WARN_BIT) != 0) {
@@ -203,7 +211,7 @@ void DECORATE_PRINTF(4, 5)
 
 #if defined(DEBUG)
     int debug_flag_mask =
-        msg_type & (VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_WARN_BIT | VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_DEBUG_BIT);
+        (int)(msg_type & (VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_WARN_BIT | VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_DEBUG_BIT));
     assert((debug_flag_mask == 0 || debug_flag_mask == VULKAN_LOADER_ERROR_BIT || debug_flag_mask == VULKAN_LOADER_WARN_BIT ||
             debug_flag_mask == VULKAN_LOADER_INFO_BIT || debug_flag_mask == VULKAN_LOADER_DEBUG_BIT) &&
            "This log has more than one exclusive debug flags (error, warn, info, debug) set");
@@ -211,7 +219,7 @@ void DECORATE_PRINTF(4, 5)
 
     // Only need enough space to create the filter description header for log messages
     // Also use the same header for all output
-    char cmd_line_msg[64] = {0};
+    char cmd_line_msg[CMD_LINE_MESSAGE_BUFFER_LEN] = {0};
     size_t cmd_line_size = sizeof(cmd_line_msg);
 
     loader_strncat(cmd_line_msg, cmd_line_size, "[Vulkan Loader] ", sizeof("[Vulkan Loader] "));
@@ -260,23 +268,62 @@ void DECORATE_PRINTF(4, 5)
     // Assert that we didn't write more than what is available in cmd_line_msg
     assert(cmd_line_size > num_used);
 
+    // NOLINTBEGIN(cert-err33-c) - this is the logger itself; no sane recovery from a failed stderr write
     fputs(cmd_line_msg, stderr);
     fputs(msg, stderr);
     fputc('\n', stderr);
-#if defined(WIN32)
-    OutputDebugString(cmd_line_msg);
-    OutputDebugString(msg);
-    OutputDebugString("\n");
+    // NOLINTEND(cert-err33-c)
+#if defined(_WIN32)
+
+    wchar_t wide_cmd_line_msg[CMD_LINE_MESSAGE_BUFFER_LEN] = {0};
+    wchar_t wide_msg[MESSAGE_BUFFER_LEN] = {0};
+
+    MultiByteToWideChar(CP_UTF8, 0, cmd_line_msg, -1, wide_cmd_line_msg, CMD_LINE_MESSAGE_BUFFER_LEN);
+    MultiByteToWideChar(CP_UTF8, 0, msg, -1, wide_msg, MESSAGE_BUFFER_LEN);
+
+    // Make sure these are always null terminated even if we cut off the last character
+    wide_cmd_line_msg[CMD_LINE_MESSAGE_BUFFER_LEN - 1] = L'\0';
+    wide_msg[MESSAGE_BUFFER_LEN - 1] = L'\0';
+
+    OutputDebugStringW(wide_cmd_line_msg);
+    OutputDebugStringW(wide_msg);
+    OutputDebugStringW(L"\n");
 #endif
 }
+#if defined(_WIN32)
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - msg_type/msg_code (unused) are convertible types; public API order
+void loader_log_wide(const struct loader_instance* inst, VkFlags msg_type, int32_t msg_code, const wchar_t* format, ...) {
+    (void)msg_code;
+    wchar_t msg[MESSAGE_BUFFER_LEN] = {0};
 
-void loader_log_asm_function_not_supported(const struct loader_instance *inst, VkFlags msg_type, int32_t msg_code,
-                                           const char *func_name) {
+    va_list ap;
+    va_start(ap, format);
+    int ret = _vsnwprintf_s(msg, MESSAGE_BUFFER_LEN, MESSAGE_BUFFER_LEN - 1, format, ap);
+    if ((ret >= (int)MESSAGE_BUFFER_LEN) || ret < 0) {
+        msg[MESSAGE_BUFFER_LEN - 1] = '\0';
+    }
+    va_end(ap);
+
+    int msg_narrow_len = MESSAGE_BUFFER_LEN * 3 + 1;
+    char msg_narrow[MESSAGE_BUFFER_LEN * 3 + 1] = {0};
+    if (WideCharToMultiByte(CP_UTF8, 0, msg, -1, msg_narrow, msg_narrow_len, NULL, NULL) <= 0) {
+        loader_log(inst, VULKAN_LOADER_ERROR_BIT, msg_code, "loader_log_wide: Failed to convert message from wchar_t to char");
+    } else {
+        loader_log(inst, msg_type, msg_code, "%s", msg_narrow);
+    }
+}
+#endif
+#undef MESSAGE_BUFFER_LEN
+#undef CMD_LINE_MESSAGE_BUFFER_LEN
+
+void loader_log_asm_function_not_supported(const struct loader_instance* inst, VkFlags msg_type, int32_t msg_code,
+                                           const char* func_name) {
     loader_log(inst, msg_type, msg_code, "Function %s not supported for this physical device", func_name);
 }
 
 void loader_log_generate_uuid_string(const uint8_t uuid[16], char output[UUID_STR_LEN]) {
     assert(uuid && output);
+    // NOLINTNEXTLINE(cert-err33-c) - fixed format string and fixed-size output buffer sized to fit exactly; cannot fail or truncate
     snprintf(output, UUID_STR_LEN, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", uuid[0], uuid[1],
              uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7], uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13],
              uuid[14], uuid[15]);

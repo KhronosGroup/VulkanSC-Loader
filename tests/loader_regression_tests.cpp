@@ -27,6 +27,7 @@
  * Author: Charles Giessen <charles@lunarg.com>
  */
 
+#include "util/json_writer.h"
 #include "manifest_builders.h"
 #include "test_environment.h"
 
@@ -374,6 +375,27 @@ TEST(EnumerateInstanceExtensionProperties, FilterUnkownInstanceExtensions) {
     }
 }
 
+// A driver may fail its instance extension query. The loader gives up on the call, but it must still release the drivers it
+// scanned the same way the success path does, otherwise every driver's library handle and path leak on each call.
+TEST(EnumerateInstanceExtensionProperties, DriverExtensionQueryFails) {
+    FrameworkEnvironment env{};
+    env.add_icd(TEST_ICD_PATH_VERSION_2);
+    env.add_icd(TEST_ICD_PATH_VERSION_2);
+    env.get_test_icd(1).set_enum_instance_extension_properties_return_code(VK_ERROR_INITIALIZATION_FAILED);
+
+    uint32_t extension_count = 0;
+    ASSERT_EQ(VK_ERROR_INITIALIZATION_FAILED,
+              env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr));
+
+    env.get_test_icd(1).set_enum_instance_extension_properties_return_code(VK_SUCCESS);
+    ASSERT_EQ(VK_SUCCESS, env.vulkan_functions.vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr));
+#ifdef VULKANSC
+    ASSERT_EQ(extension_count, 1U);  // debug utils only
+#else
+    ASSERT_EQ(extension_count, 4U);  // debug report & debug utils & portability enumeration & direct driver loading
+#endif
+}
+
 TEST(EnumerateDeviceLayerProperties, LayersMatch) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
@@ -513,7 +535,7 @@ void exercise_EnumerateDeviceExtensionProperties(InstWrapper& inst, VkPhysicalDe
         ASSERT_EQ(VK_SUCCESS, inst->vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, nullptr));
         ASSERT_EQ(extension_count, exts_to_expect.size());
 
-        // reset size to a not earthshatteringly large number of extensions
+        // reset size to a not earth shatteringly large number of extensions
         extension_count = static_cast<uint32_t>(exts_to_expect.size()) * 4;
         std::vector<VkExtensionProperties> enumerated_device_exts{extension_count};
 
@@ -569,8 +591,8 @@ TEST(EnumerateDeviceExtensionProperties, ImplicitLayerPresentWithExtensions) {
     std::vector<Extension> exts;
     std::vector<ManifestLayer::LayerDescription::Extension> layer_exts;
     for (uint32_t i = 0; i < 6; i++) {
-        exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
-        layer_exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
+        exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
+        layer_exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
     }
     env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
                                                              .set_name("implicit_layer_name")
@@ -599,8 +621,8 @@ TEST(EnumerateDeviceExtensionProperties, ImplicitLayerPresentWithLotsOfExtension
     std::vector<Extension> exts;
     std::vector<ManifestLayer::LayerDescription::Extension> layer_exts;
     for (uint32_t i = 0; i < 26; i++) {
-        exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
-        layer_exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
+        exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
+        layer_exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
     }
     env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
                                                              .set_name("implicit_layer_name")
@@ -631,8 +653,8 @@ TEST(EnumerateDeviceExtensionProperties, NoDriverExtensionsImplicitLayerPresentW
     std::vector<Extension> exts;
     std::vector<ManifestLayer::LayerDescription::Extension> layer_exts;
     for (uint32_t i = 0; i < 6; i++) {
-        exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
-        layer_exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
+        exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
+        layer_exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
     }
     env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
                                                              .set_name("implicit_layer_name")
@@ -649,6 +671,35 @@ TEST(EnumerateDeviceExtensionProperties, NoDriverExtensionsImplicitLayerPresentW
     exercise_EnumerateDeviceExtensionProperties(inst, physical_device, exts);
 }
 
+// A driver that returns VK_SUCCESS but reports more device extensions than it actually wrote must not
+// make the loader read past the caller's pProperties buffer while de-duplicating an implicit layer's
+// device extensions against the driver's list.
+TEST(EnumerateDeviceExtensionProperties, ImplicitLayerDriverOverreportsWrittenCount) {
+    FrameworkEnvironment env{};
+    auto& driver_phys_dev = env.add_icd(TEST_ICD_PATH_VERSION_2).add_and_get_physical_device({});
+    driver_phys_dev.over_reported_device_extension_count = 64;
+
+    std::vector<ManifestLayer::LayerDescription::Extension> layer_exts{{"LayerDeviceExt", 1}};
+    env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                             .set_name("implicit_layer_name")
+                                                             .set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)
+                                                             .set_disable_environment("DISABLE_ME")
+                                                             .add_device_extensions({layer_exts})));
+    env.get_test_layer().device_extensions = {Extension{"LayerDeviceExt", 1}};
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.CheckCreate();
+
+    VkPhysicalDevice physical_device = inst.GetPhysDev();
+
+    // Hand the loader a single-element buffer. The driver claims 64 extensions were written, so the
+    // implicit-layer deduplicate loop would read 64 entries out of this 1-element allocation without a clamp.
+    std::array<VkExtensionProperties, 1> storage{};
+    uint32_t extension_count = static_cast<uint32_t>(storage.size());
+    ASSERT_EQ(VK_INCOMPLETE,
+              inst->vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &extension_count, storage.data()));
+}
+
 TEST(EnumerateDeviceExtensionProperties, NoDriverExtensionsImplicitLayerPresentWithLotsOfExtensions) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({});
@@ -656,8 +707,8 @@ TEST(EnumerateDeviceExtensionProperties, NoDriverExtensionsImplicitLayerPresentW
     std::vector<Extension> exts;
     std::vector<ManifestLayer::LayerDescription::Extension> layer_exts;
     for (uint32_t i = 0; i < 6; i++) {
-        exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
-        layer_exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
+        exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
+        layer_exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
     }
     env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
                                                              .set_name("implicit_layer_name")
@@ -681,8 +732,8 @@ TEST(EnumerateDeviceExtensionProperties, ImplicitLayerPresentWithDuplicateExtens
     std::vector<Extension> exts;
     std::vector<ManifestLayer::LayerDescription::Extension> layer_exts;
     for (uint32_t i = 0; i < 26; i++) {
-        exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
-        layer_exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
+        exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
+        layer_exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
     }
     env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
                                                              .set_name("implicit_layer_name")
@@ -715,8 +766,8 @@ TEST(EnumerateDeviceExtensionProperties, ImplicitLayerPresentWithOnlyDuplicateEx
     std::vector<Extension> exts;
     std::vector<ManifestLayer::LayerDescription::Extension> layer_exts;
     for (uint32_t i = 0; i < 26; i++) {
-        exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
-        layer_exts.emplace_back(std::string("LayerExtNumba") + std::to_string(i), i + 10);
+        exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
+        layer_exts.emplace_back(std::string("LayerExtNumber") + std::to_string(i), i + 10);
     }
     env.add_implicit_layer({}, ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
                                                              .set_name("implicit_layer_name")
@@ -1492,6 +1543,53 @@ TEST(EnumeratePhysicalDevices, DeviceFilteringByDriverId) {
 #endif
 }
 
+// Layers are allowed to wrap VkPhysicalDevice handles, so the handles being filtered are not necessarily the loader's own.
+TEST(EnumeratePhysicalDevices, DeviceFilteringByDriverIdWithWrappingLayer) {
+    FrameworkEnvironment env{};
+    auto& driver = env.add_icd(TEST_ICD_PATH_VERSION_2, {}, ManifestICD{}.set_api_version(VK_API_VERSION_1_1))
+                       .set_min_icd_interface_version(5)
+                       .set_icd_api_version(VK_API_VERSION_1_1)
+                       .add_instance_extension({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME});
+
+    auto& physical_device = driver.add_and_get_physical_device("physical_device_0");
+    physical_device.extensions.push_back({VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, 0});
+    physical_device.driver_properties.driverID = VkDriverId(100);
+
+    const char* wrap_objects_name = "WrapObjectsLayer";
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(wrap_objects_name).set_lib_path(TEST_LAYER_WRAP_OBJECTS)));
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.set_api_version(VK_API_VERSION_1_1);
+    inst.create_info.add_layer(wrap_objects_name);
+    inst.CheckCreate();
+
+    // driver id matches the filter
+    {
+        env.env_var_vk_loader_driver_id_filter.set_new_value("100");
+
+        uint32_t returned_physical_count = 1;
+        VkPhysicalDevice physical_device_handle = VK_NULL_HANDLE;
+        ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDevices(inst, &returned_physical_count, &physical_device_handle));
+        ASSERT_EQ(1U, returned_physical_count);
+
+        env.env_var_vk_loader_driver_id_filter.remove_value();
+    }
+
+    // driver id does not match the filter
+    {
+        env.env_var_vk_loader_driver_id_filter.set_new_value("50");
+
+        uint32_t returned_physical_count = 1;
+        VkPhysicalDevice physical_device_handle = VK_NULL_HANDLE;
+        ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDevices(inst, &returned_physical_count, &physical_device_handle));
+        ASSERT_EQ(0U, returned_physical_count);
+
+        env.env_var_vk_loader_driver_id_filter.remove_value();
+    }
+}
+
 TEST(CreateDevice, ExtensionNotPresent) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
@@ -1650,14 +1748,36 @@ TEST(CreateDevice, ConsecutiveCreateWithoutDestruction) {
     }
 }
 
-// This test uses prebuilt binaries that must be rebuilt for
-// non x86 platforms. Attempting to rebuild them by uncommenting lines
-// in tests/framework/data/CMakeLists.txt can create further errors due to the
-// use of "-m32" and "-m64" which are not available on certain cross compilers.
-// As a result, separate 32 bit and 64 bit cross compilers are needed, which
-// may be difficult to setup with current cmake infrastructure, so this test
-// will be skipped for now when cross compiling.
-#if !defined(CROSS_COMPILING)
+#ifndef VULKANSC  // VK_KHR_device_group_creation is included in core Vulkan SC 1.0
+// The loader swaps its own copy of VkDeviceGroupDeviceCreateInfo into the pNext chain while creating the device. Make sure the
+// caller's chain is restored when device creation fails, otherwise it is left pointing at the loader's stack.
+TEST(CreateDevice, DeviceGroupPNextRestoredOnFailure) {
+    FrameworkEnvironment env{};
+    // A 1.0 driver without VK_KHR_device_group_creation, so the loader rejects a device group with more than one device
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.CheckCreate();
+
+    VkPhysicalDevice phys_dev = inst.GetPhysDev();
+    std::array<VkPhysicalDevice, 2> group_devices{phys_dev, phys_dev};
+
+    VkDeviceGroupDeviceCreateInfo group_info{};
+    group_info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO;
+    group_info.physicalDeviceCount = static_cast<uint32_t>(group_devices.size());
+    group_info.pPhysicalDevices = group_devices.data();
+    VkBaseInStructure spacer_structure{};
+    spacer_structure.sType = static_cast<VkStructureType>(100000);
+    spacer_structure.pNext = reinterpret_cast<const VkBaseInStructure*>(&group_info);
+
+    DeviceWrapper dev{inst};
+    dev.create_info.dev.pNext = &spacer_structure;
+    dev.CheckCreate(phys_dev, VK_ERROR_INITIALIZATION_FAILED);
+
+    ASSERT_EQ(reinterpret_cast<const VkBaseInStructure*>(&group_info), spacer_structure.pNext);
+}
+#endif  // VULKANSC
+
 TEST(TryLoadWrongBinaries, WrongICD) {
     FrameworkEnvironment env{};
     env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device("physical_device_0");
@@ -1683,7 +1803,6 @@ TEST(TryLoadWrongBinaries, WrongICD) {
     ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDevices(inst, &driver_count, nullptr));
     ASSERT_EQ(driver_count, 1U);
 }
-#endif
 
 TEST(TryLoadWrongBinaries, WrongExplicit) {
     FrameworkEnvironment env{};
@@ -2487,6 +2606,56 @@ TEST(EnumeratePhysicalDeviceGroups, CallThriceAddGroupInBetween) {
         DeviceWrapper dev{inst};
         dev.create_info.dev.pNext = &group_info;
         dev.CheckCreate(group.physicalDevices[0]);
+    }
+}
+
+#ifndef VULKANSC  // VK_KHR_device_group_creation is included in core Vulkan SC 1.0
+// A driver which fails the physical device count query must be skipped, not retried forever.
+TEST(EnumeratePhysicalDeviceGroups, DriverWhichFailsCountQueryIsSkipped) {
+    FrameworkEnvironment env{};
+    // A 1.0 driver does not expose vkEnumeratePhysicalDeviceGroups, so the loader counts its groups with
+    // vkEnumeratePhysicalDevices instead.
+    auto& driver = env.add_icd(TEST_ICD_PATH_VERSION_2).set_min_icd_interface_version(5);
+    driver.add_and_get_physical_device("physical_device_0");
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.set_api_version(VK_API_VERSION_1_1);
+    inst.CheckCreate();
+
+    driver.set_enum_physical_devices_return_code(VK_ERROR_INITIALIZATION_FAILED);
+
+    uint32_t returned_group_count = 0;
+    ASSERT_EQ(VK_ERROR_INITIALIZATION_FAILED, inst->vkEnumeratePhysicalDeviceGroups(inst, &returned_group_count, nullptr));
+    ASSERT_EQ(0U, returned_group_count);
+}
+#endif  // VULKANSC
+
+// A driver which reports the same VkPhysicalDevice in two groups produces two identical groups. Querying the groups more than
+// once must not make both of them reuse the same cached group, otherwise that allocation is freed twice.
+TEST(EnumeratePhysicalDeviceGroups, IdenticalGroupsCalledTwice) {
+    FrameworkEnvironment env{};
+    auto& driver = env.add_icd(TEST_ICD_PATH_VERSION_2, {}, ManifestICD{}.set_api_version(VK_API_VERSION_1_1))
+                       .set_min_icd_interface_version(5)
+                       .set_icd_api_version(VK_API_VERSION_1_1);
+    driver.add_and_get_physical_device("physical_device_0").properties.apiVersion = VK_API_VERSION_1_1;
+    driver.physical_device_groups.emplace_back(0);
+    driver.physical_device_groups.emplace_back(0);
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.set_api_version(VK_API_VERSION_1_1);
+    inst.CheckCreate();
+
+    for (uint32_t call = 0; call < 2; call++) {
+        uint32_t group_count = 0;
+        ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDeviceGroups(inst, &group_count, nullptr));
+        ASSERT_EQ(2U, group_count);
+        std::vector<VkPhysicalDeviceGroupProperties> group_props(
+            group_count, VkPhysicalDeviceGroupProperties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES});
+        ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDeviceGroups(inst, &group_count, group_props.data()));
+        ASSERT_EQ(2U, group_count);
+        for (auto const& group : group_props) {
+            ASSERT_EQ(1U, group.physicalDeviceCount);
+        }
     }
 }
 
@@ -3947,6 +4116,40 @@ TEST(SortedPhysicalDevices, DeviceGroupsSortedEnabled) {
     }
 }
 
+// A driver may fail the device extension count query without writing the count. Group sorting must not use the count in
+// that case.
+TEST(SortedPhysicalDevices, DeviceGroupsSortedExtensionQueryFails) {
+    FrameworkEnvironment env{};
+
+    env.add_icd(TEST_ICD_PATH_VERSION_2, {}, ManifestICD{}.set_api_version(VK_API_VERSION_1_1));
+    auto& cur_icd = env.get_test_icd(0);
+    cur_icd.set_icd_api_version(VK_API_VERSION_1_1);
+    auto& test_physical_device_0 = cur_icd.add_and_get_physical_device({"pd0"});
+    test_physical_device_0.set_pci_bus(7);
+    test_physical_device_0.extensions.push_back({VK_EXT_PCI_BUS_INFO_EXTENSION_NAME, 0});
+    FillInRandomDeviceProps(test_physical_device_0.properties, VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_API_VERSION_1_1, 888,
+                            0xAAA001);
+    auto& test_physical_device_1 = cur_icd.add_and_get_physical_device({"pd1"});
+    test_physical_device_1.set_pci_bus(3);
+    test_physical_device_1.extensions.push_back({VK_EXT_PCI_BUS_INFO_EXTENSION_NAME, 0});
+    FillInRandomDeviceProps(test_physical_device_1.properties, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU, VK_API_VERSION_1_1, 888,
+                            0xAAA002);
+    cur_icd.physical_device_groups.push_back({});
+    cur_icd.physical_device_groups.back().use_physical_devices({0, 1});
+    cur_icd.set_enum_device_extension_properties_return_code(VK_ERROR_OUT_OF_HOST_MEMORY);
+
+    InstWrapper inst(env.vulkan_functions);
+    inst.create_info.set_api_version(VK_API_VERSION_1_1);
+    inst.CheckCreate();
+
+    uint32_t group_count = 1;
+    VkPhysicalDeviceGroupProperties group{};
+    group.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
+    ASSERT_EQ(VK_SUCCESS, inst->vkEnumeratePhysicalDeviceGroups(inst, &group_count, &group));
+    ASSERT_EQ(group_count, 1U);
+    ASSERT_EQ(group.physicalDeviceCount, 2U);
+}
+
 TEST(SortedPhysicalDevices, DeviceGroupsSortedDisabled) {
     FrameworkEnvironment env{};
 
@@ -4412,9 +4615,11 @@ TEST(DuplicateRegistryEntries, Drivers) {
     inst.CheckCreate();
     auto phys_devs = inst.GetPhysDevs(1);
     ASSERT_EQ(phys_devs.size(), 1U);
+
+    std::string narrow_drivers_info_registry_loc = narrow(VK_DRIVERS_INFO_REGISTRY_LOC);
     ASSERT_TRUE(env.debug_log.find(std::string("Located json file \"") + env.get_icd_manifest_path().string() +
-                                   "\" from registry \"HKEY_LOCAL_MACHINE\\" VK_DRIVERS_INFO_REGISTRY_LOC));
-    ASSERT_TRUE(env.debug_log.find("Found no registry files in HKEY_LOCAL_MACHINE\\" VK_DRIVERS_INFO_REGISTRY_LOC));
+                                   "\" from registry \"HKEY_LOCAL_MACHINE\\" + narrow_drivers_info_registry_loc));
+    ASSERT_TRUE(env.debug_log.find("Found no registry files in HKEY_LOCAL_MACHINE\\" + narrow_drivers_info_registry_loc));
 }
 
 // Regression test for a heap buffer overflow in windows_add_json_entry(). The buffer that aggregates manifest paths
@@ -4475,7 +4680,7 @@ TEST(LibraryLoading, SystemLocations) {
 TEST(ManifestDiscovery, ValidSymlinkInUnsecureLocation) {
     FrameworkEnvironment env;
     env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA,
-                ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::override_folder))
+                ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::overflow_folder))
         .add_physical_device({});
 
     env.add_symlink(ManifestLocation::unsecured_driver, env.get_icd_manifest_path(0), "symlink_to_driver.json");
@@ -4489,7 +4694,7 @@ TEST(ManifestDiscovery, ValidSymlinkInUnsecureLocation) {
 TEST(ManifestDiscovery, ValidSymlink) {
     FrameworkEnvironment env{FrameworkSettings{}};
     env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA,
-                ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::override_folder))
+                ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::overflow_folder))
         .add_physical_device({});
 
     env.add_symlink(ManifestLocation::driver, env.get_icd_manifest_path(0), "symlink_to_driver.json");
@@ -4524,6 +4729,30 @@ TEST(ManifestDiscovery, InvalidSymlink) {
 }
 #endif
 
+#if TESTING_COMMON_UNIX_PLATFORMS
+// An invalid symlink in a manifest folder must not make the loader open a manifest with the same name from the current
+// working directory
+TEST(ManifestDiscovery, InvalidSymlinkNotOpenedFromWorkingDirectory) {
+    FrameworkEnvironment env;
+    // The overflow folder isn't searched, so this driver can only be found through the working directory
+    env.add_icd(
+        TEST_ICD_PATH_VERSION_2,
+        ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::overflow_folder).set_json_name("symlink_to_nothing.json"));
+
+    env.add_symlink(ManifestLocation::driver, env.get_folder(ManifestLocation::driver).location() / "nothing_here.json",
+                    "symlink_to_nothing.json");
+
+    auto original_working_directory = std::filesystem::current_path();
+    std::filesystem::current_path(env.get_folder(ManifestLocation::overflow).location());
+
+    InstWrapper inst{env.vulkan_functions};
+    FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
+    inst.CheckCreate(VK_ERROR_INCOMPATIBLE_DRIVER);
+
+    std::filesystem::current_path(original_working_directory);
+}
+#endif
+
 #if defined(__APPLE__)
 // Add two drivers, one to the bundle and one to the system locations
 TEST(ManifestDiscovery, AppleBundles) {
@@ -4548,6 +4777,37 @@ TEST(ManifestDiscovery, AppleBundles) {
     ASSERT_EQ(test_physical_device_1.properties.deviceID, props.deviceID);
     inst->vkGetPhysicalDeviceProperties(physical_devices[1], &props);
     ASSERT_EQ(test_physical_device_0.properties.deviceID, props.deviceID);
+}
+
+// Add two drivers, one to the bundle and one to the system locations
+TEST(ManifestDiscovery, AppleBundlesWithSearchOnlyInBundleEnvVar) {
+    FrameworkEnvironment env{};
+    env.env_var_search_only_in_bundle.set_new_value("1");
+    env.setup_macos_bundle();
+    env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA,
+                ManifestOptions{}.set_discovery_type(ManifestDiscoveryType::macos_bundle));
+    auto& test_physical_device_0 = env.get_test_icd(0).add_and_get_physical_device({});
+    test_physical_device_0.properties.deviceID = 1337;
+    env.add_icd(TEST_ICD_PATH_VERSION_2_EXPORT_ICD_GPDPA);
+    auto& test_physical_device_1 = env.get_test_icd(1).add_and_get_physical_device({});
+    test_physical_device_1.properties.deviceID = 9999;
+
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name("VK_LAYER_test").set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)));
+
+    InstWrapper inst{env.vulkan_functions};
+    ASSERT_NO_FATAL_FAILURE(inst.CheckCreate());
+    auto physical_devices = inst.GetPhysDevs();
+    ASSERT_EQ(1, physical_devices.size());
+
+    // should only get bundled driver and layer
+    VkPhysicalDeviceProperties props{};
+    inst->vkGetPhysicalDeviceProperties(physical_devices[0], &props);
+    ASSERT_EQ(test_physical_device_0.properties.deviceID, props.deviceID);
+
+    // No layers should be found
+    env.GetLayerProperties(0);
 }
 
 // Add two drivers, one to the bundle and one using the driver env-var
@@ -4575,6 +4835,111 @@ TEST(ManifestDiscovery, AppleBundlesEnvVarActive) {
     ASSERT_EQ(test_physical_device_1.properties.deviceID, props.deviceID);
 }
 #endif
+
+TEST(ManifestDiscovery, UnicodePaths) {
+    // Change the home folder to contain a unicode character so that the unsecured_generic folders will have unicode in them in the
+    // fake filesystem that the loader sees, and set use_unicode_in_unsecured_folders so that there is real unicode in the actual
+    // filesystem paths
+    FrameworkEnvironment env{FrameworkSettings{}.set_home_env_var("/home/🖖").set_use_unicode_in_unsecured_folders(true)};
+    env.add_icd(widen(TEST_ICD_PATH_VERSION_2_UNICODE),
+                ManifestOptions{}
+                    .set_discovery_type(ManifestDiscoveryType::unsecured_generic)
+                    .set_json_name(widen(std::string(TEST_JSON_NAME_VERSION_2_UNICODE) + ".json")))
+        .add_physical_device({});
+
+#if defined(WIN32)
+    // there is no unsecured_generic location on windows, so manually add it to the regular registry search location
+    env.platform_shim->add_manifest_to_registry(ManifestCategory::icd, env.get_icd_manifest_path(0));
+#endif
+
+    env.add_icd(widen(TEST_ICD_PATH_VERSION_2_UNICODE),
+                ManifestOptions{}
+                    .set_discovery_type(ManifestDiscoveryType::unsecured_generic)
+                    .set_json_name(widen(std::string(TEST_JSON_NAME_VERSION_2_UNICODE) + "_1.json")))
+        .add_physical_device({});
+#if defined(WIN32)
+    env.platform_shim->add_d3dkmt_adapter(
+        D3DKMT_Adapter{0, _LUID{10, 1000}}.add_driver_manifest_path(env.get_icd_manifest_path(1)));
+#endif
+
+    const char* implicit_layer_name = "VK_LAYER_implicit_layer_name";
+    env.add_implicit_layer(ManifestOptions{}
+                               .set_discovery_type(ManifestDiscoveryType::unsecured_generic)
+                               .set_json_name(widen(std::string("layer_") + TEST_JSON_NAME_VERSION_2_UNICODE + ".json")),
+                           ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                         .set_name(implicit_layer_name)
+                                                         .set_lib_path(widen(TEST_LAYER_PATH_VERSION_2_UNICODE))
+                                                         .set_disable_environment("DISABLE_ME")));
+
+    const char* explicit_layer_name = "VK_LAYER_explicit_layer_name";
+    env.add_explicit_layer(ManifestOptions{}
+                               .set_discovery_type(ManifestDiscoveryType::unsecured_generic)
+                               .set_json_name(widen(std::string(TEST_JSON_NAME_VERSION_2_UNICODE) + ".json")),
+                           ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                         .set_name(explicit_layer_name)
+                                                         .set_lib_path(widen(TEST_LAYER_PATH_VERSION_2_UNICODE))));
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.add_layer(explicit_layer_name);
+    FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
+    inst.CheckCreate();
+
+#if defined(WIN32)
+    std::string narrow_drivers_info_registry_loc = std::string("Located json file \"") +
+                                                   narrow(env.get_icd_manifest_path(0).wstring()) +
+                                                   "\" from registry \"HKEY_LOCAL_MACHINE\\" + narrow(VK_DRIVERS_INFO_REGISTRY_LOC);
+    ASSERT_TRUE(env.debug_log.find(narrow_drivers_info_registry_loc));
+#endif
+
+    auto pds = inst.GetPhysDevs(2);
+    ASSERT_EQ(pds.size(), 2U);
+
+    auto layers = inst.GetActiveLayers(pds.at(0), 2);
+    ASSERT_EQ(layers.size(), 2U);
+}
+
+TEST(ManifestDiscovery, UnicodePathsInEnvVars) {
+    FrameworkEnvironment env{};
+    env.add_icd(widen(TEST_ICD_PATH_VERSION_2_UNICODE),
+                ManifestOptions{}
+                    .set_discovery_type(ManifestDiscoveryType::env_var)
+                    .set_json_name(widen(std::string(TEST_JSON_NAME_VERSION_2_UNICODE) + ".json")))
+        .add_physical_device({});
+
+    const char* implicit_layer_name1 = "VK_LAYER_implicit_layer_name1";
+    env.add_implicit_layer(ManifestOptions{}
+                               .set_discovery_type(ManifestDiscoveryType::env_var)
+                               .set_json_name(widen(std::string("layer_1") + TEST_JSON_NAME_VERSION_2_UNICODE + ".json")),
+                           ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                         .set_name(implicit_layer_name1)
+                                                         .set_lib_path(widen(TEST_LAYER_PATH_VERSION_2_UNICODE))
+                                                         .set_disable_environment("DISABLE_ME")));
+
+    const char* implicit_layer_name2 = "VK_LAYER_implicit_layer_name2";
+    env.add_implicit_layer(ManifestOptions{}
+                               .set_discovery_type(ManifestDiscoveryType::env_var)
+                               .set_is_dir(true)
+                               .set_json_name(widen(std::string("layer2_") + TEST_JSON_NAME_VERSION_2_UNICODE + ".json")),
+                           ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                         .set_name(implicit_layer_name2)
+                                                         .set_lib_path(widen(TEST_LAYER_PATH_VERSION_2_UNICODE))
+                                                         .set_disable_environment("DISABLE_ME")));
+
+    const char* explicit_layer_name = "VK_LAYER_explicit_layer_name";
+    env.add_explicit_layer(ManifestOptions{}
+                               .set_discovery_type(ManifestDiscoveryType::env_var)
+                               .set_json_name(widen(std::string(TEST_JSON_NAME_VERSION_2_UNICODE) + ".json")),
+                           ManifestLayer{}.add_layer(ManifestLayer::LayerDescription{}
+                                                         .set_name(explicit_layer_name)
+                                                         .set_lib_path(widen(TEST_LAYER_PATH_VERSION_2_UNICODE))));
+
+    InstWrapper inst{env.vulkan_functions};
+    inst.create_info.add_layer(explicit_layer_name);
+    inst.CheckCreate();
+
+    auto layers = inst.GetActiveLayers(inst.GetPhysDev(), 3);
+    ASSERT_EQ(layers.size(), 3U);
+}
 
 TEST(LayerCreatesDevice, Basic) {
     FrameworkEnvironment env{};
@@ -4773,6 +5138,94 @@ TEST(InvalidManifest, Layer) {
     inst.CheckCreate();
 }
 
+// A layer manifest that is well-formed JSON but omits a required field ("api_version" or "implementation_version")
+// must be skipped. loader_read_layer_json logs "skipping this layer" for these, but the two checks returned without
+// setting a failure result, so the layer was still appended - never having parsed its library_path, leaving lib_name
+// NULL. Such a layer later reaches loader_platform_open_library(NULL) and a NULL "%s" log in loader_open_layer_file.
+TEST(InvalidManifest, LayerMissingRequiredField) {
+    FrameworkEnvironment env{};
+    env.add_icd(TEST_ICD_PATH_VERSION_2).add_physical_device({});
+
+    // A valid explicit layer, so the explicit-layer search path is known to be active.
+    const char* valid_layer_name = "VK_LAYER_valid_regular";
+    env.add_explicit_layer(
+        {}, ManifestLayer{}.add_layer(
+                ManifestLayer::LayerDescription{}.set_name(valid_layer_name).set_lib_path(TEST_LAYER_PATH_EXPORT_VERSION_2)));
+
+    std::vector<std::string> malformed_manifests;
+    malformed_manifests.push_back(  // omits "api_version"
+        "{\n"
+        "    \"file_format_version\": \"1.2.0\",\n"
+        "    \"layer\": {\n"
+        "        \"name\": \"VK_LAYER_missing_api_version\",\n"
+        "        \"type\": \"INSTANCE\",\n"
+        "        \"library_path\": \"./libVkLayer_missing.so\",\n"
+        "        \"implementation_version\": \"1\",\n"
+        "        \"description\": \"missing api_version\"\n"
+        "    }\n"
+        "}\n");
+    malformed_manifests.push_back(  // omits "implementation_version"
+        "{\n"
+        "    \"file_format_version\": \"1.2.0\",\n"
+        "    \"layer\": {\n"
+        "        \"name\": \"VK_LAYER_missing_impl_version\",\n"
+        "        \"type\": \"INSTANCE\",\n"
+        "        \"library_path\": \"./libVkLayer_missing.so\",\n"
+        "        \"api_version\": \"1.2.0\",\n"
+        "        \"description\": \"missing implementation_version\"\n"
+        "    }\n"
+        "}\n");
+
+    for (size_t i = 0; i < malformed_manifests.size(); i++) {
+        auto file_name = std::string("missing_field_layer_") + std::to_string(i) + ".json";
+        std::filesystem::path new_path =
+            env.get_folder(ManifestLocation::explicit_layer).write_manifest(file_name, malformed_manifests[i]);
+#if defined(WIN32)
+        env.platform_shim->add_manifest_to_registry(ManifestCategory::explicit_layer, new_path);
+#endif
+    }
+
+    // Only the valid layer is discovered; the two malformed manifests are skipped.
+    auto layer_props = env.GetLayerProperties(1);
+    EXPECT_TRUE(string_eq(layer_props.at(0).layerName, valid_layer_name));
+}
+
+// A driver manifest whose "file_format_version" or "api_version" is present but not a string must be skipped.
+// loader_parse_icd_manifest logs "Skipping ICD JSON" for these but returned VK_SUCCESS, so the driver was still loaded
+// with an api_version of 0, or with no library path at all when file_format_version was the bad field.
+TEST(InvalidManifest, ICDNonStringVersionField) {
+    for (const char* bad_field : {"file_format_version", "api_version"}) {
+        FrameworkEnvironment env{};
+
+        JsonWriter writer;
+        writer.StartObject();
+        if (string_eq(bad_field, "file_format_version")) {
+            writer.AddKeyedInteger("file_format_version", 1);
+        } else {
+            writer.AddKeyedString("file_format_version", "1.0.0");
+        }
+        writer.StartKeyedObject("ICD");
+        writer.AddKeyedString("library_path", std::filesystem::path(TEST_ICD_PATH_VERSION_2).native());
+        if (string_eq(bad_field, "api_version")) {
+            writer.AddKeyedInteger("api_version", VK_API_VERSION_1_0);
+        } else {
+            writer.AddKeyedString("api_version", "1.0.0");
+        }
+        writer.EndObject();
+        writer.EndObject();
+
+        std::filesystem::path new_path =
+            env.get_folder(ManifestLocation::driver).write_manifest("bad_version_driver.json", writer.output);
+#if defined(WIN32)
+        env.platform_shim->add_manifest_to_registry(ManifestCategory::icd, new_path);
+#endif
+
+        InstWrapper inst{env.vulkan_functions};
+        FillDebugUtilsCreateDetails(inst.create_info, env.debug_log);
+        inst.CheckCreate(VK_ERROR_INCOMPATIBLE_DRIVER);
+        EXPECT_FALSE(env.debug_log.find("Failed loading library associated with ICD JSON")) << bad_field;
+    }
+}
 #ifndef VULKANSC  // VK_MSFT_layered_driver is not supported in Vulkan SC
 #if defined(WIN32)
 void add_dxgi_adapter(FrameworkEnvironment& env, std::filesystem::path const& name, LUID luid, uint32_t vendor_id) {

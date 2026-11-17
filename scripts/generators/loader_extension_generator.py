@@ -23,44 +23,11 @@
 # Author: Mark Lobodzinski <mark@lunarg.com>
 # Author: Charles Giessen <charles@lunarg.com>
 
-import re
 import os
 from base_generator import BaseGenerator
-from vulkan_object import Version
-
-WSI_EXT_NAMES = ['VK_KHR_surface',
-                 'VK_KHR_display',
-                 'VK_KHR_xlib_surface',
-                 'VK_KHR_xcb_surface',
-                 'VK_KHR_wayland_surface',
-                 'VK_EXT_directfb_surface',
-                 'VK_KHR_win32_surface',
-                 'VK_KHR_android_surface',
-                 'VK_GGP_stream_descriptor_surface',
-                 'VK_MVK_macos_surface',
-                 'VK_MVK_ios_surface',
-                 'VK_EXT_headless_surface',
-                 'VK_EXT_metal_surface',
-                 'VK_FUCHSIA_imagepipe_surface',
-                 'VK_KHR_swapchain',
-                 'VK_KHR_display_swapchain',
-                 'VK_KHR_get_display_properties2',
-                 'VK_KHR_get_surface_capabilities2',
-                 'VK_QNX_screen_surface',
-                 'VK_NN_vi_surface']
-
-ADD_INST_CMDS = ['vkCreateInstance',
-                 'vkEnumerateInstanceExtensionProperties',
-                 'vkEnumerateInstanceLayerProperties',
-                 'vkEnumerateInstanceVersion']
-
-AVOID_EXT_NAMES = ['VK_EXT_debug_report']
+from generators.common_code import ADD_INST_CMDS, AVOID_EXT_NAMES, AVOID_CMD_NAMES, WSI_EXT_NAMES, loader_hash_string, check_no_hash_collisions, APISpecific
 
 NULL_CHECK_EXT_NAMES= ['VK_EXT_debug_utils']
-
-AVOID_CMD_NAMES = ['vkCreateDebugUtilsMessengerEXT',
-                   'vkDestroyDebugUtilsMessengerEXT',
-                   'vkSubmitDebugUtilsMessageEXT']
 
 DEVICE_CMDS_NEED_TERM = ['vkGetDeviceProcAddr',
                          'vkCreateSwapchainKHR',
@@ -103,55 +70,6 @@ SHARED_ALIASES = {
 PRE_INSTANCE_FUNCTIONS = ['vkEnumerateInstanceExtensionProperties',
                           'vkEnumerateInstanceLayerProperties',
                           'vkEnumerateInstanceVersion']
-
-# This class is a container for any source code, data, or other behavior that is necessary to
-# customize the generator script for a specific target API variant (e.g. Vulkan SC). As such,
-# all of these API-specific interfaces and their use in the generator script are part of the
-# contract between this repository and its downstream users. Changing or removing any of these
-# interfaces or their use in the generator script will have downstream effects and thus
-# should be avoided unless absolutely necessary.
-class APISpecific:
-    @staticmethod
-    def getApiVersionDisplayName(targetApiName: str, name: str) -> str:
-        match targetApiName:
-            case 'vulkansc':
-                if name in ['VK_VERSION_1_0', 'VK_VERSION_1_1', 'VK_VERSION_1_2']:
-                    # Vulkan 1.0-1.2 is included in Vulkan SC 1.0
-                    name = 'VKSC_VERSION_1_0'
-                if name.startswith('VKSC_VERSION_'):
-                    api_name = 'Vulkan SC'
-                else:
-                    api_name = 'Vulkan'
-            case 'vulkan':
-                api_name = 'Vulkan'
-
-        version_number = name[name.find('_VERSION_') + len('_VERSION_'):].replace('_', '.')
-        return f'{api_name} {version_number}'
-
-    @staticmethod
-    def getFirstVersionName(targetApiName: str) -> str:
-        match targetApiName:
-            case 'vulkansc':
-                return 'VKSC_VERSION_1_0'
-            case 'vulkan':
-                return 'VK_VERSION_1_0'
-
-    # This handles the dependency across versions of APIs, even across API variants
-    # (e.g. maps VK_VERSION_1_2 to VKSC_VERSION_1_0 for Vulkan SC).
-    # This handles the lack of proper support for the "depends" attribute of <feature> tags in the XML.
-    @staticmethod
-    def getEffectiveVersionName(targetApiName: str, version: Version) -> str:
-        if version is None:
-            return APISpecific.getFirstVersionName(targetApiName)
-
-        match targetApiName:
-            case 'vulkansc':
-                if version.name in ['VK_VERSION_1_0', 'VK_VERSION_1_1', 'VK_VERSION_1_2']:
-                    # Vulkan 1.0-1.2 is included in Vulkan SC 1.0
-                    return 'VKSC_VERSION_1_0'
-                return version.name
-            case 'vulkan':
-                return version.name
 
 
 class LoaderExtensionGenerator(BaseGenerator):
@@ -290,7 +208,9 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev);
 
 // Extension interception for vkGetInstanceProcAddr function, so we can return
 // the appropriate information for any instance extensions we know about.
-bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr);
+// name_hash must be loader_hash_string(name) - callers that already have it (e.g.
+// trampoline_get_proc_addr) pass it through instead of hashing name a second time.
+bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, uint32_t name_hash, void **addr);
 
 struct loader_instance_extension_enable_list; // Forward declaration
 
@@ -719,6 +639,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
                 out.append('    struct loader_device* dev = (struct loader_device *)table;\n')
                 out.append('    const struct loader_instance* inst = dev->phys_dev_term->this_icd_term->this_instance;\n')
                 out.append('    uint32_t api_version = VK_MAKE_API_VERSION(0, inst->app_api_version.major, inst->app_api_version.minor, inst->app_api_version.patch);\n')
+                out.append('    const uint32_t name_hash = loader_hash_string(name);\n')
                 out.append('\n')
             else:
                 cur_type = 'instance'
@@ -733,8 +654,11 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
                 out.append('\n')
                 out.append('    *found_name = true;\n')
                 out.append('    name += 2;\n')
+                out.append('    const uint32_t name_hash = loader_hash_string(name);\n')
 
+            out.append('    switch (name_hash) {\n')
 
+            base_names_for_collision_check = []
             for command_list in [self.core_commands, self.extension_commands]:
                 commands = command_list
 
@@ -744,12 +668,12 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
                     is_inst_handle_type = command.params[0].type in ['VkInstance', 'VkPhysicalDevice']
                     if ((cur_type == 'instance' and is_inst_handle_type) or (cur_type == 'device' and not is_inst_handle_type)):
 
-                        current_block = self.DescribeBlock(command, current_block, out)
+                        current_block = self.DescribeBlock(command, current_block, out, indent='        ')
                         if len(command.extensions) == 0:
                             if cur_type == 'device':
                                 effective_version_name = APISpecific.getEffectiveVersionName(self.targetApiName, command.version)
                                 api_version = effective_version_name.replace('_VERSION_', '_API_VERSION_')
-                                version_check = f"        if (dev->should_ignore_device_commands_from_newer_version && api_version < {api_version}) return NULL;\n"
+                                version_check = f"                if (dev->should_ignore_device_commands_from_newer_version && api_version < {api_version}) return NULL;\n"
                             else:
                                 version_check = ''
 
@@ -765,22 +689,29 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
                         if command.protect is not None:
                             out.append(f'#if defined({command.protect})\n')
 
-                        out.append(f'    if (!strcmp(name, "{base_name}")) ')
+                        base_names_for_collision_check.append(base_name)
+                        out.append(f'        case {loader_hash_string(base_name):#010x}u:\n')
+                        out.append(f'            if (!strcmp(name, "{base_name}")) ')
                         if command.name in DEVICE_CMDS_MUST_USE_TRAMP:
                             if version_check != '':
-                                out.append(f'{{\n{version_check}        return dev->layer_extensions.{command.extensions[0][3:].lower()}_enabled ? (void *){base_name} : NULL;\n    }}\n')
+                                out.append(f'{{\n{version_check}                return dev->layer_extensions.{command.extensions[0][3:].lower()}_enabled ? (void *){base_name} : NULL;\n            }}\n')
                             else:
                                 out.append(f'return dev->layer_extensions.{command.extensions[0][3:].lower()}_enabled ? (void *){base_name} : NULL;\n')
 
                         else:
                             if version_check != '':
-                                out.append(f'{{\n{version_check}        return (void *)table->{base_name};\n    }}\n')
+                                out.append(f'{{\n{version_check}                return (void *)table->{base_name};\n            }}\n')
                             else:
                                 out.append(f'return (void *)table->{base_name};\n')
+                        out.append('            break;\n')
 
                         if command.protect is not None:
                             out.append(f'#endif // {command.protect}\n')
 
+            check_no_hash_collisions(base_names_for_collision_check, f'loader_lookup_{cur_type}_dispatch_table')
+            out.append('        default:\n')
+            out.append('            break;\n')
+            out.append('    }\n')
             out.append('\n')
             out.append('    *found_name = false;\n')
             out.append('    return NULL;\n')
@@ -893,23 +824,17 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
 
                 if command.params[0].type == 'VkPhysicalDevice':
                     out.append('    const VkLayerInstanceDispatchTable *disp;\n')
-                    out.append(f'    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device({phys_dev_var_name});\n')
-                    out.append('    if (VK_NULL_HANDLE == unwrapped_phys_dev) {\n')
-                    out.append('        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,\n')
-                    out.append(f'                   "{command.name}: Invalid {phys_dev_var_name} "\n')
-                    out.append(f'                   "[VUID-{command.name}-{phys_dev_var_name}-parameter]");\n')
-                    out.append('        abort(); /* Intentionally fail so user can correct issue. */\n')
-                    out.append('    }\n')
+                    out.append(f'    VkPhysicalDevice unwrapped_phys_dev = loader_unwrap_physical_device({phys_dev_var_name}, "{command.name}");\n')
                     out.append(f'    disp = loader_get_instance_layer_dispatch({phys_dev_var_name});\n')
                 elif command.params[0].type == 'VkInstance':
-                    out.append(f'    struct loader_instance *inst = loader_get_instance({instance_var_name});\n')
-                    out.append('    if (NULL == inst) {\n')
-                    out.append('        loader_log(\n')
-                    out.append('            NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,\n')
-                    out.append(f'            "{command.name}: Invalid instance [VUID-{command.name}-{instance_var_name}-parameter]");\n')
-                    out.append('        abort(); /* Intentionally fail so user can correct issue. */\n')
-                    out.append('    }\n')
+                    out.append(f'    struct loader_instance* inst = loader_validate_and_get_instance_dispatch({instance_var_name}, "{command.name}");\n')
                     out.append('#error("Not implemented. Likely needs to be manually generated!");\n')
+                elif command.params[0].type == 'VkDevice':
+                    out.append(f'    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch({command.params[0].name}, "{command.name}");\n')
+                elif command.params[0].type == 'VkCommandBuffer':
+                    out.append(f'    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch({command.params[0].name}, "{command.name}");\n')
+                elif command.params[0].type == 'VkQueue':
+                    out.append(f'    const VkLayerDispatchTable *disp = loader_validate_and_get_queue_dispatch({command.params[0].name}, "{command.name}");\n')
                 else:
                     out.append('    const VkLayerDispatchTable *disp = loader_get_dispatch(')
                     out.append(command.params[0].name)
@@ -1075,13 +1000,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
 
 
                 elif command.params[0].type == 'VkInstance':
-                    out.append(f'    struct loader_instance *inst = loader_get_instance({instance_var_name});\n')
-                    out.append('    if (NULL == inst) {\n')
-                    out.append('        loader_log(\n')
-                    out.append('            NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,\n')
-                    out.append(f'            "{command.name}: Invalid instance [VUID-{command.name}-{instance_var_name}-parameter]");\n')
-                    out.append('        abort(); /* Intentionally fail so user can correct issue. */\n')
-                    out.append('    }\n')
+                    out.append(f'    struct loader_instance *inst = loader_validate_and_get_instance({instance_var_name}, "{command.name}");\n')
                     out.append('#error("Not implemented. Likely needs to be manually generated!");\n')
                 elif command.extensions[0] in ['VK_EXT_debug_utils', 'VK_EXT_debug_marker']:
                     if command.name in ['vkDebugMarkerSetObjectNameEXT', 'vkDebugMarkerSetObjectTagEXT', 'vkSetDebugUtilsObjectNameEXT' , 'vkSetDebugUtilsObjectTagEXT']:
@@ -1159,16 +1078,22 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
                 out.append('}\n\n')
             else:
                 out.append(tramp_header)
-
-                out.append('    const VkLayerDispatchTable *disp = loader_get_dispatch(')
-                out.append(command.params[0].name)
-                out.append(');\n')
-                out.append('    if (NULL == disp) {\n')
-                out.append('        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,\n')
-                out.append(f'                   "{command.name}: Invalid {command.params[0].name} "\n')
-                out.append(f'                   "[VUID-{command.name}-{command.params[0].name}-parameter]");\n')
-                out.append('        abort(); /* Intentionally fail so user can correct issue. */\n')
-                out.append('    }\n')
+                if command.params[0].type == 'VkDevice':
+                    out.append(f'    const VkLayerDispatchTable *disp = loader_validate_and_get_device_dispatch({command.params[0].name}, "{command.name}");\n')
+                elif command.params[0].type == 'VkCommandBuffer':
+                    out.append(f'    const VkLayerDispatchTable *disp = loader_validate_and_get_command_buffer_dispatch({command.params[0].name}, "{command.name}");\n')
+                elif command.params[0].type == 'VkQueue':
+                    out.append(f'    const VkLayerDispatchTable *disp = loader_validate_and_get_queue_dispatch({command.params[0].name}, "{command.name}");\n')
+                else:
+                    out.append('    const VkLayerDispatchTable *disp = loader_get_dispatch(')
+                    out.append(command.params[0].name)
+                    out.append(');\n')
+                    out.append('    if (NULL == disp) {\n')
+                    out.append('        loader_log(NULL, VULKAN_LOADER_FATAL_ERROR_BIT | VULKAN_LOADER_ERROR_BIT | VULKAN_LOADER_VALIDATION_BIT, 0,\n')
+                    out.append(f'                   "{command.name}: Invalid {command.params[0].name} "\n')
+                    out.append(f'                   "[VUID-{command.name}-{command.params[0].name}-parameter]");\n')
+                    out.append('        abort(); /* Intentionally fail so user can correct issue. */\n')
+                    out.append('    }\n')
 
                 if command.extensions[0] in NULL_CHECK_EXT_NAMES:
                     out.append('    if (disp->' + base_name + ' != NULL) {\n')
@@ -1202,9 +1127,12 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
         cur_extension_name = ''
 
         out.append( '// GPA helpers for extensions\n')
-        out.append( 'bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, void **addr) {\n')
-        out.append( '    *addr = NULL;\n\n')
+        out.append( '// name_hash must be loader_hash_string(name) - passed in by the caller so it is only computed once per lookup.\n')
+        out.append( 'bool extension_instance_gpa(struct loader_instance *ptr_instance, const char *name, uint32_t name_hash, void **addr) {\n')
+        out.append( '    *addr = NULL;\n')
+        out.append( '    switch (name_hash) {\n')
 
+        full_names_for_collision_check = []
         for command in [x for x in self.vk.commands.values() if x.extensions]:
             if (command.version or
                 command.extensions[0] in WSI_EXT_NAMES or
@@ -1213,7 +1141,7 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
                 continue
 
             if command.extensions[0] != cur_extension_name:
-                out.append( f'\n    // ---- {command.extensions[0]} extension commands\n')
+                out.append( f'\n        // ---- {command.extensions[0]} extension commands\n')
                 cur_extension_name = command.extensions[0]
 
             if command.protect is not None:
@@ -1222,24 +1150,31 @@ VKAPI_ATTR VkResult VKAPI_CALL vkDevExtError(VkDevice dev) {
             #base_name = command.name[2:]
             base_name = SHARED_ALIASES[command.name] if command.name in SHARED_ALIASES else command.name[2:]
 
+            full_names_for_collision_check.append(command.name)
+            out.append(f'        case {loader_hash_string(command.name):#010x}u:\n')
             if len(command.extensions) > 0 and self.vk.extensions[command.extensions[0]].instance:
-                out.append( f'    if (!strcmp("{command.name}", name)) {{\n')
-                out.append( '        *addr = (ptr_instance->enabled_extensions.')
+                out.append( f'            if (!strcmp("{command.name}", name)) {{\n')
+                out.append( '                *addr = (ptr_instance->enabled_extensions.')
                 out.append( command.extensions[0][3:].lower())
                 out.append( ' == 1)\n')
-                out.append( f'                     ? (void *){base_name}\n')
-                out.append( '                     : NULL;\n')
-                out.append( '        return true;\n')
-                out.append( '    }\n')
+                out.append( f'                             ? (void *){base_name}\n')
+                out.append( '                             : NULL;\n')
+                out.append( '                return true;\n')
+                out.append( '            }\n')
             else:
-                out.append( f'    if (!strcmp("{command.name}", name)) {{\n')
-                out.append( f'        *addr = (void *){base_name};\n')
-                out.append( '        return true;\n')
-                out.append( '    }\n')
+                out.append( f'            if (!strcmp("{command.name}", name)) {{\n')
+                out.append( f'                *addr = (void *){base_name};\n')
+                out.append( '                return true;\n')
+                out.append( '            }\n')
+            out.append('            break;\n')
 
             if command.protect is not None:
                 out.append( f'#endif // {command.protect}\n')
 
+        check_no_hash_collisions(full_names_for_collision_check, 'extension_instance_gpa')
+        out.append( '        default:\n')
+        out.append( '            break;\n')
+        out.append( '    }\n')
         out.append( '    return false;\n')
         out.append( '}\n\n')
 

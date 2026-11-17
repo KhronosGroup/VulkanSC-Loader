@@ -1,0 +1,59 @@
+# Copyright 2026 Valve Corporation
+# Copyright 2026 LunarG, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: lint
+
+on:
+    push:
+    pull_request:
+        branches:
+            - main
+
+permissions:
+    contents: read
+
+jobs:
+  clang-format:
+    name: clang-format
+    runs-on: ubuntu-26.04
+
+    env:
+      CLANG_FORMAT_VERSION: 22
+      CLANG_FORMAT_FILES: "*.c *.h *.cpp *.hpp"
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Check formatting
+      run: |
+        for f in $(git ls-files -- ${CLANG_FORMAT_FILES}); do
+          echo "Checking $f"
+          clang-format-${CLANG_FORMAT_VERSION} -i --Werror "$f"
+        done
+
+        git diff --exit-code
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+
+    env:
+      CLANG_TIDY_VERSION: 22
+
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'
+    - run: python3 -m pip install pyparsing
+    - run: sudo apt update
+    - run: sudo apt install --yes --no-install-recommends libwayland-dev libxrandr-dev
+    - run: |
+        cmake -S. -B build \
+        -D CMAKE_BUILD_TYPE=Release \
+        -D UPDATE_DEPS=ON \
+        -D USE_CLANG_TIDY=ON \
+        -D CLANG_TIDY_EXE=$(command -v clang-tidy-${CLANG_TIDY_VERSION})
+    - run: cmake --build build

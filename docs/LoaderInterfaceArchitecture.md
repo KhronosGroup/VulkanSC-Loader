@@ -46,6 +46,7 @@
   - [Globs](#globs)
   - [Case-Insensitive](#case-insensitive)
   - [Environment Variable Priority](#environment-variable-priority)
+  - [Multiple Filtering](#multiple-filtering)
 - [Table of Debug Environment Variables](#table-of-debug-environment-variables)
   - [Active Environment Variables](#active-environment-variables)
   - [Deprecated Environment Variables](#deprecated-environment-variables)
@@ -167,68 +168,8 @@ VkConfig can be found by either installing the
 [Vulkan SDK](https://vulkan.lunarg.com/) or by building the source out of the
 [LunarG VulkanTools GitHub Repo](https://github.com/LunarG/VulkanTools).
 
-VkConfig generates three outputs, two of which work with the Vulkan loader and
-layers.
-These outputs are:
- * The Vulkan Override Layer
- * The Vulkan Layer Settings File
- * VkConfig Configuration Settings
-
-These files are found in different locations based on your platform:
-
-<table style="width:100%">
-  <tr>
-    <th>Platform</th>
-    <th>Output</th>
-    <th>Location</th>
-  </tr>
-  <tr>
-    <th rowspan="3">Linux</th>
-    <td>Vulkan Override Layer</td>
-    <td>$USER/.local/share/vulkan/implicit_layer.d/VkLayer_override.json</td>
-  </tr>
-  <tr>
-    <td>Vulkan Layer Settings</td>
-    <td>$USER/.local/share/vulkan/settings.d/vk_layer_settings.txt</td>
-  </tr>
-  <tr>
-    <td>VkConfig Configuration Settings</td>
-    <td>$USER/.local/share/vulkan/settings.d/vk_layer_settings.txt</td>
-  </tr>
-  <tr>
-    <th rowspan="3">Windows</th>
-    <td>Vulkan Override Layer</td>
-    <td>%HOME%\AppData\Local\LunarG\vkconfig\override\VkLayerOverride.json</td>
-  </tr>
-  <tr>
-    <td>Vulkan Layer Settings</td>
-    <td>(registry) HKEY_CURRENT_USER\Software\Khronos\Vulkan\LoaderSettings</td>
-  </tr>
-  <tr>
-    <td>VkConfig Configuration Settings</td>
-    <td>(registry) HKEY_CURRENT_USER\Software\LunarG\vkconfig </td>
-  </tr>
-</table>
-
-The [Override Meta-Layer](./LoaderLayerInterface.md#override-meta-layer) is
-an important part of how VkConfig works.
-This layer, when found by the loader, forces the loading of the desired layers
-that were enabled inside of VkConfig as well as disables those layers that
-were intentionally disabled (including implicit layers).
-
-The Vulkan Layer Settings file can be used to specify certain behaviors and
-actions each enabled layer is expected to perform.
-These settings can also be controlled by VkConfig, or they can be manually
-enabled.
-For details on what settings can be used, refer to the individual layers.
-
-In the future, VkConfig may have additional interactions with the Vulkan
-loader.
-
 More details on VkConfig can be found in its
 [GitHub documentation](https://github.com/LunarG/VulkanTools/blob/main/vkconfig/README.md).
-<br/>
-<br/>
 
 
 ## Important Vulkan Concepts
@@ -1059,6 +1000,26 @@ discovery.
         <br/>
         set<br/>
         &nbsp;&nbsp;VK_LOADER_DRIVER_ID_FILTER=1-3:13<br/><br/>
+    </small></td>
+  </tr>
+  <tr>
+    <td><small>
+        <i>VK_LOADER_SEARCH_ONLY_IN_BUNDLE</i>
+    </small></td>
+    <td><small>
+        Prevents searching for layer and driver manifests outside of the
+        Application Bundle. Meant to isolate applications shipping on macOS/iOS
+        in a bundle from using system installed layers and drivers.
+    </small></td>
+    <td><small>
+        <b>macOS/iOS only</b><br/>
+        This functionality is only available with Loaders built with version
+        1.4.359 of the Vulkan headers and later.
+    </small></td>
+    <td><small>
+        export<br/>
+        &nbsp;&nbsp;VK_LOADER_SEARCH_ONLY_IN_BUNDLE=1<br/>
+        <br/>
     </small></td>
   </tr>
 </table>

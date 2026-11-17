@@ -24,13 +24,22 @@ set(VULKANSC ON CACHE BOOL "User defined variable for VULKANSC mode to be passed
 if(VULKANSC)
     project(VULKAN_LOADER VERSION 1.0.22 LANGUAGES C) # vulkansc
 else()
-    project(VULKAN_LOADER VERSION 1.4.356 LANGUAGES C) # vulkan
+    project(VULKAN_LOADER VERSION 1.4.368 LANGUAGES C) # vulkan
 endif()
 
 option(CODE_COVERAGE "Enable Code Coverage" OFF)
 if (CODE_COVERAGE)
     include(scripts/CodeCoverage.cmake)
     add_code_coverage_all_targets()
+endif()
+
+option(USE_CLANG_TIDY "Run clang-tidy on the loader sources as part of the build")
+if (USE_CLANG_TIDY)
+    if (CMAKE_VERSION VERSION_LESS "3.27")
+        message(FATAL_ERROR "USE_CLANG_TIDY requires CMake 3.27 or newer (for the SKIP_LINTING source property)")
+    endif()
+    find_program(CLANG_TIDY_EXE NAMES clang-tidy REQUIRED)
+    set(CLANG_TIDY_COMMAND "${CLANG_TIDY_EXE}")
 endif()
 
 # This variable enables downstream users to customize the target API
@@ -50,7 +59,16 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_VISIBILITY_PRESET "hidden")
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+if (WIN32)
+    option(DYNAMIC_LINK_MSVC_RUNTIME_LIBRARY "Forces linking to the dynamic MSVC CRT library")
+
+    if (DYNAMIC_LINK_MSVC_RUNTIME_LIBRARY)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    else()
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
+endif()
 
 # By default, loader & tests are built without sanitizers
 # Use these options to force a specific sanitizer on the loader and test executables
@@ -66,8 +84,16 @@ if(WIN32)
 endif()
 
 find_package(VulkanHeaders ${PROJECT_VERSION} CONFIG QUIET)
-if (${VulkanHeaders_VERSION} VERSION_GREATER ${PROJECT_VERSION})
+if (DEFINED ${VulkanHeaders_VERSION} AND ${VulkanHeaders_VERSION} VERSION_GREATER ${PROJECT_VERSION})
     message(WARNING "The Vulkan Headers version ${VulkanHeaders_VERSION} is newer than the expected version ${PROJECT_VERSION} used by the Vulkan-Loader. May cause issues.")
+endif()
+
+# Workaround AppleClang using the wrong headers when there are headers in /usr/local/include
+if (CMAKE_C_COMPILER_ID STREQUAL AppleClang AND TARGET Vulkan::Headers AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.25)
+    get_target_property(vulkan_headers_aliased Vulkan::Headers ALIASED_TARGET)
+    if (NOT vulkan_headers_aliased)
+        set_target_properties(Vulkan::Headers PROPERTIES SYSTEM OFF)
+    endif()
 endif()
 
 include(GNUInstallDirs)
@@ -282,7 +308,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" A
 
     # Enable EH Continuation Metadata for 64-bit architectures
     if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-        target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE::CXX,C>:/guard:ehcont>)
+        target_compile_options(loader_common_options INTERFACE $<$<COMPILE_LANGUAGE:CXX,C>:/guard:ehcont>)
         target_link_options(loader_common_options INTERFACE "LINKER:/guard:ehcont")
     endif()
 

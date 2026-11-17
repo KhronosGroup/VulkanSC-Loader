@@ -34,7 +34,6 @@
 #include "loader_environment.h"
 #include "loader.h"
 #include "log.h"
-#include "stack_allocation.h"
 
 // Determine a priority based on device type with the higher value being higher priority.
 uint32_t determine_priority_type_value(VkPhysicalDeviceType type) {
@@ -62,7 +61,8 @@ int32_t device_type_compare(VkPhysicalDeviceType a, VkPhysicalDeviceType b) {
     uint32_t b_value = determine_priority_type_value(b);
     if (a_value > b_value) {
         return -1;
-    } else if (b_value > a_value) {
+    }
+    if (b_value > a_value) {
         return 1;
     }
     return 0;
@@ -74,14 +74,16 @@ int32_t device_type_compare(VkPhysicalDeviceType a, VkPhysicalDeviceType b) {
 //   2) Sort by type
 //   3) Sort by PCI bus ID
 //   4) Ties broken by device_ID XOR vendor_ID comparison
-int32_t compare_devices(const void *a, const void *b) {
-    struct LinuxSortedDeviceInfo *left = (struct LinuxSortedDeviceInfo *)a;
-    struct LinuxSortedDeviceInfo *right = (struct LinuxSortedDeviceInfo *)b;
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - qsort comparator signature, order is fixed by the C standard library API
+int32_t compare_devices(const void* a, const void* b) {
+    struct LinuxSortedDeviceInfo* left = (struct LinuxSortedDeviceInfo*)a;
+    struct LinuxSortedDeviceInfo* right = (struct LinuxSortedDeviceInfo*)b;
 
     // Default device always gets priority
     if (left->default_device) {
         return -1;
-    } else if (right->default_device) {
+    }
+    if (right->default_device) {
         return 1;
     }
 
@@ -94,31 +96,37 @@ int32_t compare_devices(const void *a, const void *b) {
     // Sort by PCI info (prioritize devices that have info over those that don't)
     if (left->has_pci_bus_info && !right->has_pci_bus_info) {
         return -1;
-    } else if (!left->has_pci_bus_info && right->has_pci_bus_info) {
+    }
+    if (!left->has_pci_bus_info && right->has_pci_bus_info) {
         return 1;
-    } else if (left->has_pci_bus_info && right->has_pci_bus_info) {
+    }
+    if (left->has_pci_bus_info && right->has_pci_bus_info) {
         // Sort low to high PCI domain
         if (left->pci_domain < right->pci_domain) {
             return -1;
-        } else if (left->pci_domain > right->pci_domain) {
+        }
+        if (left->pci_domain > right->pci_domain) {
             return 1;
         }
         // Sort low to high PCI bus
         if (left->pci_bus < right->pci_bus) {
             return -1;
-        } else if (left->pci_bus > right->pci_bus) {
+        }
+        if (left->pci_bus > right->pci_bus) {
             return 1;
         }
         // Sort low to high PCI device
         if (left->pci_device < right->pci_device) {
             return -1;
-        } else if (left->pci_device > right->pci_device) {
+        }
+        if (left->pci_device > right->pci_device) {
             return 1;
         }
         // Sort low to high PCI function
         if (left->pci_function < right->pci_function) {
             return -1;
-        } else if (left->pci_function > right->pci_function) {
+        }
+        if (left->pci_function > right->pci_function) {
             return 1;
         }
     }
@@ -128,7 +136,8 @@ int32_t compare_devices(const void *a, const void *b) {
     uint32_t right_xord_dev_vend = right->device_id ^ right->vendor_id;
     if (left_xord_dev_vend < right_xord_dev_vend) {
         return -1;
-    } else if (right_xord_dev_vend < left_xord_dev_vend) {
+    }
+    if (right_xord_dev_vend < left_xord_dev_vend) {
         return 1;
     }
     return 0;
@@ -141,18 +150,20 @@ int32_t compare_devices(const void *a, const void *b) {
 //   2) Group with the best device type for device 0 wins
 //   3) Group with best PCI bus ID for device 0 wins
 //   4) Ties broken by group device 0 device_ID XOR vendor_ID comparison
-int32_t compare_device_groups(const void *a, const void *b) {
-    struct loader_physical_device_group_term *grp_a = (struct loader_physical_device_group_term *)a;
-    struct loader_physical_device_group_term *grp_b = (struct loader_physical_device_group_term *)b;
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - qsort comparator signature, order is fixed by the C standard library API
+int32_t compare_device_groups(const void* a, const void* b) {
+    struct loader_physical_device_group_term* grp_a = (struct loader_physical_device_group_term*)a;
+    struct loader_physical_device_group_term* grp_b = (struct loader_physical_device_group_term*)b;
 
     // Use the first GPU's info from each group to sort the groups by
-    struct LinuxSortedDeviceInfo *left = &grp_a->internal_device_info[0];
-    struct LinuxSortedDeviceInfo *right = &grp_b->internal_device_info[0];
+    struct LinuxSortedDeviceInfo* left = &grp_a->internal_device_info[0];
+    struct LinuxSortedDeviceInfo* right = &grp_b->internal_device_info[0];
 
     // Default device always gets priority
     if (left->default_device) {
         return -1;
-    } else if (right->default_device) {
+    }
+    if (right->default_device) {
         return 1;
     }
 
@@ -165,31 +176,37 @@ int32_t compare_device_groups(const void *a, const void *b) {
     // Sort by PCI info (prioritize devices that have info over those that don't)
     if (left->has_pci_bus_info && !right->has_pci_bus_info) {
         return -1;
-    } else if (!left->has_pci_bus_info && right->has_pci_bus_info) {
+    }
+    if (!left->has_pci_bus_info && right->has_pci_bus_info) {
         return 1;
-    } else if (left->has_pci_bus_info && right->has_pci_bus_info) {
+    }
+    if (left->has_pci_bus_info && right->has_pci_bus_info) {
         // Sort low to high PCI domain
         if (left->pci_domain < right->pci_domain) {
             return -1;
-        } else if (left->pci_domain > right->pci_domain) {
+        }
+        if (left->pci_domain > right->pci_domain) {
             return 1;
         }
         // Sort low to high PCI bus
         if (left->pci_bus < right->pci_bus) {
             return -1;
-        } else if (left->pci_bus > right->pci_bus) {
+        }
+        if (left->pci_bus > right->pci_bus) {
             return 1;
         }
         // Sort low to high PCI device
         if (left->pci_device < right->pci_device) {
             return -1;
-        } else if (left->pci_device > right->pci_device) {
+        }
+        if (left->pci_device > right->pci_device) {
             return 1;
         }
         // Sort low to high PCI function
         if (left->pci_function < right->pci_function) {
             return -1;
-        } else if (left->pci_function > right->pci_function) {
+        }
+        if (left->pci_function > right->pci_function) {
             return 1;
         }
     }
@@ -199,23 +216,26 @@ int32_t compare_device_groups(const void *a, const void *b) {
     uint32_t right_xord_dev_vend = right->device_id ^ right->vendor_id;
     if (left_xord_dev_vend < right_xord_dev_vend) {
         return -1;
-    } else if (right_xord_dev_vend < left_xord_dev_vend) {
+    }
+    if (right_xord_dev_vend < left_xord_dev_vend) {
         return 1;
     }
     return 0;
 }
 
 // Search for the default device using the loader environment variable.
-void linux_env_var_default_device(struct loader_instance *inst, uint32_t device_count,
-                                  struct LinuxSortedDeviceInfo *sorted_device_info) {
-    char *selection = loader_getenv("VK_LOADER_DEVICE_SELECT", inst);
+void linux_env_var_default_device(struct loader_instance* inst, uint32_t device_count,
+                                  struct LinuxSortedDeviceInfo* sorted_device_info) {
+    char* selection = loader_getenv("VK_LOADER_DEVICE_SELECT", inst);
     if (NULL != selection) {
         loader_log(inst, VULKAN_LOADER_DEBUG_BIT | VULKAN_LOADER_DRIVER_BIT, 0,
                    "linux_env_var_default_device:  Found \'VK_LOADER_DEVICE_SELECT\' set to %s", selection);
 
         // The environment variable exists, so grab the vendor ID and device ID of the
         // selected default device
-        unsigned vendor_id, device_id;
+        unsigned vendor_id;
+        unsigned device_id;
+        // NOLINTNEXTLINE(cert-err34-c, bugprone-unchecked-string-to-number-conversion) - checked below via 'matched == 2'
         int32_t matched = sscanf(selection, "%x:%x", &vendor_id, &device_id);
         if (matched == 2) {
             for (int32_t i = 0; i < (int32_t)device_count; ++i) {
@@ -234,15 +254,17 @@ void linux_env_var_default_device(struct loader_instance *inst, uint32_t device_
 }
 
 // This function allocates an array in sorted_devices which must be freed by the caller if not null
-VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32_t icd_count,
-                                            struct loader_icd_physical_devices *icd_devices, uint32_t phys_dev_count,
-                                            struct loader_physical_device_term **sorted_device_term) {
+VkResult linux_read_sorted_physical_devices(struct loader_instance* inst, uint32_t icd_count,
+                                            struct loader_icd_physical_devices* icd_devices, uint32_t phys_dev_count,
+                                            struct loader_physical_device_term** sorted_device_term) {
     VkResult res = VK_SUCCESS;
+    uint32_t ext_props_alloc_count = 0;
+    VkExtensionProperties* ext_props = NULL;
 #ifndef VULKANSC
     bool app_is_vulkan_1_1 = loader_check_version_meets_required(LOADER_VERSION_1_1_0, inst->app_api_version);
 #endif  // VULKANSC
 
-    struct LinuxSortedDeviceInfo *sorted_device_info = loader_instance_heap_calloc(
+    struct LinuxSortedDeviceInfo* sorted_device_info = loader_instance_heap_calloc(
         inst, phys_dev_count * sizeof(struct LinuxSortedDeviceInfo), VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
     if (NULL == sorted_device_info) {
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -256,8 +278,8 @@ VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32
     uint32_t index = 0;
     for (uint32_t icd_idx = 0; icd_idx < icd_count; ++icd_idx) {
         for (uint32_t phys_dev = 0; phys_dev < icd_devices[icd_idx].device_count; ++phys_dev) {
-            struct loader_icd_term *icd_term = icd_devices[icd_idx].icd_term;
-            VkPhysicalDeviceProperties dev_props = {};
+            struct loader_icd_term* icd_term = icd_devices[icd_idx].icd_term;
+            VkPhysicalDeviceProperties dev_props = {0};
 
             sorted_device_info[index].physical_device = icd_devices[icd_idx].physical_devices[phys_dev];
             sorted_device_info[index].icd_term = icd_term;
@@ -279,11 +301,16 @@ VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32
                 icd_term->dispatch.EnumerateDeviceExtensionProperties(sorted_device_info[index].physical_device, NULL, &ext_count,
                                                                       NULL);
                 if (ext_count > 0) {
-                    VkExtensionProperties *ext_props =
-                        (VkExtensionProperties *)loader_stack_alloc(sizeof(VkExtensionProperties) * ext_count);
-                    if (NULL == ext_props) {
-                        res = VK_ERROR_OUT_OF_HOST_MEMORY;
-                        goto out;
+                    if (NULL == ext_props || ext_props_alloc_count < ext_count) {
+                        VkExtensionProperties* new_ext_props = loader_instance_heap_realloc(
+                            inst, ext_props, ext_props_alloc_count, sizeof(VkExtensionProperties) * ext_count,
+                            VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
+                        if (NULL == new_ext_props) {
+                            res = VK_ERROR_OUT_OF_HOST_MEMORY;
+                            goto out;
+                        }
+                        ext_props = new_ext_props;
+                        ext_props_alloc_count = ext_count;
                     }
                     uint32_t allocated_count = ext_count;
                     icd_term->dispatch.EnumerateDeviceExtensionProperties(sorted_device_info[index].physical_device, NULL,
@@ -344,21 +371,25 @@ VkResult linux_read_sorted_physical_devices(struct loader_instance *inst, uint32
     for (uint32_t dev = 0; dev < phys_dev_count; ++dev) {
         sorted_device_term[dev]->this_icd_term = sorted_device_info[dev].icd_term;
         sorted_device_term[dev]->phys_dev = sorted_device_info[dev].physical_device;
-        loader_set_dispatch((void *)sorted_device_term[dev], inst->disp);
+        loader_set_dispatch((void*)sorted_device_term[dev], inst->disp);
         loader_log(inst, VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_DRIVER_BIT, 0, "           [%u] %s  %s", dev,
                    sorted_device_info[dev].device_name, (sorted_device_info[dev].default_device ? "[default]" : ""));
     }
 
 out:
+
+    loader_instance_heap_free(inst, ext_props);
     loader_instance_heap_free(inst, sorted_device_info);
 
     return res;
 }
 
 // This function sorts an array of physical device groups
-VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_t group_count,
-                                           struct loader_physical_device_group_term *sorted_group_term) {
+VkResult linux_sort_physical_device_groups(struct loader_instance* inst, uint32_t group_count,
+                                           struct loader_physical_device_group_term* sorted_group_term) {
     VkResult res = VK_SUCCESS;
+    uint32_t ext_props_alloc_count = 0;
+    VkExtensionProperties* ext_props = NULL;
 #ifndef VULKANSC
     bool app_is_vulkan_1_1 = loader_check_version_meets_required(LOADER_VERSION_1_1_0, inst->app_api_version);
 #endif  // VULKANSC
@@ -368,9 +399,9 @@ VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_
     for (uint32_t group = 0; group < group_count; ++group) {
         loader_log(inst, VULKAN_LOADER_INFO_BIT | VULKAN_LOADER_DRIVER_BIT, 0, "           Group %u", group);
 
-        struct loader_icd_term *icd_term = sorted_group_term[group].this_icd_term;
+        struct loader_icd_term* icd_term = sorted_group_term[group].this_icd_term;
         for (uint32_t gpu = 0; gpu < sorted_group_term[group].group_props.physicalDeviceCount; ++gpu) {
-            VkPhysicalDeviceProperties dev_props = {};
+            VkPhysicalDeviceProperties dev_props = {0};
 
             sorted_group_term[group].internal_device_info[gpu].physical_device =
                 sorted_group_term[group].group_props.physicalDevices[gpu];
@@ -390,14 +421,20 @@ VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_
                 loader_check_version_meets_required(LOADER_VERSION_1_1_0, loader_make_version(dev_props.apiVersion));
 #endif  // VULKANSC
             if (!sorted_group_term[group].internal_device_info[gpu].has_pci_bus_info) {
-                uint32_t ext_count;
+                uint32_t ext_count = 0;
                 icd_term->dispatch.EnumerateDeviceExtensionProperties(
                     sorted_group_term[group].internal_device_info[gpu].physical_device, NULL, &ext_count, NULL);
                 if (ext_count > 0) {
-                    VkExtensionProperties *ext_props =
-                        (VkExtensionProperties *)loader_stack_alloc(sizeof(VkExtensionProperties) * ext_count);
-                    if (NULL == ext_props) {
-                        return VK_ERROR_OUT_OF_HOST_MEMORY;
+                    if (NULL == ext_props || ext_props_alloc_count < ext_count) {
+                        VkExtensionProperties* new_ext_props = loader_instance_heap_realloc(
+                            inst, ext_props, ext_props_alloc_count, sizeof(VkExtensionProperties) * ext_count,
+                            VK_SYSTEM_ALLOCATION_SCOPE_COMMAND);
+                        if (NULL == new_ext_props) {
+                            res = VK_ERROR_OUT_OF_HOST_MEMORY;
+                            goto out;
+                        }
+                        ext_props = new_ext_props;
+                        ext_props_alloc_count = ext_count;
                     }
                     uint32_t allocated_count = ext_count;
                     icd_term->dispatch.EnumerateDeviceExtensionProperties(
@@ -471,6 +508,9 @@ VkResult linux_sort_physical_device_groups(struct loader_instance *inst, uint32_
                        (sorted_group_term[group].internal_device_info[gpu].default_device ? "[default]" : ""));
         }
     }
+out:
+
+    loader_instance_heap_free(inst, ext_props);
 
     return res;
 }
